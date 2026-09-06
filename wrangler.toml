@@ -1,0 +1,5 @@
+name = "gestor-aramis-api"
+main = "server/index.ts"
+compatibility_date = "2026-09-01"
+workers_dev = false
+# Despliegue manual después de pruebas reales, dominio y configuración de secretos.

@@ -195,7 +195,7 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
         if (existing && !sameAsset(existing, asset)) fail('ASSET_CONFLICT', 'Ese archivo ya fue registrado con otros datos.');
         if (!existing) { request.assets.push(structuredClone(asset)); added = true; }
       }
-      if (added) { request.status = 'received'; activity(piece, 'Material recibido; falta la verificación de Aramís.', 'client'); }
+      if (added) { request.status = 'received'; activity(piece, 'Material recibido; falta la verificación de Aramis.', 'client'); }
       entityId = request.id;
       break;
     }
@@ -208,7 +208,7 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
         if (!request.assets.length) fail('MATERIAL_REQUIRED', 'Registrá el material recibido antes de completar el pedido.');
         if (request.status === 'complete') return { state, entityId: request.id };
         request.status = 'complete';
-        activity(piece, 'Aramís verificó y completó el pedido de material.', 'client');
+        activity(piece, 'Aramis verificó y completó el pedido de material.', 'client');
       } else {
         if (state.materials.some(item => item.pieceId === piece.id && item.id !== request.id && item.status !== 'complete')) fail('ACTIVE_REQUEST', 'Ya hay otro pedido abierto para este contenido.');
         request.status = 'pending';

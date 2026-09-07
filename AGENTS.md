@@ -1,4 +1,4 @@
-# Gestor Aramís — instrucciones de ejecución
+# Gestor Aramis — instrucciones de ejecución
 
 Leé ROADMAP.md, PROJECT_STATE.md y DECISIONS.md antes de trabajar. El repositorio autorizado es este; no edites Aramis-Web ni otros proyectos vecinos.
 

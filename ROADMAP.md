@@ -1,23 +1,23 @@
-# Hoja de ruta — Gestor Aramís V1
+# Hoja de ruta — Gestor Aramis V1
 
 Versión acordada el 2026-09-06. Objetivo: coordinación interna visible para la hermana del usuario y calendario, aprobaciones y material para clientes desde WhatsApp. Contratos compartidos en contracts/. Detalles y justificación en DECISIONS.md.
 
 ## Estados y regla de cierre
 Pendiente → En curso → Probado en aislamiento → Integrado. Bloqueado siempre indica la dependencia. Demo/local y servicios reales se informan por separado. Una interfaz simulada NO completa un bloque de producción.
 
-| Bloque | Dependencias | Entrega | Aceptación | Estado inicial |
+| Bloque | Dependencias | Entrega | Aceptación | Estado al 2026-09-07 |
 |---|---|---|---|---|
-| C00 Contratos | — | Roadmap, estado, decisiones, AGENTS, tipos, fixtures | Coherencia entre datos, operaciones y permisos | En curso |
-| C01 Aplicación | C00 | Rutas, componentes, marca, build y modo demo | Arranca y navega en escritorio/móvil, estados de error/vacío | En curso |
-| C02 Datos/negocio | C00/C01 | SQL, migraciones, API, transiciones, historial | Invariantes, idempotencia y concurrencia; RLS | En curso, aislamiento |
-| C03 Acceso | C02 | OTP real, sesiones, roles, enlaces scope/revocación | Aislamiento API entre clientes, recuperación y correo real | Base en curso; accesos pendientes |
-| C04 Drive | Inicia C01, integra C02/C03 | OAuth, selección, subidas, streaming privado, versiones | Video real reanudado y reproducido en teléfono; permisos y cuota | Primitivas en curso; Google pendiente |
-| C05 Panel interno | Inicia C01, integra C02/C03 | Semana, bloqueos, filtros, alta, responsable, fechas, detalle | Hermana identifica quién debe avanzar; persistencia y errores | En curso, demo |
-| C06 Calendario cliente | Inicia C01, integra C02/C03 | Mes/agenda, enlace lectura/sesión, icono móvil | No filtra internos; fechas consistentes; acceso Android/iPhone | En curso, demo |
-| C07 Aprobaciones | C02/C03/C04 | Preview/copy, aprobar/cambiar/comentar, historial | Versión exacta, reintentos, nueva revisión invalida anterior | En curso, demo |
-| C08 Material | C02/C03/C04 | Pedido, varios archivos, progreso, verificación interna | Fallos parciales, recibido≠completo, reanudación real | En curso, demo |
-| C09 WhatsApp | C05/C07/C08 | Mensaje/link manual, enviado, registro de respuesta externa | Abrir no marca enviado; misma regla de aprobación | Pendiente |
-| C10 Piloto | C02–C09 reales | Subdominio, observabilidad, backup/restore, rollback, guía | Recorrido completo y restauración, 3 clientes/2 semanas | Pendiente |
+| C00 Contratos | — | Roadmap, estado, decisiones, AGENTS, tipos, fixtures | Coherencia entre datos, operaciones y permisos | Integrado localmente |
+| C01 Aplicación | C00 | Rutas, componentes, marca, build y modo demo | Arranca y navega en escritorio/móvil, estados de error/vacío | Integrado en demo |
+| C02 Datos/negocio | C00/C01 | SQL, migraciones, API, transiciones, historial | Invariantes, idempotencia y concurrencia; RLS | Dominio demo integrado; SQL probado aislado; transacciones remotas pendientes |
+| C03 Acceso | C02 | OTP real, sesiones, roles, enlaces scope/revocación | Aislamiento API entre clientes, recuperación y correo real | Permisos/enlaces probados aislados; OTP e integración pendientes |
+| C04 Drive | Inicia C01, integra C02/C03 | OAuth, selección, subidas, streaming privado, versiones | Video real reanudado y reproducido en teléfono; permisos y cuota | Primitivas probadas aisladas; integración y Google real pendientes |
+| C05 Panel interno | Inicia C01, integra C02/C03 | Semana, bloqueos, filtros, alta, responsable, fechas, detalle | Hermana identifica quién debe avanzar; persistencia y errores | Integrado en demo; pendiente prueba de la hermana |
+| C06 Calendario cliente | Inicia C01, integra C02/C03 | Mes/agenda, enlace lectura/sesión, icono móvil | No filtra internos; fechas consistentes; acceso Android/iPhone | Integrado en demo; sesión y teléfonos reales pendientes |
+| C07 Aprobaciones | C02/C03/C04 | Preview/copy, aprobar/cambiar/comentar, historial | Versión exacta, reintentos, nueva revisión invalida anterior | Integrado en demo; medios reales pendientes |
+| C08 Material | C02/C03/C04 | Pedido, varios archivos, progreso, verificación interna | Fallos parciales, recibido≠completo, reanudación real | Demo integrada; transporte aislado, subida real pendiente |
+| C09 WhatsApp | C05/C07/C08 | Mensaje/link manual, enviado, registro de respuesta externa | Abrir no marca enviado; misma regla de aprobación | Integrado en demo; envío siempre manual |
+| C10 Piloto | C02–C09 reales | Subdominio, observabilidad, backup/restore, rollback, guía | Recorrido completo y restauración, 3 clientes/2 semanas | Pendiente de servicios reales |
 
 ## C00 — preparación
 Fijar entidades clientes, integrantes, piezas, versiones, solicitudes, archivos, respuestas, shares y actividad. IDs opacos. Fecha de calendario local YYYY-MM-DD, historial ISO UTC. Estados planned/production/review/approved/scheduled/published; archived separado. Un responsable interno persistente. Visibilidad cliente explícita. Una revisión vigente con copy+assets exactos.

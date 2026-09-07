@@ -13,7 +13,7 @@ La demostración persistirá únicamente datos ficticios en el navegador, con in
 Visibilidad cliente opt-in por pieza; no mostrar notas internas. Las revisiones capturan texto y archivos. Mutar copy o crear versión nueva invalida aprobación anterior. Estado aprobado solo por respuesta de revisión vigente. Material recibido y completo son estados distintos. Un comentario no autoriza publicación. Reintentos idempotentes y actualización con revision esperada.
 
 ## D05 — Drive
-Se mantiene estructura existente; la integración creará su carpeta propia cuando exista autorización funcional. OAuth de cuenta Aramís con drive.file y offline access. Elegir explícitamente archivos anteriores mediante Picker; compartir una carpeta no implica permiso a todos sus descendientes. Sin credenciales Google en frontend. Carga reanudable con permiso por envío; comprobar tamaño/existencia antes de registrar recibido. Revisiones conservadas con archivo y checksum verificables. No sincronización automática del disco físico en V1.
+Se mantiene estructura existente; la integración creará su carpeta propia cuando exista autorización funcional. OAuth de cuenta Aramis con drive.file y offline access. Elegir explícitamente archivos anteriores mediante Picker; compartir una carpeta no implica permiso a todos sus descendientes. Sin credenciales Google en frontend. Carga reanudable con permiso por envío; comprobar tamaño/existencia antes de registrar recibido. Revisiones conservadas con archivo y checksum verificables. No sincronización automática del disco físico en V1.
 
 ## D06 — Marca
 Azul institucional #1b2a41, rojo #8b2634, fondo #e9ecf1, amarillo #f4b943 y azul #5c9cd9 como acentos. DM Serif Display para títulos y Lato para lectura/UI. Español rioplatense, profesional y cercano.
@@ -29,3 +29,6 @@ La visibilidad en calendario y el enlace de una solicitud son permisos diferente
 
 ## D10 — Snapshots Drive y copia privada
 El borrador de texto se guarda en `piece_drafts` sólo para equipo; el cliente obtiene texto de la revisión sellada vigente. Un checksum seguido de descarga del head de Drive deja una carrera. Los snapshots de medios deben guardar `driveRevisionId` con `keepForever` y transmitir esa revisión exacta. Las primitivas están probadas con mocks; faltan persistencia, handlers y prueba Google real. La retención de Drive no sustituye un backup.
+
+## D11 — UI de trabajo (2026-09-07)
+Aramis sin acento y logo original. Priorizar pendientes, acciones y filtros; eliminar slogans y tarjetas decorativas. Lato en encabezados funcionales para lectura compacta. La demo no representa cuentas reales.

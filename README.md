@@ -1,4 +1,4 @@
-# Gestor Aramís
+# Gestor Aramis
 
 Gestión de contenido para el equipo y calendario, aprobaciones y pedidos de material para clientes desde enlaces enviados por WhatsApp.
 

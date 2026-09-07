@@ -10,7 +10,7 @@ export interface BrowserUploadSession {
 }
 
 export interface UploadProgress {
-  /** Bytes acknowledged by Google, not a statement that Aramís has verified the file. */
+  /** Bytes acknowledged by Google, not a statement that Aramis has verified the file. */
   acknowledgedBytes: number;
   totalBytes: number;
   phase: 'uploading' | 'retrying' | 'uploaded_unverified';

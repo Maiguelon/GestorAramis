@@ -8,7 +8,7 @@ async function storedState(page: Page): Promise<WorkspaceState> {
 
 test('el calendario muestra contenido del cliente y mantiene el foco dentro del detalle', async ({ page }) => {
   await page.goto('/calendar/demo-calendar');
-  await expect(page.getByRole('heading', { name: /Lo que viene para Casa Oliva/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Calendario de Casa Oliva/ })).toBeVisible();
   await expect(page.getByText('Demostración · datos ficticios locales')).toBeVisible();
   await expect(page.getByText('Nota privada')).toHaveCount(0);
   await expect(page.getByText('Detrás de cada proyecto')).toHaveCount(0);
@@ -114,7 +114,7 @@ test('una revisión reemplazada no ofrece una aprobación desactualizada', async
     localStorage.setItem(key, JSON.stringify(state));
   }, storageKey);
   await page.reload();
-  await expect(page.getByText('Hay una versión más reciente. Pedile a Aramís el enlace actualizado.')).toBeVisible();
+  await expect(page.getByText('Hay una versión más reciente. Pedile a Aramis el enlace actualizado.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Aprobar contenido' })).toHaveCount(0);
 });
 

@@ -179,5 +179,5 @@ test('los vencimientos de material lejanos aparecen esta semana y en móvil sigu
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
   await page.getByRole('button',{name:'Abrir menú'}).click();
   await page.getByRole('button',{name:'Clientes',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Nuestras marcas.'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Clientes',exact:true})).toBeVisible();
 });

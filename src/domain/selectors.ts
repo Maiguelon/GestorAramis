@@ -42,7 +42,7 @@ export function piecePriority(state: WorkspaceState, piece: Piece, today: string
 
 function resolveShare(state: WorkspaceState, token: string): { share: Share; pieces: Piece[] } {
   const share = state.shares.find(item => item.token === token);
-  if (!share || share.revokedAt) throw new DomainError('INVALID_LINK', 'Este enlace no está disponible. Pedile uno nuevo a Aramís.');
+  if (!share || share.revokedAt) throw new DomainError('INVALID_LINK', 'Este enlace no está disponible. Pedile uno nuevo a Aramis.');
   if (!state.clients.some(client => client.id === share.clientId)) throw new DomainError('INVALID_LINK', 'Este enlace no está disponible.');
   if (share.scope === 'calendar') {
     if (share.targetId !== share.clientId) throw new DomainError('INVALID_LINK', 'Este enlace no está disponible.');
@@ -53,7 +53,7 @@ function resolveShare(state: WorkspaceState, token: string): { share: Share; pie
   const piece = request && state.pieces.find(item => item.id === request.pieceId && item.clientId === share.clientId && !item.archived);
   if (!request || !piece) throw new DomainError('INVALID_LINK', 'Este enlace no está disponible.');
   // An explicit request link authorizes that request, even if its piece is hidden from the calendar.
-  if (share.scope === 'review' && currentReview(state, piece.id)?.id !== request.id) throw new DomainError('STALE_REVIEW', 'Hay una versión más reciente. Pedile a Aramís el enlace actualizado.');
+  if (share.scope === 'review' && currentReview(state, piece.id)?.id !== request.id) throw new DomainError('STALE_REVIEW', 'Hay una versión más reciente. Pedile a Aramis el enlace actualizado.');
   return { share, pieces: [piece] };
 }
 
@@ -92,9 +92,9 @@ export function getClientView(state: WorkspaceState, token: string): ClientView 
     pieces: pieces.map(piece => publicPiece(piece, reviews.find(review => review.pieceId === piece.id))),
     reviews: reviews.map(review => ({ id: review.id, pieceId: review.pieceId, version: review.version, caption: review.caption, assets: review.assets.map(publicAsset), status: review.status, createdAt: review.createdAt, sentAt: review.sentAt })),
     materials: materials.map(request => ({ id: request.id, pieceId: request.pieceId, instructions: request.instructions, dueDate: request.dueDate, status: request.status, assets: request.assets.map(publicAsset), createdAt: request.createdAt, sentAt: request.sentAt })),
-    responses: state.responses.filter(response => reviewIds.has(response.reviewId)).map(response => ({ id: response.id, reviewId: response.reviewId, kind: response.kind, comment: response.comment, authorName: response.source === 'whatsapp' ? 'Cliente · registrado por Aramís' : response.authorName, source: response.source, recordedBy: null, createdAt: response.createdAt })),
+    responses: state.responses.filter(response => reviewIds.has(response.reviewId)).map(response => ({ id: response.id, reviewId: response.reviewId, kind: response.kind, comment: response.comment, authorName: response.source === 'whatsapp' ? 'Cliente · registrado por Aramis' : response.authorName, source: response.source, recordedBy: null, createdAt: response.createdAt })),
     // A request link exposes only its own content, never other requests' timelines.
-    activities: share.scope === 'calendar' ? state.activities.filter(item => pieceIds.has(item.pieceId) && item.visibility === 'client').map(item => ({ id: item.id, pieceId: item.pieceId, text: item.text, actor: 'Aramís', createdAt: item.createdAt, visibility: 'client' })) : [],
+    activities: share.scope === 'calendar' ? state.activities.filter(item => pieceIds.has(item.pieceId) && item.visibility === 'client').map(item => ({ id: item.id, pieceId: item.pieceId, text: item.text, actor: 'Aramis', createdAt: item.createdAt, visibility: 'client' })) : [],
     scope: share.scope,
     targetId: share.targetId,
   };

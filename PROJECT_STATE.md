@@ -1,25 +1,22 @@
 # Estado del proyecto
 
-Fecha: 2026-09-07. Desarrollo retomado por el usuario; seguir sin crear cuentas por ahora.
+Fecha: 2026-09-07. Último checkpoint previo: 6d3a194. No reiniciar lo completado.
 
-## Punto de partida
-- Repositorio correcto: C:/Users/Usuario/Desktop/Aramis/GestorAramis, rama main, commit inicial 59d2e7b. Solo README, sin cambios del usuario.
-- Marca leída desde Aramis-Web/public/brandbook.txt.
-- Drive inspeccionado solo metadatos: carpeta raíz con clientes, temporadas y archivo. Una muestra de cliente organiza por meses y Archivo; no hay Shared Drive confirmado. No se descargaron ni modificaron videos.
-- El usuario confirmó que no tiene cuentas/proyectos configurados y pidió continuar con desarrollo y pruebas locales. No volver a preguntar por ellas durante este bloque.
+## Estado actual
+- Demo integrada en localStorage con datos ficticios; un navegador, sin login ni usuarios reales. Los integrantes son ejemplos.
+- Panel, calendario, solicitudes, historial y mensajes manuales funcionan localmente. Worker de negocio cerrado con 503/501; no basta agregar claves.
+- Dominio/API protege versión exacta, concurrencia, publicación, notas y borradores. Calendario secreto sólo de lectura, sin tokens de escritura.
+- SQL/RLS y primitivas OAuth, carga reanudable y reproducción de revisión fija están probadas en aislamiento. Sin conexión a servicios externos.
+- Limpieza UI solicitada: logo original copiado de Aramis-Web/public/img/stock/logoAramis.svg a public/brand/aramis.svg; nombre sin acento, sin slogans, filtros compactos y textos directos. Proyecto vecino sin modificar.
 
-## Punto guardado
-- Último commit del usuario: `ceb66e2` — demo integrada; anterior `f70d543` — base técnica. No reiniciar el proyecto.
-- Panel, detalle, calendario y solicitudes funcionan sobre datos ficticios en localStorage. Enlaces demo sólo en este navegador; sin servicio multiusuario.
-- `npm run typecheck` y `npm run build` pasaron en esta reanudación. Los resultados de pruebas por módulo están en handoffs/; falta cierre global del coordinador.
-- Dominio/API: aprobación por versión, permisos, almacenamiento robusto, publicado protegido. Calendario secreto ya no entrega enlaces de escritura.
-- SQL/RLS y primitivas OAuth/Drive implementadas; Worker de negocio cerrado con 503/501. Tener claves no basta para habilitarlo: faltan handlers y transacciones.
+## Verificación
+- npm test: 177 pruebas, 5 archivos, todas pasan.
+- npm run build: pasa (incluye compilación TypeScript).
+- npx playwright test --reporter=list: 13 recorridos pasan, incluidas vistas móviles.
+- Worker dry-run pasó en el checkpoint técnico anterior. No hubo despliegue.
 
-## Trabajo en curso en esta reanudación
-- Coordinador: pruebas E2E internas, correcciones UX/estado, revisión de integración, README, actualización roadmap y checkpoint.
-- Agente domain: separar borrador de copy en SQL para evitar exposición a cliente, limitar revisión histórica pública y regresiones PGlite. Archivos supabase/** + tests/server.test.ts.
-- Agente client_ui: E2E cliente y revisión visual; actualizar evidencia en handoff. Archivos src/client/** + tests/e2e/client.spec.ts.
-- Agente infrastructure: completar/verificar transporte reanudable local y streaming privado. Archivos src/lib/resumable-upload.ts, server/drive.ts, tests/upload.test.ts y tests/drive-edge.test.ts.
+## Para probar
+npm run dev; abrir http://127.0.0.1:5173/. Calendario: /calendar/demo-calendar. Datos sólo de este navegador; ninguna carga real a Drive.
 
 ## Próximo paso
-Integrar estas entregas, ejecutar typecheck/build/tests/E2E/worker dry run. Registrar evidencia y limitaciones antes del commit. No dar por implementada la V1 real por completar la demostración. No publicar, conectar cuentas ni contactar clientes.
+El usuario prueba la UI y devuelve ajustes. No ampliar funciones antes de esa devolución. Luego continuar repositorios y transacciones de negocio, handlers autorizados y adaptador remoto; consultar ROADMAP y docs/SETUP. Cuentas pendientes de Supabase, Cloudflare, Google y correo; el usuario pidió posponerlas. No publicar ni contactar clientes.

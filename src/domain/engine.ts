@@ -108,6 +108,7 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
       if (patch.internalNote !== undefined && typeof patch.internalNote !== 'string') fail('VALIDATION', 'La nota no es válida.');
       if (patch.visibleToClient !== undefined && typeof patch.visibleToClient !== 'boolean') fail('VALIDATION', 'La visibilidad no es válida.');
       if (patch.archived !== undefined && typeof patch.archived !== 'boolean') fail('VALIDATION', 'El estado de archivo no es válido.');
+      if (piece.status === 'published' && ((patch.caption !== undefined && patch.caption !== piece.caption) || (patch.status !== undefined && patch.status !== 'published'))) fail('PUBLISHED_IMMUTABLE', 'Este contenido ya se publicó. Creá una nueva pieza para preparar otra versión.');
       if (patch.status !== undefined) {
         if (!['planned', 'production', 'review', 'approved', 'scheduled', 'published'].includes(patch.status)) fail('VALIDATION', 'El estado no es válido.');
         if (['review', 'approved'].includes(patch.status) && patch.status !== piece.status) fail('INVALID_TRANSITION', 'Ese estado se actualiza mediante una revisión.');
@@ -118,7 +119,7 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
       }
       const captionChanged = patch.caption !== undefined && patch.caption !== piece.caption;
       const leavesReview = patch.status !== undefined && ['planned', 'production'].includes(patch.status) && patch.status !== piece.status;
-      if (captionChanged || leavesReview || patch.archived === true) invalidateReviews(state, piece);
+      if (captionChanged || leavesReview || (patch.archived === true && piece.status !== 'published')) invalidateReviews(state, piece);
       const safePatch = Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)) as typeof patch;
       // A simultaneous caption edit cannot restore review/approved after invalidation.
       if (captionChanged && (safePatch.status === 'review' || safePatch.status === 'approved')) delete safePatch.status;
@@ -134,6 +135,7 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
     }
     case 'create-review': {
       const piece = findPiece(state, command.pieceId);
+      if (piece.status === 'published') fail('PUBLISHED_IMMUTABLE', 'Este contenido ya se publicó. Creá una nueva pieza para preparar otra versión.');
       validateAssets(command.assets);
       if (!command.assets.length) fail('VALIDATION', 'Agregá al menos un archivo para enviar a revisión.');
       if (typeof command.caption !== 'string') fail('VALIDATION', 'El texto no es válido.');

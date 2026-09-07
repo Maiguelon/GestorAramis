@@ -97,7 +97,8 @@ create table public.reviews (
   unique (workspace_id, client_id, piece_id, id),
   check (status in ('pending', 'superseded') or sealed_at is not null)
 );
-create unique index one_current_review_per_piece on public.reviews (piece_id) where status <> 'superseded';
+-- A historical change request can remain 'changes' when a new review is prepared.
+create unique index one_current_review_per_piece on public.reviews (piece_id) where status in ('pending', 'approved');
 
 create table public.material_requests (
   id uuid primary key default gen_random_uuid(),
@@ -114,6 +115,7 @@ create table public.material_requests (
   unique (workspace_id, client_id, id),
   unique (workspace_id, client_id, piece_id, id)
 );
+create unique index one_open_material_request on public.material_requests (piece_id) where status <> 'complete';
 
 create table public.assets (
   id uuid primary key default gen_random_uuid(),

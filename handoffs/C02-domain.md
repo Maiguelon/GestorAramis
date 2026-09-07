@@ -7,7 +7,8 @@ Estado: **probado en aislamiento**. No representa un backend multiusuario ni una
 - `src/domain/engine.ts`: `applyCommand(state, command, context)`, `DomainError` e `isCalendarDate`. Función pura, copia profunda de entrada y snapshots separados. Validación de responsables, fechas, transiciones, versiones, archivo, solicitudes y reintentos.
 - `src/domain/selectors.ts`: `getClientView`, `assertPublicCommandAccess`, `localDate`, `addDays`, `weekRange`, `currentReview`, `activeMaterial` y `piecePriority`. Proyección explícita sin notas, propietarios, teléfonos, tokens, identificadores de Drive ni borradores de texto no enviados a revisión.
 - `src/domain/seed.ts`: `createSeed(today?)`. Tres clientes ficticios, dos integrantes, siete piezas y fechas relativas al día local. Los tres enlaces iniciales se refieren a Casa Oliva: `demo-calendar`, `demo-review`, `demo-material`.
-- `tests/domain.test.ts`: 30 pruebas de comportamiento; cubren permisos, privacidad, versiones exactas, concurrencia y recuperación de reintentos.
+- `tests/domain.test.ts`: 31 pruebas de comportamiento; cubren permisos, privacidad, versiones exactas, concurrencia y recuperación de reintentos.
+- `src/lib/api.ts` y `tests/api.test.ts`: adaptador de demostración con 17 pruebas adicionales de persistencia, límites públicos y errores del almacenamiento.
 
 ## Reglas comprobadas
 
@@ -20,12 +21,16 @@ Estado: **probado en aislamiento**. No representa un backend multiusuario ni una
 - Preparar un enlace no registra envío. La respuesta puede llegar antes de marcar manualmente el envío.
 - Enlaces de calendario son lectura. Un enlace de revisión/material sólo autoriza operaciones sobre su destino. Revocación, archivo y versiones superadas impiden acceso.
 - Las proyecciones de solicitudes sólo contienen su solicitud. El calendario contiene únicamente piezas visibles del cliente; un enlace explícito de solicitud puede resolver su pedido aunque su pieza no figure en el calendario.
+- Las piezas publicadas mantienen ese hecho: no admiten cambios de texto, nuevas revisiones ni volver a estados anteriores. Se permite editar título, fecha prevista, responsable, visibilidad y nota; archivarlas conserva la aprobación histórica. Decisión confirmada por el coordinador: una adaptación requiere una nueva pieza.
+- El adaptador nunca devuelve el workspace desde una operación pública: únicamente su `entityId`. La autorización del enlace y el cambio usan el mismo snapshot.
+- El adaptador demo rechaza `source: 'drive'`, referencias de proveedor y URLs arbitrarias. Los metadatos sin URL y las muestras `/demo/[nombre].svg` están admitidos.
+- Leer o recibir el resultado de una operación no permite mutar el cache. Reiniciar la demo reemplaza los datos en una sola escritura: si falla, no borra lo anterior. Datos corruptos producen un error; jamás se reinician silenciosamente.
 
 ## Verificación reproducible
 
-`npm test -- tests/domain.test.ts`
+`npm test -- tests/domain.test.ts tests/api.test.ts`
 
-Resultado: **30 pruebas aprobadas**. La compilación global consultada durante el trabajo no informó errores de estos archivos; estaba pendiente de archivos de interfaz que otros agentes estaban creando. El coordinador debe ejecutar nuevamente los checks globales al integrar.
+Resultado: **48 pruebas aprobadas**. `npm run typecheck` global también pasó después de integrarse los archivos de interfaz. El coordinador debe ejecutar los checks de aplicación al terminar su integración.
 
 ## Configuración y límites
 
@@ -35,6 +40,8 @@ Resultado: **30 pruebas aprobadas**. La compilación global consultada durante e
 - `receive-material` valida metadatos, no verifica que haya bytes en un proveedor. Esa comprobación corresponde al adaptador Drive antes de ejecutar la operación; la demo debe identificar los archivos como simulación.
 - Las URLs públicas se filtran y los campos privados de Drive se omiten. La protección real de medios requiere el Worker y verificaciones del proveedor.
 - La autorización autenticada, RLS, OAuth, correo, carga reanudable, comprobación de cambios externos de archivos y persistencia multiusuario permanecen pendientes de sus bloques.
+- El adaptador detecta una escritura externa entre lectura y guardado, pero `localStorage` no ofrece transacciones: dos escrituras de pestañas estrictamente simultáneas aún requieren la futura transacción del servidor. El modo demo no debe usarse como persistencia multiusuario.
+- `getDemoRequestLink` es una ayuda exclusiva de la demostración para navegar a solicitudes ficticias existentes. El calendario real de lectura no debe poder obtener por esta vía capacidades de escritura; el servidor deberá separar ese acceso del calendario autenticado. La limitación fue informada al coordinador.
 - El contrato `ClientView.client` fue estrechado por el coordinador a identidad pública básica; los contratos permanecen bajo su control.
 
 ## Continuación

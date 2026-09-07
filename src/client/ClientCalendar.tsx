@@ -3,7 +3,6 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { ArrowDown, ArrowRight, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, Film, Images, LayoutGrid, List, MessageCircle, Sparkles, X } from 'lucide-react';
 import type { PublicPiece } from '../../contracts/domain';
 import { FORMAT_LABELS, STATUS_LABELS } from '../../contracts/domain';
-import { getDemoRequestLink } from '../lib/api';
 import { ClientFooter, ClientHeader, dateLabel, Unavailable, useClientView } from './shared';
 import './client.css';
 
@@ -34,8 +33,20 @@ export default function ClientCalendar({ token }: { token: string }) {
   if (!view || view.scope !== 'calendar') return <Unavailable error={error || 'Este enlace no corresponde a un calendario.'} />;
 
   const moveMonth = (direction: number) => setMonth(new Date(month.getFullYear(), month.getMonth() + direction, 1));
-  const reviewHref = selected ? getDemoRequestLink(selected.id, 'review') : null;
-  const materialHref = selected ? getDemoRequestLink(selected.id, 'material') : null;
+  const focusPending = () => {
+    const enabled = !onlyPending;
+    setOnlyPending(enabled);
+    if (enabled && !shownPieces.some(piece => pendingIds.has(piece.id))) {
+      const first = pieces.filter(piece => pendingIds.has(piece.id) && piece.plannedDate).sort((a, b) => a.plannedDate!.localeCompare(b.plannedDate!))[0];
+      if (first?.plannedDate) {
+        const [year, monthNumber] = first.plannedDate.split('-').map(Number);
+        setMonth(new Date(year, monthNumber - 1, 1));
+      }
+    }
+    document.getElementById('client-calendar-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+
 
   return <Dialog.Root open={Boolean(selected)} onOpenChange={open => { if (!open) setSelectedId(null); }}><div className="client-app">
     <ClientHeader name={view.client.name} page="Tu calendario" />
@@ -44,7 +55,7 @@ export default function ClientCalendar({ token }: { token: string }) {
         <div><span className="client-section-kicker"><span className="client-tiny-line" /> TU MARCA, EN MOVIMIENTO</span><h1>Lo que viene<br />para <em>{view.client.name}.</em></h1><p>Todo el contenido en un lugar. Mirá qué estamos preparando y cuándo sale cada pieza.</p></div>
         <div className="client-next-card"><div className="client-next-top"><span>PRÓXIMA PUBLICACIÓN</span><CalendarDays size={18} /></div>{nextPiece ? <><strong>{dateLabel(nextPiece.plannedDate, { day: 'numeric', month: 'short' })}</strong><h2>{nextPiece.title}</h2><div className="client-next-bottom"><span><FormatIcon format={nextPiece.format} />{FORMAT_LABELS[nextPiece.format]}</span><button aria-label={`Ver próxima publicación: ${nextPiece.title}`} onClick={() => openPiece(nextPiece.id)}><ArrowRight size={20} /></button></div></> : <><strong>En preparación</strong><p>Pronto vas a ver nuevas publicaciones acá.</p></>}</div>
       </section>
-      {pendingIds.size > 0 && <button className="client-pending-callout" onClick={() => { setOnlyPending(value => !value); document.getElementById('client-calendar-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}><span className="client-pending-icon"><MessageCircle size={19} /></span><span><strong>{pendingIds.size === 1 ? 'Hay una pieza que necesita tu respuesta' : `${pendingIds.size} piezas necesitan tu respuesta`}</strong><small>Una aprobación o material tuyo nos ayuda a seguir.</small></span><span className="client-pending-action">{onlyPending ? 'Ver todo' : 'Ver pendientes'} <ArrowDown size={16} /></span></button>}
+      {pendingIds.size > 0 && <button className="client-pending-callout" onClick={focusPending}><span className="client-pending-icon"><MessageCircle size={19} /></span><span><strong>{pendingIds.size === 1 ? 'Hay una pieza que necesita tu respuesta' : `${pendingIds.size} piezas necesitan tu respuesta`}</strong><small>Una aprobación o material tuyo nos ayuda a seguir.</small></span><span className="client-pending-action">{onlyPending ? 'Ver todo' : 'Ver pendientes'} <ArrowDown size={16} /></span></button>}
       <section className="client-calendar-section" id="client-calendar-content" aria-label="Calendario de contenido">
         <div className="client-calendar-toolbar"><div className="client-month-nav"><button className="client-icon-btn" aria-label="Mes anterior" onClick={() => moveMonth(-1)}><ChevronLeft size={19} /></button><h2>{new Intl.DateTimeFormat('es-AR', { month: 'long', year: 'numeric' }).format(month)}</h2><button className="client-icon-btn" aria-label="Mes siguiente" onClick={() => moveMonth(1)}><ChevronRight size={19} /></button></div><div className="client-toolbar-right"><button className="client-today-btn" onClick={() => { setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1)); setOnlyPending(false); }}>Hoy</button><div className="client-segment" aria-label="Vista del calendario"><button aria-pressed={layout === 'agenda'} onClick={() => setLayout('agenda')}><List size={16} />Agenda</button><button aria-pressed={layout === 'month'} onClick={() => setLayout('month')}><CalendarDays size={16} />Mes</button></div></div></div>
         <div className="client-calendar-subtoolbar"><span>{shownPieces.length} {shownPieces.length === 1 ? 'publicación prevista' : 'publicaciones previstas'}</span><button className={onlyPending ? 'client-filter active' : 'client-filter'} aria-pressed={onlyPending} onClick={() => setOnlyPending(value => !value)}>{onlyPending && <Check size={13} />}Sólo mis pendientes</button></div>
@@ -54,6 +65,7 @@ export default function ClientCalendar({ token }: { token: string }) {
       </section>
     </main>
     <ClientFooter />
-    {selected && <Dialog.Portal><div className="client-app client-dialog-layer"><Dialog.Overlay className="client-modal-backdrop" /><Dialog.Content className="client-piece-dialog" onCloseAutoFocus={event => { event.preventDefault(); previousFocus.current?.focus(); }}><div className="client-dialog-top"><span className="client-section-kicker">{FORMAT_LABELS[selected.format]} · {dateLabel(selected.plannedDate)}</span><Dialog.Close asChild><button className="client-icon-btn" aria-label="Cerrar detalle"><X size={19} /></button></Dialog.Close></div><Dialog.Title asChild><h2>{selected.title}</h2></Dialog.Title><Dialog.Description className="client-sr-only">Detalle de la publicación y enlaces a solicitudes disponibles.</Dialog.Description><span className={`client-status status-${selected.status}`}><i />{STATUS_LABELS[selected.status]}</span>{selected.caption && <div className="client-dialog-caption"><h3>Texto de publicación</h3><p>{selected.caption}</p></div>}<div className="client-dialog-actions">{reviewHref && <a className="client-btn client-btn-primary" href={reviewHref}>Ver contenido y responder <ArrowRight size={17} /></a>}{materialHref && <a className="client-btn client-btn-secondary" href={materialHref}>Ver pedido de material <ArrowRight size={17} /></a>}{!reviewHref && !materialHref && <p>Cuando necesitemos tu respuesta, vas a recibir un enlace por WhatsApp.</p>}</div><small className="client-detail-demo">En esta demostración los enlaces abren solicitudes ficticias.</small></Dialog.Content></div></Dialog.Portal>}
+    {selected && <Dialog.Portal><div className="client-app client-dialog-layer"><Dialog.Overlay className="client-modal-backdrop" /><Dialog.Content className="client-piece-dialog" onCloseAutoFocus={event => { event.preventDefault(); previousFocus.current?.focus(); }}><div className="client-dialog-top"><span className="client-section-kicker">{FORMAT_LABELS[selected.format]} · {dateLabel(selected.plannedDate)}</span><Dialog.Close asChild><button className="client-icon-btn" aria-label="Cerrar detalle"><X size={19} /></button></Dialog.Close></div><Dialog.Title asChild><h2>{selected.title}</h2></Dialog.Title><Dialog.Description className="client-sr-only">Detalle de la publicación. Este calendario permite consultar el contenido.</Dialog.Description><span className={`client-status status-${selected.status}`}><i />{STATUS_LABELS[selected.status]}</span>{selected.caption && <div className="client-dialog-caption"><h3>Texto de publicación</h3><p>{selected.caption}</p></div>}<div className="client-dialog-actions"><p>{pendingIds.has(selected.id) ? 'Abrí el enlace que te enviamos por WhatsApp para responder a este pedido.' : 'Cuando necesitemos tu respuesta, vas a recibir un enlace por WhatsApp.'}</p></div><small className="client-detail-demo">Este enlace del calendario es de consulta. Las respuestas se envían desde cada solicitud.</small></Dialog.Content></div></Dialog.Portal>}
   </div></Dialog.Root>;
 }
+

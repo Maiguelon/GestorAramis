@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import worker from '../server/index';
 import { authorizeShare, hashShareToken, issueShareToken, requireStaff, verifySupabaseUser, type ShareRecord, type ShareRepository } from '../server/authz';
-import { checkDriveUpload, initiateDriveUpload, streamDriveAsset, type DriveFile, type StoredAsset, type UploadExpectation } from '../server/drive';
+import { checkDriveUpload, copyDriveSnapshot, initiateDriveUpload, streamDriveAsset, type DriveFile, type StoredAsset, type UploadExpectation } from '../server/drive';
 import { decryptRefreshToken, DRIVE_SCOPE, encryptRefreshToken, exchangeGoogleCode, prepareGoogleOAuth, refreshGoogleTokens } from '../server/google-oauth';
 
 describe('production worker fails closed', () => {
@@ -59,7 +59,7 @@ describe('capabilities and staff identity', () => {
     await expect(authorizeShare('a'.repeat(43), { scope: 'review', targetId: 'r' }, { ...repo, findByHash: async () => null })).rejects.toMatchObject({ status: 403 });
   });
   it('verifies a user against Auth and then requires server-side active staff membership', async () => {
-    const fetcher = vi.fn(async () => Response.json({ id: 'verified-user', email: 'not-needed@example.test' }));
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => Response.json({ id: 'verified-user', email: 'not-needed@example.test' }));
     const user = await verifySupabaseUser(new Request('https://app.test', { headers: { Authorization: 'Bearer valid.jwt.signature' } }), { url: 'https://auth.test', publishableKey: 'pk' }, fetcher);
     expect(user).toEqual({ id: 'verified-user' });
     expect(fetcher.mock.calls[0][0].toString()).toBe('https://auth.test/auth/v1/user');
@@ -99,6 +99,18 @@ describe('Google OAuth server primitives', () => {
     const result = await refreshGoogleTokens(config, 'existing-refresh', fetcher, 0);
     expect(result).toEqual({ accessToken: 'new-access', refreshToken: 'existing-refresh', expiresAt: 3_600_000 });
   });
+  it('exchanges one bound authorization code with its PKCE verifier only server-side', async () => {
+    const prepared = await prepareGoogleOAuth(config, { userId: 'u', workspaceId: 'w' }, 0);
+    const state = new URL(prepared.url).searchParams.get('state')!;
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => Response.json({ access_token: 'access', refresh_token: 'refresh', token_type: 'Bearer', expires_in: 3600, scope: DRIVE_SCOPE }));
+    const store = { consume: vi.fn(async () => prepared.record) };
+    const result = await exchangeGoogleCode(config, { code: 'authorization-code', state, userId: 'u', workspaceId: 'w' }, store, fetcher, 1);
+    expect(result.refreshToken).toBe('refresh');
+    expect(store.consume).toHaveBeenCalledWith(prepared.record.stateHash);
+    const body = fetcher.mock.calls[0][1]!.body as URLSearchParams;
+    expect(body.get('code_verifier')).toBe(prepared.record.verifier);
+    expect(body.get('client_secret')).toBe(config.clientSecret);
+  });
   it('redacts upstream failures and rejects missing Drive scope', async () => {
     await expect(refreshGoogleTokens(config, 'refresh', async () => new Response('secret refresh error payload', { status: 400 }))).rejects.toMatchObject({ message: 'google_reconnect_required' });
     await expect(refreshGoogleTokens(config, 'refresh', async () => Response.json({ access_token: 'access', token_type: 'Bearer', expires_in: 3600, scope: 'openid' }))).rejects.toMatchObject({ code: 'google_scope_missing' });
@@ -117,6 +129,13 @@ describe('Drive uploads and private video streams', () => {
   const sessionUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=test-session';
   const file: DriveFile = { id: 'file', name: 'video.mp4', mimeType: 'video/mp4', size: '100', parents: ['parent'], appProperties: { uploadId: 'upload', workspaceId: 'workspace', clientId: 'client', requestId: 'request' }, trashed: false, md5Checksum: 'a'.repeat(32) };
   const asset: StoredAsset = { driveFileId: 'file', name: 'video.mp4', mimeType: 'video/mp4', size: 100, workspaceId: 'workspace', clientId: 'client', checksum: 'a'.repeat(32) };
+  it('copies a specifically selected original to a distinct, tagged review snapshot', async () => {
+    const destination = { workspaceId: 'workspace', clientId: 'client', pieceId: 'piece', parentFolderId: 'parent', name: 'Review v1.mp4' };
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => Response.json({ ...file, name: destination.name, appProperties: { workspaceId: 'workspace', clientId: 'client', pieceId: 'piece' } }));
+    await expect(copyDriveSnapshot('access', 'selected-original', destination, fetcher)).resolves.toEqual({ ...asset, name: destination.name });
+    expect(fetcher.mock.calls[0][0].toString()).toContain('/selected-original/copy?');
+    expect(JSON.parse(fetcher.mock.calls[0][1]!.body as string).parents).toEqual(['parent']);
+  });
   it('initiates with expected size and binds upload metadata to the authorized request', async () => {
     const fetcher = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response(null, { status: 200, headers: { Location: sessionUrl } }));
     await expect(initiateDriveUpload('access', expected, fetcher)).resolves.toEqual({ sessionUrl, expected });
@@ -239,8 +258,8 @@ describe('PostgreSQL schema and actual row-level policies (PGlite)', () => {
     await expect(asUser(2, "update public.members set role = 'staff', client_id = null")).rejects.toMatchObject({ code: '42501' });
   });
   it('cross-client references and client owners fail even for privileged inserts', async () => {
-    await expect(db.query(`insert into public.reviews(workspace_id,client_id,piece_id,version) values
-      ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000002','40000000-0000-4000-8000-000000000001',2)`)).rejects.toMatchObject({ code: '23503' });
+    await expect(db.query(`insert into public.reviews(workspace_id,client_id,piece_id,version,status) values
+      ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000002','40000000-0000-4000-8000-000000000001',2,'superseded')`)).rejects.toMatchObject({ code: '23503' });
     await expect(db.query(`insert into public.pieces(workspace_id,client_id,title,owner_member_id) values
       ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001','Bad owner','30000000-0000-4000-8000-000000000002')`)).rejects.toMatchObject({ code: '23503' });
   });
@@ -250,6 +269,18 @@ describe('PostgreSQL schema and actual row-level policies (PGlite)', () => {
     await expect(db.query(`insert into public.review_assets(workspace_id,client_id,piece_id,review_id,asset_id,position) values
       ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000001',
       '50000000-0000-4000-8000-000000000001','60000000-0000-4000-8000-000000000001',0)`)).rejects.toThrow('sealed_review_assets_immutable');
+  });
+  it('keeps the rejected revision history while allowing exactly one new pending revision', async () => {
+    await db.exec('begin;');
+    try {
+      await db.query("update public.reviews set status='changes' where id='50000000-0000-4000-8000-000000000001'");
+      await db.query(`insert into public.reviews(workspace_id,client_id,piece_id,version,caption,sealed_at) values
+        ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000001',2,'Corregido',now())`);
+      const versions = await db.query<{ version: number; status: string }>("select version,status from public.reviews where piece_id='40000000-0000-4000-8000-000000000001' order by version");
+      expect(versions.rows).toEqual([{ version: 1, status: 'changes' }, { version: 2, status: 'pending' }]);
+      await expect(db.query(`insert into public.reviews(workspace_id,client_id,piece_id,version) values
+        ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000001',3)`)).rejects.toMatchObject({ code: '23505' });
+    } finally { await db.exec('rollback;'); }
   });
   it('malformed hashes and empty change requests fail validation', async () => {
     await expect(db.query(`insert into public.shares(workspace_id,client_id,scope,token_hash) values

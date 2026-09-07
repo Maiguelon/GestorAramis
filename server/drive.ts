@@ -40,6 +40,14 @@ export interface StoredAsset {
   checksum: string;
 }
 
+export interface SnapshotDestination {
+  workspaceId: string;
+  clientId: string;
+  pieceId: string;
+  parentFolderId: string;
+  name: string;
+}
+
 function safeId(id: string): string {
   if (!ID.test(id)) throw new ServiceError('invalid_file', 400);
   return id;
@@ -99,6 +107,37 @@ export async function getDriveFile(token: string, fileId: string, fetcher: Fetch
   const response = await upstream(fetcher, `${API}/${safeId(fileId)}?${query}`, { headers: headers(token) });
   if (!response.ok) throw upstreamError(response.status);
   return parseFile(response);
+}
+
+/** Copy a specifically selected, OAuth-accessible source into a new tagged review snapshot. */
+export async function copyDriveSnapshot(
+  token: string, sourceFileId: string, destination: SnapshotDestination, fetcher: Fetcher = fetch,
+): Promise<StoredAsset> {
+  [destination.workspaceId, destination.clientId, destination.pieceId, destination.parentFolderId].forEach(safeId);
+  if (!destination.name.trim() || destination.name.length > 255 || /[\u0000-\u001f]/.test(destination.name)) {
+    throw new ServiceError('invalid_file', 400);
+  }
+  const requestHeaders = headers(token);
+  requestHeaders.set('Content-Type', 'application/json');
+  const query = new URLSearchParams({ fields: FILE_FIELDS, supportsAllDrives: 'true' });
+  const response = await upstream(fetcher, `${API}/${safeId(sourceFileId)}/copy?${query}`, {
+    method: 'POST', headers: requestHeaders,
+    body: JSON.stringify({ name: destination.name, parents: [destination.parentFolderId], appProperties: {
+      workspaceId: destination.workspaceId, clientId: destination.clientId, pieceId: destination.pieceId,
+    } }),
+  });
+  if (!response.ok) throw upstreamError(response.status);
+  const file = await parseFile(response);
+  if (file.trashed || !file.md5Checksum || file.id === sourceFileId || !INLINE_MIMES.has(file.mimeType) ||
+    !file.parents.includes(destination.parentFolderId) || Number(file.size) <= 0 ||
+    file.appProperties.workspaceId !== destination.workspaceId || file.appProperties.clientId !== destination.clientId ||
+    file.appProperties.pieceId !== destination.pieceId) {
+    throw new ServiceError('snapshot_verification_failed', 409);
+  }
+  return {
+    driveFileId: file.id, name: file.name, mimeType: file.mimeType, size: Number(file.size),
+    workspaceId: destination.workspaceId, clientId: destination.clientId, checksum: file.md5Checksum,
+  };
 }
 
 /** Server-only primitive. Caller must authorize staff/share and enforce request quota first. */

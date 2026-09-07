@@ -82,6 +82,16 @@ describe('piece changes and concurrency', () => {
     expect(piece(applyCommand(state, { type: 'update-piece', pieceId: id, expectedRevision: 1, patch: { status: 'scheduled' } }, context()).state, id).status).toBe('scheduled');
     errorCode(() => applyCommand(state, { type: 'update-piece', pieceId: id, expectedRevision: 1, patch: { status: 'scheduled', caption: 'Sin aprobar' } }, context()), 'APPROVAL_REQUIRED');
   });
+  it('preserves publication and its approval while allowing metadata edits and archiving', () => {
+    const state = createSeed(today);
+    const id = 'piece-bruma-published';
+    errorCode(() => applyCommand(state, { type: 'update-piece', pieceId: id, expectedRevision: 1, patch: { caption: 'Texto posterior' } }, context()), 'PUBLISHED_IMMUTABLE');
+    for (const status of ['planned', 'production', 'review', 'approved', 'scheduled'] as const) errorCode(() => applyCommand(state, { type: 'update-piece', pieceId: id, expectedRevision: 1, patch: { status } }, context()), 'PUBLISHED_IMMUTABLE');
+    errorCode(() => applyCommand(state, { type: 'create-review', pieceId: id, caption: 'Nueva versión', assets: [asset] }, context()), 'PUBLISHED_IMMUTABLE');
+    const result = applyCommand(state, { type: 'update-piece', pieceId: id, expectedRevision: 1, patch: { title: 'Título corregido', internalNote: 'Nota nueva', plannedDate: '2026-09-03', ownerId: 'member-mateo', archived: true } }, context()).state;
+    expect(piece(result, id)).toMatchObject({ title: 'Título corregido', archived: true, status: 'published', ownerId: 'member-mateo' });
+    expect(result.reviews.find(review => review.id === 'review-bruma-1')?.status).toBe('approved');
+  });
 });
 
 describe('versioned reviews', () => {

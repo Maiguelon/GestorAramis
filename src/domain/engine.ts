@@ -135,6 +135,7 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
     }
     case 'create-review': {
       const piece = findPiece(state, command.pieceId);
+      if (piece.revision !== command.expectedRevision) fail('CONFLICT', 'El contenido cambió. Actualizá la vista antes de preparar otra revisión.');
       if (piece.status === 'published') fail('PUBLISHED_IMMUTABLE', 'Este contenido ya se publicó. Creá una nueva pieza para preparar otra versión.');
       validateAssets(command.assets);
       if (!command.assets.length) fail('VALIDATION', 'Agregá al menos un archivo para enviar a revisión.');

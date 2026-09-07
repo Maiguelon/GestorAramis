@@ -20,7 +20,7 @@ export interface ClientView { client: Pick<Client, 'id' | 'name' | 'initials' | 
 export type Command =
  | { type: 'create-piece'; input: { clientId: string; title: string; ownerId: string; format?: ContentFormat; plannedDate?: string | null } }
  | { type: 'update-piece'; pieceId: string; expectedRevision: number; patch: Partial<Pick<Piece, 'title' | 'format' | 'ownerId' | 'plannedDate' | 'visibleToClient' | 'caption' | 'internalNote' | 'archived' | 'status'>> }
- | { type: 'create-review'; pieceId: string; caption: string; assets: Asset[] }
+ | { type: 'create-review'; pieceId: string; expectedRevision: number; caption: string; assets: Asset[] }
  | { type: 'respond-review'; reviewId: string; version: number; kind: DecisionKind; comment: string; authorName: string; source: 'link' | 'whatsapp'; idempotencyKey: string }
  | { type: 'create-material'; pieceId: string; instructions: string; dueDate: string | null }
  | { type: 'receive-material'; requestId: string; assets: Asset[] }

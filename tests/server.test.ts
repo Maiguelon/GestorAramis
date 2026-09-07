@@ -247,6 +247,19 @@ describe('PostgreSQL schema and actual row-level policies (PGlite)', () => {
     const columns = await db.query<{ column_name: string }>("select column_name from information_schema.columns where table_schema='public' and table_name='pieces'");
     expect(columns.rows.map((column) => column.column_name)).not.toContain('internal_note');
   });
+  it('keeps editable copy private even when its calendar piece is client-visible', async () => {
+    expect(await asUser(2, 'select * from public.piece_drafts')).toEqual([]);
+    expect(await asUser(3, 'select * from public.piece_drafts')).toEqual([]);
+    expect(await asUser(4, 'select * from public.piece_drafts')).toEqual([]);
+    expect(await asUser(5, 'select * from public.piece_drafts')).toEqual([]);
+    expect(await asUser(1, 'select caption from public.piece_drafts')).toEqual([{ caption: 'BORRADOR PRIVADO sin aprobar' }]);
+    const visiblePieces = await asUser(2, 'select * from public.pieces');
+    expect(visiblePieces).toHaveLength(1);
+    expect(JSON.stringify(visiblePieces)).not.toContain('BORRADOR PRIVADO');
+    expect(visiblePieces[0]).not.toHaveProperty('caption');
+    expect(await asUser(2, 'select caption from public.reviews')).toEqual([{ caption: 'Texto público' }]);
+    await expect(asUser(1, "update public.piece_drafts set caption = 'bypass'")).rejects.toMatchObject({ code: '42501' });
+  });
   it('anonymous direct database access is denied', async () => {
     await db.exec('set role anon;');
     try { await expect(db.query('select * from public.pieces')).rejects.toMatchObject({ code: '42501' }); }
@@ -278,8 +291,25 @@ describe('PostgreSQL schema and actual row-level policies (PGlite)', () => {
         ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000001',2,'Corregido',now())`);
       const versions = await db.query<{ version: number; status: string }>("select version,status from public.reviews where piece_id='40000000-0000-4000-8000-000000000001' order by version");
       expect(versions.rows).toEqual([{ version: 1, status: 'changes' }, { version: 2, status: 'pending' }]);
+      expect(await asUser(2, 'select version,caption from public.reviews')).toEqual([{ version: 2, caption: 'Corregido' }]);
+      expect(await asUser(1, "select version,status from public.reviews where piece_id='40000000-0000-4000-8000-000000000001' order by version")).toEqual(versions.rows);
       await expect(db.query(`insert into public.reviews(workspace_id,client_id,piece_id,version) values
         ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000001',3)`)).rejects.toMatchObject({ code: '23505' });
+    } finally { await db.exec('rollback;'); }
+  });
+  it('does not expose superseded reviews or related responses while copy is being revised', async () => {
+    await db.exec('begin;');
+    try {
+      await db.query(`insert into public.responses(workspace_id,client_id,review_id,kind,comment,author_name,source,idempotency_key) values
+        ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001','50000000-0000-4000-8000-000000000001','comment','Consulta de versión anterior','Cliente','link',gen_random_uuid())`);
+      expect(await asUser(2, 'select comment from public.responses')).toEqual([{ comment: 'Consulta de versión anterior' }]);
+      await db.query("update public.reviews set status='superseded' where id='50000000-0000-4000-8000-000000000001'");
+      expect(await asUser(2, 'select * from public.reviews')).toEqual([]);
+      expect(await asUser(2, 'select * from public.responses')).toEqual([]);
+      expect(await asUser(1, "select caption from public.reviews where id='50000000-0000-4000-8000-000000000001'")).toEqual([{ caption: 'Texto público' }]);
+      await db.query(`insert into public.reviews(workspace_id,client_id,piece_id,version,caption) values
+        ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000001',2,'Todavía sin sellar')`);
+      expect(await asUser(2, 'select * from public.reviews')).toEqual([]);
     } finally { await db.exec('rollback;'); }
   });
   it('malformed hashes and empty change requests fail validation', async () => {

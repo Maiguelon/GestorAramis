@@ -2,7 +2,8 @@ import { ServiceError, type Fetcher } from './errors';
 
 const API = 'https://www.googleapis.com/drive/v3/files';
 const UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
-const FILE_FIELDS = 'id,name,mimeType,size,md5Checksum,parents,appProperties,trashed';
+const FILE_FIELDS = 'id,name,mimeType,size,md5Checksum,parents,appProperties,trashed,headRevisionId';
+const REVISION_FIELDS = 'id,mimeType,size,md5Checksum,keepForever';
 const ID = /^[A-Za-z0-9_-]{1,160}$/;
 const INLINE_MIMES = new Set(['video/mp4', 'video/webm', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
@@ -28,6 +29,8 @@ export interface DriveFile {
   parents: string[];
   appProperties: Record<string, string>;
   trashed: boolean;
+  /** Present only for binary files; optional for upload/legacy metadata compatibility. */
+  headRevisionId?: string;
 }
 export interface StoredAsset {
   driveFileId: string;
@@ -36,8 +39,21 @@ export interface StoredAsset {
   size: number;
   workspaceId: string;
   clientId: string;
-  /** Required for approval snapshots; a changed file is rejected before it is streamed. */
+  /** Metadata checksum alone does not prevent mutable-head races. Reviews require PinnedDriveAsset. */
   checksum: string;
+}
+
+/** Store this revision ID with the review snapshot; never resolve the head again for its media. */
+export interface PinnedDriveAsset extends StoredAsset {
+  driveRevisionId: string;
+}
+
+interface DriveRevision {
+  id: string;
+  mimeType: string;
+  size: string;
+  md5Checksum: string;
+  keepForever: boolean;
 }
 
 export interface SnapshotDestination {
@@ -49,7 +65,7 @@ export interface SnapshotDestination {
 }
 
 function safeId(id: string): string {
-  if (!ID.test(id)) throw new ServiceError('invalid_file', 400);
+  if (typeof id !== 'string' || !ID.test(id)) throw new ServiceError('invalid_file', 400);
   return id;
 }
 
@@ -94,9 +110,11 @@ async function parseFile(response: Response): Promise<DriveFile> {
   if (!data || typeof data.id !== 'string' || !ID.test(data.id) || typeof data.name !== 'string' ||
     typeof data.mimeType !== 'string' || typeof data.size !== 'string' || !/^\d+$/.test(data.size) ||
     !Number.isSafeInteger(Number(data.size)) || typeof data.trashed !== 'boolean' ||
-    !Array.isArray(data.parents) || !data.parents.every((parent) => typeof parent === 'string') ||
-    !data.appProperties || typeof data.appProperties !== 'object' ||
-    (data.md5Checksum !== undefined && !/^[a-fA-F0-9]{32}$/.test(data.md5Checksum))) {
+    !Array.isArray(data.parents) || !data.parents.every((parent) => typeof parent === 'string' && ID.test(parent)) ||
+    !data.appProperties || typeof data.appProperties !== 'object' || Array.isArray(data.appProperties) ||
+    !Object.values(data.appProperties).every((value) => typeof value === 'string') ||
+    (data.md5Checksum !== undefined && (typeof data.md5Checksum !== 'string' || !/^[a-fA-F0-9]{32}$/.test(data.md5Checksum))) ||
+    (data.headRevisionId !== undefined && (typeof data.headRevisionId !== 'string' || !ID.test(data.headRevisionId)))) {
     throw new ServiceError('invalid_drive_response', 502);
   }
   return data as DriveFile;
@@ -106,10 +124,12 @@ export async function getDriveFile(token: string, fileId: string, fetcher: Fetch
   const query = new URLSearchParams({ fields: FILE_FIELDS, supportsAllDrives: 'true' });
   const response = await upstream(fetcher, `${API}/${safeId(fileId)}?${query}`, { headers: headers(token) });
   if (!response.ok) throw upstreamError(response.status);
-  return parseFile(response);
+  const file = await parseFile(response);
+  if (file.id !== fileId) throw new ServiceError('invalid_drive_response', 502);
+  return file;
 }
 
-/** Copy a specifically selected, OAuth-accessible source into a new tagged review snapshot. */
+/** Copy into a new tagged file. Pin its revision before attaching it to an exact review snapshot. */
 export async function copyDriveSnapshot(
   token: string, sourceFileId: string, destination: SnapshotDestination, fetcher: Fetcher = fetch,
 ): Promise<StoredAsset> {
@@ -138,6 +158,62 @@ export async function copyDriveSnapshot(
     driveFileId: file.id, name: file.name, mimeType: file.mimeType, size: Number(file.size),
     workspaceId: destination.workspaceId, clientId: destination.clientId, checksum: file.md5Checksum,
   };
+}
+
+function validateStoredAsset(asset: StoredAsset): void {
+  [asset.driveFileId, asset.workspaceId, asset.clientId].forEach(safeId);
+  if (!Number.isSafeInteger(asset.size) || asset.size <= 0 || typeof asset.checksum !== 'string' || !/^[a-fA-F0-9]{32}$/.test(asset.checksum)) {
+    throw new ServiceError('asset_changed_or_inaccessible', 409);
+  }
+}
+
+function assertAssetOwnership(file: DriveFile, asset: StoredAsset): void {
+  if (file.trashed || file.appProperties.workspaceId !== asset.workspaceId || file.appProperties.clientId !== asset.clientId) {
+    throw new ServiceError('asset_changed_or_inaccessible', 409);
+  }
+}
+
+async function verifiedRevision(response: Response, revisionId: string, asset: StoredAsset): Promise<DriveRevision> {
+  const data = await response.json().catch(() => null) as Partial<DriveRevision> | null;
+  if (!data || data.id !== revisionId || data.keepForever !== true ||
+    data.size !== String(asset.size) || data.mimeType !== asset.mimeType || data.md5Checksum !== asset.checksum) {
+    throw new ServiceError('snapshot_verification_failed', 409);
+  }
+  return data as DriveRevision;
+}
+
+/**
+ * Server-only mutation for an already authorized app-owned copy. Pin the observed binary head
+ * and verify that exact revision before persisting a review. An intervening new head is harmless:
+ * the PATCH and every future download address the original revision ID, never current content.
+ */
+export async function pinDriveAssetRevision(
+  token: string, asset: StoredAsset, fetcher: Fetcher = fetch,
+): Promise<PinnedDriveAsset> {
+  validateStoredAsset(asset);
+  if (!INLINE_MIMES.has(asset.mimeType)) throw new ServiceError('snapshot_verification_failed', 409);
+  const file = await getDriveFile(token, asset.driveFileId, fetcher);
+  assertAssetOwnership(file, asset);
+  if (!file.headRevisionId || file.md5Checksum !== asset.checksum || file.size !== String(asset.size) || file.mimeType !== asset.mimeType) {
+    throw new ServiceError('snapshot_verification_failed', 409);
+  }
+  const requestHeaders = headers(token);
+  requestHeaders.set('Content-Type', 'application/json');
+  const query = new URLSearchParams({ fields: REVISION_FIELDS });
+  const response = await upstream(fetcher, `${API}/${safeId(asset.driveFileId)}/revisions/${safeId(file.headRevisionId)}?${query}`, {
+    method: 'PATCH', headers: requestHeaders, body: JSON.stringify({ keepForever: true }),
+  });
+  if (!response.ok) throw upstreamError(response.status);
+  await verifiedRevision(response, file.headRevisionId, asset);
+  return { ...asset, driveRevisionId: file.headRevisionId };
+}
+
+/** Copy and pin are not a database transaction; caller tracks failed/orphan copies for cleanup. */
+export async function copyPinnedDriveSnapshot(
+  token: string, sourceFileId: string, destination: SnapshotDestination, fetcher: Fetcher = fetch,
+): Promise<PinnedDriveAsset> {
+  const asset = await copyDriveSnapshot(token, sourceFileId, destination, fetcher);
+  return pinDriveAssetRevision(token, asset, fetcher);
 }
 
 /** Server-only primitive. Caller must authorize staff/share and enforce request quota first. */
@@ -206,11 +282,27 @@ function validRange(range: string): boolean {
   return start !== undefined || (end !== undefined && end > 0);
 }
 
-/** The caller must resolve and authorize this stored asset BEFORE invoking; no HTTP route exposes it yet. */
+function expectedByteRange(range: string, total: number): { start: number; end: number } {
+  const [start, end] = range.slice('bytes='.length).split('-');
+  return start
+    ? { start: Number(start), end: end ? Math.min(Number(end), total - 1) : total - 1 }
+    : { start: Math.max(total - Number(end), 0), end: total - 1 };
+}
+
+async function invalidMediaResponse(response: Response): Promise<never> {
+  try { await response.body?.cancel(); } catch { /* Do not expose upstream stream errors. */ }
+  throw new ServiceError('invalid_drive_response', 502);
+}
+
+/**
+ * Legacy mutable-head transport, NOT safe for exact approvals: content can change between metadata
+ * and media requests. Review routes must use streamPinnedDriveAsset. No HTTP route exposes either.
+ */
 export async function streamDriveAsset(
   token: string, asset: StoredAsset, range: string | null, fetcher: Fetcher = fetch,
 ): Promise<Response> {
   if (range !== null && !validRange(range)) throw new ServiceError('invalid_range', 416);
+  validateStoredAsset(asset);
   const file = await getDriveFile(token, asset.driveFileId, fetcher);
   if (file.trashed || !asset.checksum || file.md5Checksum !== asset.checksum || file.size !== String(asset.size) ||
     file.mimeType !== asset.mimeType || file.appProperties.workspaceId !== asset.workspaceId || file.appProperties.clientId !== asset.clientId) {
@@ -219,10 +311,39 @@ export async function streamDriveAsset(
   const requestHeaders = headers(token);
   if (range) requestHeaders.set('Range', range);
   const response = await upstream(fetcher, `${API}/${safeId(asset.driveFileId)}?alt=media&supportsAllDrives=true`, { headers: requestHeaders });
+  return checkedMediaResponse(response, asset, range);
+}
+
+/** Caller must authorize the persisted review/asset relationship and current share before invoking. */
+export async function streamPinnedDriveAsset(
+  token: string, asset: PinnedDriveAsset, range: string | null, fetcher: Fetcher = fetch,
+): Promise<Response> {
+  if (range !== null && !validRange(range)) throw new ServiceError('invalid_range', 416);
+  validateStoredAsset(asset);
+  safeId(asset.driveRevisionId);
+  if (!INLINE_MIMES.has(asset.mimeType)) throw new ServiceError('snapshot_verification_failed', 409);
+  const file = await getDriveFile(token, asset.driveFileId, fetcher);
+  // The current head may differ. Ownership and trash are file properties; bytes belong to the revision.
+  assertAssetOwnership(file, asset);
+  const revisionUrl = `${API}/${safeId(asset.driveFileId)}/revisions/${safeId(asset.driveRevisionId)}`;
+  const metadata = await upstream(fetcher, `${revisionUrl}?${new URLSearchParams({ fields: REVISION_FIELDS })}`, { headers: headers(token) });
+  if (!metadata.ok) throw upstreamError(metadata.status);
+  await verifiedRevision(metadata, asset.driveRevisionId, asset);
+  const requestHeaders = headers(token);
+  if (range) requestHeaders.set('Range', range);
+  const response = await upstream(fetcher, `${revisionUrl}?alt=media`, { headers: requestHeaders });
+  return checkedMediaResponse(response, asset, range);
+}
+
+async function checkedMediaResponse(response: Response, asset: StoredAsset, range: string | null): Promise<Response> {
   if (response.status === 416) {
     const resultHeaders = new Headers({ 'Cache-Control': 'private, no-store' });
     const contentRange = response.headers.get('Content-Range');
-    if (contentRange && /^bytes \*\/\d+$/.test(contentRange)) resultHeaders.set('Content-Range', contentRange);
+    if (contentRange) {
+      if (contentRange !== `bytes */${asset.size}`) return invalidMediaResponse(response);
+      resultHeaders.set('Content-Range', contentRange);
+    }
+    try { await response.body?.cancel(); } catch { /* Never forward provider error contents. */ }
     return new Response(null, { status: 416, headers: resultHeaders });
   }
   if (response.status !== 200 && response.status !== 206) throw upstreamError(response.status);
@@ -230,19 +351,29 @@ export async function streamDriveAsset(
     await response.body?.cancel();
     throw new ServiceError('drive_range_unavailable', 502);
   }
+  if (!range && response.status === 206) return invalidMediaResponse(response);
+  const contentRange = response.headers.get('Content-Range');
+  let expectedLength = asset.size;
+  if (response.status === 206) {
+    const match = contentRange && /^bytes (\d+)-(\d+)\/(\d+)$/.exec(contentRange);
+    if (!match || !range) return invalidMediaResponse(response);
+    const [start, end, total] = match.slice(1).map(Number);
+    const wanted = expectedByteRange(range, asset.size);
+    if (![start, end, total].every(Number.isSafeInteger) || total !== asset.size || end < start || end >= total ||
+      start !== wanted.start || end !== wanted.end) return invalidMediaResponse(response);
+    expectedLength = end - start + 1;
+  } else if (contentRange) return invalidMediaResponse(response);
+  const length = response.headers.get('Content-Length');
+  if (length !== null && (!/^\d+$/.test(length) || !Number.isSafeInteger(Number(length)) || Number(length) !== expectedLength)) {
+    return invalidMediaResponse(response);
+  }
   const resultHeaders = new Headers({
     'Content-Type': INLINE_MIMES.has(asset.mimeType) ? asset.mimeType : 'application/octet-stream',
     'Cache-Control': 'private, no-store', 'Accept-Ranges': 'bytes',
     'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
     'Content-Disposition': INLINE_MIMES.has(asset.mimeType) ? 'inline' : 'attachment',
   });
-  const length = response.headers.get('Content-Length');
-  if (length && /^\d+$/.test(length)) resultHeaders.set('Content-Length', length);
-  const contentRange = response.headers.get('Content-Range');
-  if (response.status === 206 && (!contentRange || !/^bytes \d+-\d+\/\d+$/.test(contentRange))) {
-    await response.body?.cancel();
-    throw new ServiceError('invalid_drive_response', 502);
-  }
+  if (length !== null) resultHeaders.set('Content-Length', length);
   if (contentRange && response.status === 206) resultHeaders.set('Content-Range', contentRange);
   return new Response(response.body, { status: response.status, headers: resultHeaders });
 }

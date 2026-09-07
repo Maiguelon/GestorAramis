@@ -33,13 +33,14 @@ export default function Workspace() {
   const [month, setMonth] = useState(() => localDate().slice(0, 7));
   const [notice, setNotice] = useState('');
   const today = localDate();
-  const horizon = addDays(today, 7);
+  const horizon = addDays(today, 6);
   const pieces = state.pieces.filter(piece => !piece.archived);
-  const attention = pieces.filter(piece => nextAction(state, piece, today).urgent);
-  const waiting = pieces.filter(piece => piece.status === 'review');
-  const ready = pieces.filter(piece => ['approved', 'scheduled'].includes(piece.status));
-  const filtered = pieces.filter(piece => (clientId === 'all' || piece.clientId === clientId) && (ownerId === 'all' || piece.ownerId === ownerId) && `${piece.title} ${state.clients.find(client => client.id === piece.clientId)?.name}`.toLowerCase().includes(search.toLowerCase()) && (filter === 'all' || filter === 'attention' && attention.includes(piece) || filter === 'review' && waiting.includes(piece) || filter === 'ready' && ready.includes(piece)));
-  const shown = [...filtered].filter(piece => page !== 'week' || piece.status !== 'published' && (!piece.plannedDate || piece.plannedDate <= horizon)).sort((a, b) => piecePriority(state, a, today) - piecePriority(state, b, today) || (a.plannedDate ?? '9999').localeCompare(b.plannedDate ?? '9999'));
+  const weekPieces = pieces.filter(piece => piece.status !== 'published' && (!piece.plannedDate || piece.plannedDate <= horizon || nextAction(state, piece, today).urgent));
+  const attention = weekPieces.filter(piece => nextAction(state, piece, today).urgent);
+  const waiting = weekPieces.filter(piece => piece.status === 'review');
+  const ready = weekPieces.filter(piece => ['approved', 'scheduled'].includes(piece.status));
+  const filtered = (page === 'week' ? weekPieces : pieces).filter(piece => (clientId === 'all' || piece.clientId === clientId) && (ownerId === 'all' || piece.ownerId === ownerId) && `${piece.title} ${state.clients.find(client => client.id === piece.clientId)?.name}`.toLowerCase().includes(search.toLowerCase()) && (filter === 'all' || filter === 'attention' && attention.includes(piece) || filter === 'review' && waiting.includes(piece) || filter === 'ready' && ready.includes(piece)));
+  const shown = [...filtered].sort((a, b) => piecePriority(state, a, today) - piecePriority(state, b, today) || (a.plannedDate ?? '9999').localeCompare(b.plannedDate ?? '9999'));
   const selectedPiece = pieces.find(piece => piece.id === selected);
   function act(command: Command) { try { return execute(command); } catch { return undefined; } }
   function navigate(next: Page) { setPage(next); setFilter('all'); setSearch(''); setClientId('all'); setOwnerId('all'); setMobileNav(false); setNotice(''); }

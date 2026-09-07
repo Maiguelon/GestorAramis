@@ -177,7 +177,7 @@ describe('public authorization at the API boundary', () => {
   it('rejects stale review links even when there is a new explicitly shared review', async () => {
     const api = await import('../src/lib/api');
     api.runPublicCommand(respond({ kind: 'changes', comment: 'Otra portada' }), 'demo-review');
-    const next = api.runCommand({ type: 'create-review', pieceId: 'piece-oliva-review', caption: 'Otra versión', assets: [{ ...asset, mimeType: 'image/svg+xml', url: '/demo/cover-oliva.svg' }] });
+    const next = api.runCommand({ type: 'create-review', pieceId: 'piece-oliva-review', expectedRevision: api.readWorkspace().pieces.find(piece => piece.id === 'piece-oliva-review')!.revision, caption: 'Otra versión', assets: [{ ...asset, mimeType: 'image/svg+xml', url: '/demo/cover-oliva.svg' }] });
     api.runCommand({ type: 'create-share', scope: 'review', targetId: next.entityId });
     expect(() => api.runPublicCommand(respond({ idempotencyKey: 'late' }), 'demo-review')).toThrow('versión más reciente');
   });
@@ -187,7 +187,7 @@ describe('public authorization at the API boundary', () => {
     const raw = storage.getItem(api.DEMO_STORAGE_KEY);
     for (const invalid of [{ ...asset, source: 'drive' as const }, { ...asset, driveFileId: 'provider-id' }, { ...asset, checksum: 'provider-hash' }, { ...asset, url: 'https://files.example.test/a' }, { ...asset, url: 'javascript:alert(1)' }, { ...asset, url: '/demo/../private.svg' }]) {
       expect(() => api.runPublicCommand({ type: 'receive-material', requestId: 'material-oliva-1', assets: [invalid] }, 'demo-material')).toThrow('sólo registra archivos de prueba locales');
-      expect(() => api.runCommand({ type: 'create-review', pieceId: 'piece-oliva-review', caption: 'Texto', assets: [invalid] })).toThrow('sólo registra archivos de prueba locales');
+      expect(() => api.runCommand({ type: 'create-review', pieceId: 'piece-oliva-review', expectedRevision: 1, caption: 'Texto', assets: [invalid] })).toThrow('sólo registra archivos de prueba locales');
     }
     expect(storage.getItem(api.DEMO_STORAGE_KEY)).toBe(raw);
     api.runPublicCommand({ type: 'receive-material', requestId: 'material-oliva-1', assets: [asset] }, 'demo-material');
@@ -197,6 +197,23 @@ describe('public authorization at the API boundary', () => {
 });
 
 describe('cross-tab conflict detection', () => {
+  it('rejects an old review draft after a client approval without writing or notifying subscribers', async () => {
+    const api = await import('../src/lib/api');
+    const original = api.readWorkspace();
+    const staleDraft: Command = { type: 'create-review', pieceId: 'piece-oliva-review', expectedRevision: original.pieces.find(piece => piece.id === 'piece-oliva-review')!.revision, caption: 'Texto anterior a la aprobación', assets: [asset] };
+    api.runPublicCommand(respond(), 'demo-review');
+    const raw = storage.getItem(api.DEMO_STORAGE_KEY);
+    const writes = storage.setCalls;
+    const listener = vi.fn();
+    api.subscribe(listener);
+
+    expect(() => api.runCommand(staleDraft)).toThrow('El contenido cambió.');
+
+    expect(storage.getItem(api.DEMO_STORAGE_KEY)).toBe(raw);
+    expect(storage.setCalls).toBe(writes);
+    expect(listener).not.toHaveBeenCalled();
+    expect(api.readClientView('demo-review').reviews[0].status).toBe('approved');
+  });
   it('reads external updates before applying an expectedRevision command', async () => {
     const api = await import('../src/lib/api');
     const external = api.readWorkspace();

@@ -20,3 +20,12 @@ Azul institucional #1b2a41, rojo #8b2634, fondo #e9ecf1, amarillo #f4b943 y azul
 
 ## D07 — Continuidad y audiencia
 Hasta tres subagentes + coordinador, sin ediciones superpuestas. Cada módulo entrega evidencia y pendientes. No publicar, usar datos reales ni contactar clientes durante la demostración; preparar configuración y pruebas controladas. Si faltan accesos externos, continuar trabajo aislado y pedir al usuario lo necesario para la siguiente integración.
+
+## D08 — Versión exacta y concurrencia (2026-09-07)
+Crear una revisión también exige revisión esperada, igual que editar una pieza. Un formulario abierto no puede invalidar una aprobación más reciente ni trasladar una respuesta WhatsApp a otra versión. Mensajes y formularios de respuesta se reconstruyen cuando cambia su revisión. Publicar exige resolver el borrador sin guardar; una pieza publicada mantiene texto y aprobación histórica, incluso al archivarla.
+
+## D09 — Calendario y acceso a pedidos
+La visibilidad en calendario y el enlace de una solicitud son permisos diferentes. Una pieza oculta del calendario puede tener un pedido explícitamente compartido. El calendario secreto es estrictamente de lectura y no entrega tokens de solicitudes. La futura sesión de cliente deberá autorizar por separado su navegación a acciones pendientes.
+
+## D10 — Snapshots Drive y copia privada
+El borrador de texto se guarda en `piece_drafts` sólo para equipo; el cliente obtiene texto de la revisión sellada vigente. Un checksum seguido de descarga del head de Drive deja una carrera. Los snapshots de medios deben guardar `driveRevisionId` con `keepForever` y transmitir esa revisión exacta. Las primitivas están probadas con mocks; faltan persistencia, handlers y prueba Google real. La retención de Drive no sustituye un backup.

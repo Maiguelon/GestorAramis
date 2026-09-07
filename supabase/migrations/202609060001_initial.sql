@@ -58,7 +58,6 @@ create table public.pieces (
   owner_role text not null default 'staff' check (owner_role = 'staff'),
   planned_date date,
   visible_to_client boolean not null default false,
-  caption text not null default '',
   archived boolean not null default false,
   revision integer not null default 1 check (revision > 0),
   created_at timestamptz not null default now(),
@@ -69,6 +68,16 @@ create table public.pieces (
   unique (workspace_id, client_id, id)
 );
 create index pieces_calendar on public.pieces (workspace_id, client_id, planned_date) where not archived;
+
+-- The editor's mutable copy is private even when the calendar piece is visible.
+-- Staff API joins this row; client API reads only the current sealed review caption.
+create table public.piece_drafts (
+  piece_id uuid primary key,
+  workspace_id uuid not null,
+  caption text not null default '',
+  updated_at timestamptz not null default now(),
+  foreign key (workspace_id, piece_id) references public.pieces(workspace_id, id) on delete cascade
+);
 
 -- RLS controls rows, not columns. Internal notes must NEVER share a client-readable row.
 create table public.piece_internal_notes (
@@ -236,14 +245,27 @@ language sql stable security definer set search_path = '' as $$
       (p.visible_to_client and not p.archived and app_private.can_read_client(p.workspace_id, p.client_id))));
 $$;
 
+-- A newer revision immediately retires older client-visible snapshots, including
+-- historical change requests. Evaluate with trusted rows to avoid recursive RLS.
+create function app_private.can_read_review(wanted_workspace uuid, wanted_review uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.reviews r where r.id = wanted_review and r.workspace_id = wanted_workspace
+    and (app_private.is_staff(r.workspace_id) or (
+      r.sealed_at is not null and r.status <> 'superseded'
+      and app_private.can_read_piece(r.workspace_id, r.piece_id)
+      and not exists (select 1 from public.reviews newer where newer.piece_id = r.piece_id and newer.version > r.version)
+    )));
+$$;
+
 revoke all on all functions in schema app_private from public;
-grant execute on function app_private.is_staff(uuid), app_private.can_read_client(uuid, uuid), app_private.can_read_piece(uuid, uuid) to authenticated;
+grant execute on function app_private.is_staff(uuid), app_private.can_read_client(uuid, uuid), app_private.can_read_piece(uuid, uuid), app_private.can_read_review(uuid, uuid) to authenticated;
 
 alter table public.workspaces enable row level security;
 alter table public.profiles enable row level security;
 alter table public.clients enable row level security;
 alter table public.members enable row level security;
 alter table public.pieces enable row level security;
+alter table public.piece_drafts enable row level security;
 alter table public.piece_internal_notes enable row level security;
 alter table public.reviews enable row level security;
 alter table public.material_requests enable row level security;
@@ -268,9 +290,8 @@ create policy pieces_member_read on public.pieces for select to authenticated us
   app_private.is_staff(workspace_id) or (visible_to_client and not archived and app_private.can_read_client(workspace_id, client_id))
 );
 create policy notes_staff_only on public.piece_internal_notes for select to authenticated using (app_private.is_staff(workspace_id));
-create policy reviews_member_read on public.reviews for select to authenticated using (
-  app_private.is_staff(workspace_id) or (sealed_at is not null and app_private.can_read_piece(workspace_id, piece_id))
-);
+create policy drafts_staff_only on public.piece_drafts for select to authenticated using (app_private.is_staff(workspace_id));
+create policy reviews_member_read on public.reviews for select to authenticated using (app_private.can_read_review(workspace_id, id));
 create policy materials_member_read on public.material_requests for select to authenticated using (app_private.can_read_piece(workspace_id, piece_id));
 -- Drive IDs and hashes are server projections, not directly client-readable metadata.
 create policy assets_staff_only on public.assets for select to authenticated using (app_private.is_staff(workspace_id));
@@ -287,14 +308,14 @@ create policy activity_member_read on public.activity for select to authenticate
 -- shares intentionally has NO authenticated/anon policy: only the trusted backend can resolve hashes.
 
 revoke all on public.workspaces, public.profiles, public.clients, public.members, public.pieces,
-  public.piece_internal_notes, public.reviews, public.material_requests, public.assets,
+  public.piece_drafts, public.piece_internal_notes, public.reviews, public.material_requests, public.assets,
   public.review_assets, public.material_request_assets, public.responses, public.shares, public.activity
   from public, anon, authenticated;
 grant select on public.workspaces, public.profiles, public.clients, public.members, public.pieces,
-  public.piece_internal_notes, public.reviews, public.material_requests, public.assets,
+  public.piece_drafts, public.piece_internal_notes, public.reviews, public.material_requests, public.assets,
   public.review_assets, public.material_request_assets, public.responses, public.activity to authenticated;
 grant all on public.workspaces, public.profiles, public.clients, public.members, public.pieces,
-  public.piece_internal_notes, public.reviews, public.material_requests, public.assets,
+  public.piece_drafts, public.piece_internal_notes, public.reviews, public.material_requests, public.assets,
   public.review_assets, public.material_request_assets, public.responses, public.shares, public.activity to service_role;
 
 create function app_private.guard_review_snapshot() returns trigger

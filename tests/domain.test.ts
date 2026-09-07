@@ -87,7 +87,7 @@ describe('piece changes and concurrency', () => {
     const id = 'piece-bruma-published';
     errorCode(() => applyCommand(state, { type: 'update-piece', pieceId: id, expectedRevision: 1, patch: { caption: 'Texto posterior' } }, context()), 'PUBLISHED_IMMUTABLE');
     for (const status of ['planned', 'production', 'review', 'approved', 'scheduled'] as const) errorCode(() => applyCommand(state, { type: 'update-piece', pieceId: id, expectedRevision: 1, patch: { status } }, context()), 'PUBLISHED_IMMUTABLE');
-    errorCode(() => applyCommand(state, { type: 'create-review', pieceId: id, caption: 'Nueva versión', assets: [asset] }, context()), 'PUBLISHED_IMMUTABLE');
+    errorCode(() => applyCommand(state, { type: 'create-review', pieceId: id, expectedRevision: piece(state, id).revision, caption: 'Nueva versión', assets: [asset] }, context()), 'PUBLISHED_IMMUTABLE');
     const result = applyCommand(state, { type: 'update-piece', pieceId: id, expectedRevision: 1, patch: { title: 'Título corregido', internalNote: 'Nota nueva', plannedDate: '2026-09-03', ownerId: 'member-mateo', archived: true } }, context()).state;
     expect(piece(result, id)).toMatchObject({ title: 'Título corregido', archived: true, status: 'published', ownerId: 'member-mateo' });
     expect(result.reviews.find(review => review.id === 'review-bruma-1')?.status).toBe('approved');
@@ -138,7 +138,7 @@ describe('versioned reviews', () => {
     const ctx = context();
     const approved = applyCommand(createSeed(today), respond(), ctx).state;
     const incoming = structuredClone(asset);
-    const revised = applyCommand(approved, { type: 'create-review', pieceId: piece(approved).id, caption: 'Versión dos', assets: [incoming] }, ctx).state;
+    const revised = applyCommand(approved, { type: 'create-review', pieceId: piece(approved).id, expectedRevision: piece(approved).revision, caption: 'Versión dos', assets: [incoming] }, ctx).state;
     incoming.name = 'Mutación posterior';
     expect(currentReview(revised, piece(revised).id)).toMatchObject({ version: 2, caption: 'Versión dos', status: 'pending' });
     expect(currentReview(revised, piece(revised).id)?.assets[0].name).toBe('Demo.svg');
@@ -146,6 +146,36 @@ describe('versioned reviews', () => {
     expect(approved.reviews.find(review => review.id === 'review-oliva-1')?.status).toBe('approved');
     errorCode(() => applyCommand(revised, respond({ idempotencyKey: 'late-response' }), ctx), 'STALE_REVIEW');
     errorCode(() => getClientView(revised, 'demo-review'), 'STALE_REVIEW');
+  });
+  it('rejects a stale review draft without invalidating a newer approval', () => {
+    const ctx = context();
+    const original = createSeed(today);
+    const staleDraft: Command = { type: 'create-review', pieceId: piece(original).id, expectedRevision: piece(original).revision, caption: 'Texto del formulario viejo', assets: [asset] };
+    const second = applyCommand(original, { ...staleDraft, caption: 'Texto actualizado de la segunda versión' }, ctx);
+    const approved = applyCommand(second.state, respond({ reviewId: second.entityId, version: 2 }), ctx).state;
+    const snapshot = structuredClone(approved);
+
+    errorCode(() => applyCommand(approved, staleDraft, ctx), 'CONFLICT');
+
+    expect(approved).toEqual(snapshot);
+    expect(piece(approved)).toMatchObject({ status: 'approved', caption: 'Texto actualizado de la segunda versión' });
+    expect(currentReview(approved, piece(approved).id)).toMatchObject({ id: second.entityId, version: 2, status: 'approved' });
+    expect(approved.reviews.filter(review => review.pieceId === piece(approved).id)).toHaveLength(2);
+  });
+  it('requires the piece revision captured before editing a review', () => {
+    const ctx = context();
+    const original = createSeed(today);
+    const staleDraft: Command = { type: 'create-review', pieceId: piece(original).id, expectedRevision: piece(original).revision, caption: 'Texto viejo', assets: [asset] };
+    const edited = applyCommand(original, { type: 'update-piece', pieceId: piece(original).id, expectedRevision: piece(original).revision, patch: { caption: 'Borrador nuevo del equipo' } }, ctx).state;
+    const snapshot = structuredClone(edited);
+
+    errorCode(() => applyCommand(edited, staleDraft, ctx), 'CONFLICT');
+    const { expectedRevision: _revision, ...missingRevision } = staleDraft;
+    errorCode(() => applyCommand(edited, missingRevision as Command, ctx), 'CONFLICT');
+    expect(edited).toEqual(snapshot);
+
+    const refreshed = applyCommand(edited, { ...staleDraft, expectedRevision: piece(edited).revision, caption: piece(edited).caption }, ctx).state;
+    expect(currentReview(refreshed, piece(edited).id)).toMatchObject({ version: 2, caption: 'Borrador nuevo del equipo', status: 'pending' });
   });
   it('invalidates pending and approved versions when copy changes, preserving the old snapshot', () => {
     for (const approved of [false, true]) {

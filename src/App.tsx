@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react';
 import ClientCalendar from './client/ClientCalendar';
 import ClientRequest from './client/ClientRequest';
+import PieceText from './internal/PieceText';
 import Workspace from './internal/Workspace';
 import { APP_MODE, resetDemo } from './lib/api';
 class AppBoundary extends Component<{ children: ReactNode }, { error: string }> {
@@ -11,5 +12,5 @@ class AppBoundary extends Component<{ children: ReactNode }, { error: string }> 
 export default function App() {
   if (APP_MODE !== 'demo') return <main className="setup-page"><div className="brand-word">aramis.</div><p className="eyebrow">ESPACIO DE CONTENIDO</p><h1>Estamos preparando tu espacio.</h1><p>El acceso compartido todavía necesita la configuración de Aramis. Contactá al equipo para recibir tu enlace cuando esté disponible.</p></main>;
   const [route, token = ''] = location.pathname.split('/').filter(Boolean);
-  return <AppBoundary>{route === 'calendar' ? <ClientCalendar token={decodeURIComponent(token)} /> : route === 'request' ? <ClientRequest token={decodeURIComponent(token)} /> : !route ? <Workspace /> : <main className="setup-page"><h1>Esta página no existe.</h1><a href="/">Volver al espacio de Aramis</a></main>}</AppBoundary>;
+  return <AppBoundary>{route === 'text' ? <PieceText pieceId={decodeURIComponent(token)} /> : route === 'calendar' ? <ClientCalendar token={decodeURIComponent(token)} /> : route === 'request' ? <ClientRequest token={decodeURIComponent(token)} /> : !route ? <Workspace /> : <main className="setup-page"><h1>Esta página no existe.</h1><a href="/">Volver al espacio de Aramis</a></main>}</AppBoundary>;
 }

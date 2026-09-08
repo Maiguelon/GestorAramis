@@ -21,3 +21,10 @@ npm run dev y abrir http://127.0.0.1:5173/. Clientes → Trabajar mes → Editar
 
 ## Pendiente
 Esperar devolución de Miguel y Eliana. Sin ampliar POV cliente ahora. Supabase/Google/Cloudflare/correo siguen pendientes; Worker cerrado 503/501. Nuevos campos de cliente/plan/producción/archivos todavía necesitan migración SQL privada y adaptadores remotos; agregar claves no habilita la V1. Leer handoffs/C05-monthly-production.md y docs/SETUP antes de integrar servicios.
+
+## Actualización — logos, ZIP y pestaña de texto
+Checkpoint previo: 134b8cd. Incorporadas referencias visuales Aura/Beecomex/Musas desde Aramis-Web/public/img/clientes, copias originales en public/brand/clients. ClientAvatar en tareas, clientes, detalle y calendario interno (en móvil calendario prioriza texto).
+Material del equipo añade Descargar todo (ZIP); no altera preview. Verifica todos los archivos, no parcial; nombres duplicados se numeran, límite ZIP 2 GB. No dependencias añadidas.
+Detalles → Expandir guion y texto abre /text/:pieceId con guion, copy y notas, de lectura y actualizable desde otra pestaña. Se exige guardar el borrador antes de abrir. Pieza archivada/no existente no expone texto. Sólo demo local, no link para clientes reales.
+Verificación de este cierre: npm test 190 pruebas / 7 archivos; 20 E2E; npm run build pasa. QA visual escritorio en work/qa. Sin reset de datos, cuentas, Drive ni publicación.
+Próximo paso: usuario prueba; pendientes de UX de Eliana y regla de completitud de reels sólo anotados, no implementados. Ver handoffs/C05-reading-zip-logos.md.

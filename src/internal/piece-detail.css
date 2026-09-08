@@ -16,3 +16,5 @@
 .team-asset-info small { font-size: 11px; color: #67778b; }
 .client-material-exception { border-top: 1px solid #dce1e7; padding-top: 17px; }
 .client-material-exception > summary { cursor: pointer; font-size: 14px; font-weight: 700; color: #53657d; margin-bottom: 15px; }
+
+.team-materials > .team-file-picker{margin-top:12px}

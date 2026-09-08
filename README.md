@@ -19,15 +19,16 @@ El modo predeterminado es `demo`. Los cambios se guardan en este navegador, incl
 
 ## Recorrido sugerido
 
-1. Crear contenido con cliente y responsable. En Detalles, elegir fecha y visibilidad en calendario; usar «Empezar producción».
-2. En Material, preparar instrucciones, generar enlace y «Abrir como cliente». Elegir un archivo ficticio y registrar su nombre/tamaño. El equipo recibe el aviso y confirma si está completo.
-3. En Revisión, preparar texto e imagen de muestra. Generar enlace y responder desde la pantalla del cliente. Un comentario no aprueba; pedir cambios devuelve el trabajo a producción.
-4. Preparar otra versión, aprobarla, marcarla programada y publicada. La aprobación pertenece al texto y archivos de esa versión. Una pieza publicada no admite cambios de contenido; una adaptación requiere otra pieza.
-5. Desde Clientes, abrir el calendario de cada marca. El enlace de calendario es de lectura y no entrega enlaces de escritura. Las solicitudes se abren desde sus mensajes independientes.
+1. Entrar a **Clientes → Trabajar mes**. En **Editar datos y plan**, definir contacto y cantidades de posteos/reels. Un cliente nuevo puede crearse desde esa pantalla.
+2. Elegir mes y **Generar base del mes**. Completa las cantidades faltantes respetando piezas existentes, una sola vez por mes. No asigna fechas automáticamente. Editar título, formato, fecha y área en cada fila y guardar; se pueden agregar extras o quitar piezas (archivarlas).
+3. Abrir una pieza, escribir **Guion e instrucciones de producción**, guardar y marcar **Listo para producción**. Pasa a Diseño. En Producción, filtrar cliente/área y etapa; grabación pasa a Marketing y edición/diseño a Diseño.
+4. En **Material → Material del equipo**, adjuntar un archivo de prueba de hasta 100 MB. Se guarda en IndexedDB de ese navegador, permite previsualizar videos/imágenes y descargar después de recargar. No se sube a Drive. El apartado plegado **Pedidos al cliente** mantiene el flujo excepcional anterior, sólo con metadatos ficticios.
+5. En **Calendario**, cada día muestra dos piezas y **+N más** abre el día completo. Las piezas sin fecha se agrupan según el mes del plan. Cambiar la fecha de publicación no cambia automáticamente el mes del plan; éste puede editarse desde Detalles.
+6. La revisión/aprobación anterior sigue disponible, sin ampliaciones de la vista cliente en este bloque. La aprobación continúa vinculada a una versión exacta.
 
 Enlaces iniciales de muestra: [calendario](http://127.0.0.1:5173/calendar/demo-calendar), [revisión](http://127.0.0.1:5173/request/demo-review) y [material](http://127.0.0.1:5173/request/demo-material). Pueden dejar de estar vigentes después de modificar o revocar una revisión: usar el enlace actual que genera el panel.
 
-Copiar o abrir un mensaje no lo marca enviado. El registro del envío es manual. Esta demo no abre WhatsApp ni envía mensajes. Las cargas de la pantalla de material guardan solamente metadatos; no se transfieren ni conservan los archivos seleccionados.
+Copiar o abrir un mensaje no lo marca enviado. El registro del envío es manual. Esta demo no abre WhatsApp ni envía mensajes. Los pedidos al cliente guardan solamente metadatos. El material del equipo conserva archivos en el navegador; la exportación JSON no incluye esos archivos. Para borrar todos los archivos locales, eliminar los datos del sitio desde el navegador.
 
 ## Verificación
 

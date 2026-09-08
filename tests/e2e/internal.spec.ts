@@ -16,15 +16,16 @@ test('recorrido del equipo: crear, recibir material, pedir cambios, aprobar y pu
   await page.getByRole('button',{name:'Nuevo contenido'}).click();
   let dialog=page.getByRole('dialog');
   await dialog.getByLabel('Título del contenido').fill('Campaña de prueba completa');
-  await dialog.getByLabel('Responsable').selectOption({label:'Mateo · demo'});
+  await dialog.getByLabel('Responsable').selectOption({label:'Eliana · demo'});
   await dialog.getByRole('button',{name:'Crear contenido'}).click();
   dialog=page.getByRole('dialog');
   await expect(dialog.getByRole('heading',{name:'Campaña de prueba completa'})).toBeVisible();
   await expect(dialog.getByText('No figura en el calendario del cliente')).toBeVisible();
   const pieceId=(await state(page)).pieces.find(piece=>piece.title==='Campaña de prueba completa')!.id;
-  await dialog.getByRole('button',{name:'Empezar producción'}).click();
+  await dialog.getByRole('button',{name:'Listo para producción'}).click();
   await expect(dialog.locator('.status-pill')).toHaveText('En producción');
   await dialog.getByRole('tab',{name:'Material',exact:true}).click();
+  await dialog.locator('summary').filter({hasText:'Pedidos al cliente'}).click();
   await dialog.getByLabel('Instrucciones').fill('Dos tomas verticales del espacio.');
   await dialog.getByRole('button',{name:'Preparar pedido'}).click();
   await dialog.getByRole('button',{name:'Generar enlace de prueba'}).click();

@@ -32,3 +32,8 @@ El borrador de texto se guarda en `piece_drafts` sólo para equipo; el cliente o
 
 ## D11 — UI de trabajo (2026-09-07)
 Aramis sin acento y logo original. Priorizar pendientes, acciones y filtros; eliminar slogans y tarjetas decorativas. Lato en encabezados funcionales para lectura compacta. La demo no representa cuentas reales.
+
+## D12 — Base mensual y producción interna (2026-09-07)
+Miguel y Eric trabajan desde Clientes; Eliana desde Producción. Plan actual editable por cliente (posteos incluye post/carrusel, reels separado). Generación explícita una vez por mes, completa faltantes sin mover ni eliminar piezas existentes, sin fechas automáticas. Quitar archiva y conserva historial; no regenera espacios eliminados. planMonth representa el mes del plan y es independiente de la fecha de publicación. Cantidades mostradas comparan con el plan actual, sin snapshot contractual histórico.
+Preparación usa planned; productionStage distingue ready, recording y editing dentro de production. Listo para producción pasa a Diseño; grabación a Marketing. Filtros de área reemplazan responsables; ownerId se conserva para integridad e historial.
+Material del equipo privado en la pieza, guion también privado. Demo guarda blobs por ID en IndexedDB, nunca URLs blob en contratos, hasta 100 MB/archivo. Puede previsualizar y descargar localmente; no hay Drive ni sincronización. Exportación de metadata no incluye archivos. Nuevos campos aún no migrados al esquema SQL remoto. El POV cliente queda pendiente de revisión posterior.

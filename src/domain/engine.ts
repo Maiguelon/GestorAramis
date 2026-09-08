@@ -23,10 +23,32 @@ function validateDate(value: string | null): void {
   if (value !== null && !isCalendarDate(value)) fail('VALIDATION', 'La fecha debe ser una fecha válida con formato AAAA-MM-DD.');
 }
 
+export function isPlanMonth(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
+}
+
+function validatePlan(plan: unknown): void {
+  if (!plan || typeof plan !== 'object' || Array.isArray(plan)) fail('VALIDATION', 'El plan mensual no es válido.');
+  const values = plan as Record<string, unknown>;
+  if (Object.keys(values).some(key => !['posts', 'reels'].includes(key)) || !['posts', 'reels'].every(key => Number.isSafeInteger(values[key]) && Number(values[key]) >= 0 && Number(values[key]) <= 200)) fail('VALIDATION', 'Cada cantidad mensual debe ser un entero entre 0 y 200.');
+}
+
+function validateClientFields(patch: Record<string, unknown>): void {
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) fail('VALIDATION', 'Los datos del cliente no son válidos.');
+  if (Object.keys(patch).some(key => !['name', 'contactName', 'phone', 'monthlyPlan'].includes(key))) fail('VALIDATION', 'La actualización incluye campos no admitidos.');
+  if (patch.name !== undefined) required(patch.name as string, 'El nombre');
+  if (patch.contactName !== undefined && typeof patch.contactName !== 'string') fail('VALIDATION', 'El contacto no es válido.');
+  if (patch.phone !== undefined && typeof patch.phone !== 'string') fail('VALIDATION', 'El teléfono no es válido.');
+  if (patch.monthlyPlan !== undefined) validatePlan(patch.monthlyPlan);
+}
+
+function clientInitials(name: string): string { return name.trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase(); }
+
 function validateAssets(assets: Asset[]): void {
   if (!Array.isArray(assets)) fail('VALIDATION', 'Los archivos no son válidos.');
   const ids = new Set<string>();
   for (const asset of assets) {
+    if (!asset || typeof asset !== 'object') fail('VALIDATION', 'El archivo no es válido.');
     required(asset.id, 'El identificador del archivo');
     required(asset.name, 'El nombre del archivo');
     required(asset.mimeType, 'El tipo del archivo');
@@ -82,14 +104,61 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
   };
   let entityId = '';
   switch (command.type) {
+    case 'create-client': {
+      validateClientFields(command.input);
+      const name = required(command.input.name, 'El nombre');
+      if (typeof command.input.contactName !== 'string' || typeof command.input.phone !== 'string') fail('VALIDATION', 'Los datos de contacto no son válidos.');
+      validatePlan(command.input.monthlyPlan);
+      entityId = context.newId();
+      state.clients.push({ id: entityId, name, initials: clientInitials(name), color: ['#8b2634', '#5c9cd9', '#f4b943'][state.clients.length % 3], contactName: command.input.contactName.trim(), phone: command.input.phone.trim(), monthlyPlan: structuredClone(command.input.monthlyPlan), revision: 0, generatedMonths: [] });
+      break;
+    }
+    case 'update-client': {
+      const client = state.clients.find(item => item.id === command.clientId);
+      if (!client) return fail('NOT_FOUND', 'No encontramos ese cliente.');
+      if ((client.revision ?? 0) !== command.expectedRevision) fail('CONFLICT', 'El cliente cambió. Actualizá la vista antes de guardar.');
+      validateClientFields(command.patch);
+      for (const [key, value] of Object.entries(command.patch)) if (value !== undefined) Object.assign(client, { [key]: typeof value === 'string' ? value.trim() : structuredClone(value) });
+      client.initials = clientInitials(client.name);
+      client.revision = (client.revision ?? 0) + 1;
+      entityId = client.id;
+      break;
+    }
+    case 'generate-month': {
+      const client = state.clients.find(item => item.id === command.clientId);
+      if (!client) return fail('NOT_FOUND', 'No encontramos ese cliente.');
+      if (!isPlanMonth(command.month)) fail('VALIDATION', 'Elegí un mes válido.');
+      if (!state.members.some(member => member.id === command.ownerId)) fail('VALIDATION', 'Elegí un responsable del equipo.');
+      if (client.generatedMonths?.includes(command.month)) fail('MONTH_EXISTS', 'La base de este mes ya fue generada. Podés agregar o archivar piezas manualmente.');
+      const plan = client.monthlyPlan ?? { posts: 0, reels: 0 };
+      validatePlan(plan);
+      if (!plan.posts && !plan.reels) fail('EMPTY_PLAN', 'Definí la cantidad de posteos o reels antes de generar el mes.');
+      const existing = state.pieces.filter(piece => piece.clientId === client.id && !piece.archived && (piece.planMonth ?? piece.plannedDate?.slice(0, 7) ?? piece.createdAt.slice(0, 7)) === command.month);
+      for (const format of ['post', 'reel'] as const) {
+        const total = format === 'post' ? plan.posts : plan.reels;
+        const count = existing.filter(piece => format === 'post' ? ['post', 'carousel'].includes(piece.format) : piece.format === format).length;
+        for (let index = count + 1; index <= total; index += 1) {
+          const piece: Piece = { id: context.newId(), clientId: client.id, title: `${format === 'post' ? 'Posteo' : 'Reel'} ${String(index).padStart(2, '0')}`, format, status: 'planned', ownerId: command.ownerId, plannedDate: null, planMonth: command.month, workArea: 'marketing', productionStage: 'ready', script: '', teamAssets: [], visibleToClient: false, caption: '', internalNote: '', archived: false, revision: 0, createdAt: context.now, updatedAt: context.now };
+          state.pieces.push(piece);
+          activity(piece, `Contenido creado desde el plan de ${command.month}.`);
+        }
+      }
+      client.generatedMonths = [...(client.generatedMonths ?? []), command.month];
+      client.revision = (client.revision ?? 0) + 1;
+      entityId = client.id;
+      break;
+    }
     case 'create-piece': {
       if (!state.clients.some(client => client.id === command.input.clientId)) fail('NOT_FOUND', 'No encontramos ese cliente.');
       if (!state.members.some(member => member.id === command.input.ownerId)) fail('VALIDATION', 'Elegí un responsable del equipo.');
       validateDate(command.input.plannedDate ?? null);
       const format = command.input.format ?? 'post';
       if (!['reel', 'carousel', 'post', 'story'].includes(format)) fail('VALIDATION', 'El formato no es válido.');
+      if (command.input.planMonth !== undefined && !isPlanMonth(command.input.planMonth)) fail('VALIDATION', 'Elegí un mes válido.');
+      if (command.input.workArea !== undefined && !['marketing', 'design'].includes(command.input.workArea)) fail('VALIDATION', 'El área no es válida.');
+      if (command.input.title !== undefined && typeof command.input.title !== 'string') fail('VALIDATION', 'El título no es válido.');
       entityId = context.newId();
-      const piece: Piece = { id: entityId, clientId: command.input.clientId, title: required(command.input.title, 'El título'), format, status: 'planned', ownerId: command.input.ownerId, plannedDate: command.input.plannedDate ?? null, visibleToClient: false, caption: '', internalNote: '', archived: false, revision: 0, createdAt: context.now, updatedAt: context.now };
+      const piece: Piece = { id: entityId, clientId: command.input.clientId, title: command.input.title?.trim() || ({ post: 'Posteo sin título', reel: 'Reel sin título', carousel: 'Carrusel sin título', story: 'Historia sin título' }[format]), planMonth: command.input.planMonth ?? command.input.plannedDate?.slice(0, 7) ?? context.now.slice(0, 7), workArea: command.input.workArea ?? 'marketing', productionStage: 'ready', script: '', teamAssets: [], format, status: 'planned', ownerId: command.input.ownerId, plannedDate: command.input.plannedDate ?? null, visibleToClient: false, caption: '', internalNote: '', archived: false, revision: 0, createdAt: context.now, updatedAt: context.now };
       state.pieces.push(piece);
       activity(piece, 'Contenido creado.');
       break;
@@ -98,8 +167,13 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
       const piece = findPiece(state, command.pieceId);
       if (piece.revision !== command.expectedRevision) fail('CONFLICT', 'El contenido cambió. Actualizá la vista antes de guardar.');
       const patch = command.patch;
-      const allowed = ['title', 'format', 'ownerId', 'plannedDate', 'visibleToClient', 'caption', 'internalNote', 'archived', 'status'];
+      const allowed = ['title', 'format', 'ownerId', 'plannedDate', 'visibleToClient', 'caption', 'internalNote', 'archived', 'status', 'planMonth', 'workArea', 'productionStage', 'script', 'teamAssets'];
       if (Object.keys(patch).some(key => !allowed.includes(key))) fail('VALIDATION', 'La actualización incluye campos no admitidos.');
+      if (patch.planMonth !== undefined && !isPlanMonth(patch.planMonth)) fail('VALIDATION', 'Elegí un mes válido.');
+      if (patch.workArea !== undefined && !['marketing', 'design'].includes(patch.workArea)) fail('VALIDATION', 'El área no es válida.');
+      if (patch.productionStage !== undefined && !['ready', 'recording', 'editing'].includes(patch.productionStage)) fail('VALIDATION', 'La etapa de producción no es válida.');
+      if (patch.script !== undefined && typeof patch.script !== 'string') fail('VALIDATION', 'El guion no es válido.');
+      if (patch.teamAssets !== undefined) validateAssets(patch.teamAssets);
       if (patch.title !== undefined) required(patch.title, 'El título');
       if (patch.ownerId !== undefined && !state.members.some(member => member.id === patch.ownerId)) fail('VALIDATION', 'Elegí un responsable del equipo.');
       if (patch.format !== undefined && !['reel', 'carousel', 'post', 'story'].includes(patch.format)) fail('VALIDATION', 'El formato no es válido.');
@@ -123,7 +197,7 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
       const safePatch = Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)) as typeof patch;
       // A simultaneous caption edit cannot restore review/approved after invalidation.
       if (captionChanged && (safePatch.status === 'review' || safePatch.status === 'approved')) delete safePatch.status;
-      Object.assign(piece, safePatch);
+      Object.assign(piece, structuredClone(safePatch));
       if (patch.title !== undefined) piece.title = patch.title.trim();
       if (patch.archived === true) {
         const targets = new Set([...state.reviews.filter(item => item.pieceId === piece.id), ...state.materials.filter(item => item.pieceId === piece.id)].map(item => item.id));

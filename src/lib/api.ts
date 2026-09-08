@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Command, CommandResult, WorkspaceState } from '../../contracts/domain';
-import { applyCommand, DomainError, isCalendarDate } from '../domain/engine';
+import { applyCommand, DomainError, isCalendarDate, isPlanMonth } from '../domain/engine';
 import { createSeed } from '../domain/seed';
 import { assertPublicCommandAccess, getClientView } from '../domain/selectors';
 
@@ -36,10 +36,15 @@ function isDemoAsset(value: Record<string, unknown>): boolean {
   return strings(value, ['id', 'name', 'mimeType']) && Number.isSafeInteger(value.size) && Number(value.size) >= 0 && value.source === 'demo' && value.driveFileId === undefined && value.checksum === undefined && (value.url === undefined || (typeof value.url === 'string' && /^\/demo\/[a-z0-9-]+\.svg$/.test(value.url)));
 }
 function assertDemoAssets(command: Command): void {
+  if (command.type === 'update-piece' && command.patch.teamAssets !== undefined && (!Array.isArray(command.patch.teamAssets) || !command.patch.teamAssets.every(asset => object(asset) && isDemoAsset(asset)))) throw new DomainError('DEMO_ASSETS_ONLY', 'El material del equipo sólo admite archivos locales en esta demostración.');
   if (command.type === 'receive-material' || command.type === 'create-review') {
     if (!Array.isArray(command.assets) || !command.assets.every(asset => object(asset) && isDemoAsset(asset))) throw new DomainError('DEMO_ASSETS_ONLY', 'Esta demostración sólo registra archivos de prueba locales. No carga archivos en Drive ni acepta enlaces externos.');
   }
 }
+
+const optional = (value: unknown, test: (item: unknown) => boolean) => value === undefined || test(value);
+const plan = (value: unknown) => object(value) && Object.keys(value).every(key => ['posts', 'reels'].includes(key)) && ['posts', 'reels'].every(key => Number.isSafeInteger(value[key]) && Number(value[key]) >= 0 && Number(value[key]) <= 200);
+const months = (value: unknown) => Array.isArray(value) && value.every(isPlanMonth) && new Set(value).size === value.length;
 
 /** Local data integrity check; it is not an authentication/security boundary. */
 function parseWorkspace(raw: string): WorkspaceState {
@@ -47,9 +52,9 @@ function parseWorkspace(raw: string): WorkspaceState {
   let state: unknown;
   try { state = JSON.parse(raw); } catch { throw invalid(); }
   if (!object(state) || state.schemaVersion !== 1 ||
-    !arrayOf(state.clients, item => strings(item, ['id', 'name', 'initials', 'color', 'contactName', 'phone'])) ||
+    !arrayOf(state.clients, item => strings(item, ['id', 'name', 'initials', 'color', 'contactName', 'phone']) && optional(item.monthlyPlan, plan) && optional(item.generatedMonths, months) && optional(item.revision, value => Number.isSafeInteger(value) && Number(value) >= 0)) ||
     !arrayOf(state.members, item => strings(item, ['id', 'name', 'initials'])) ||
-    !arrayOf(state.pieces, item => strings(item, ['id', 'clientId', 'title', 'ownerId', 'caption', 'internalNote', 'createdAt', 'updatedAt']) && oneOf(item.format, ['reel', 'carousel', 'post', 'story']) && oneOf(item.status, ['planned', 'production', 'review', 'approved', 'scheduled', 'published']) && calendarDate(item.plannedDate) && typeof item.visibleToClient === 'boolean' && typeof item.archived === 'boolean' && Number.isSafeInteger(item.revision) && Number(item.revision) >= 0) ||
+    !arrayOf(state.pieces, item => strings(item, ['id', 'clientId', 'title', 'ownerId', 'caption', 'internalNote', 'createdAt', 'updatedAt']) && oneOf(item.format, ['reel', 'carousel', 'post', 'story']) && oneOf(item.status, ['planned', 'production', 'review', 'approved', 'scheduled', 'published']) && calendarDate(item.plannedDate) && typeof item.visibleToClient === 'boolean' && typeof item.archived === 'boolean' && Number.isSafeInteger(item.revision) && Number(item.revision) >= 0 && optional(item.planMonth, isPlanMonth) && optional(item.workArea, value => oneOf(value, ['marketing', 'design'])) && optional(item.productionStage, value => oneOf(value, ['ready', 'recording', 'editing'])) && optional(item.script, value => typeof value === 'string') && optional(item.teamAssets, value => arrayOf(value, isDemoAsset) && new Set((value as Array<{ id: string }>).map(asset => asset.id)).size === (value as unknown[]).length)) ||
     !arrayOf(state.reviews, item => strings(item, ['id', 'pieceId', 'caption', 'createdAt']) && Number.isSafeInteger(item.version) && Number(item.version) > 0 && oneOf(item.status, ['pending', 'approved', 'changes', 'superseded']) && nullableString(item.sentAt) && arrayOf(item.assets, isDemoAsset)) ||
     !arrayOf(state.materials, item => strings(item, ['id', 'pieceId', 'instructions', 'createdAt']) && calendarDate(item.dueDate) && oneOf(item.status, ['pending', 'received', 'complete']) && nullableString(item.sentAt) && arrayOf(item.assets, isDemoAsset)) ||
     !arrayOf(state.responses, item => strings(item, ['id', 'reviewId', 'comment', 'authorName', 'createdAt']) && oneOf(item.kind, ['approved', 'changes', 'comment']) && oneOf(item.source, ['link', 'whatsapp']) && nullableString(item.recordedBy)) ||

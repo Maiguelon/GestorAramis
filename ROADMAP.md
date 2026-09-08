@@ -12,7 +12,7 @@ Pendiente → En curso → Probado en aislamiento → Integrado. Bloqueado siemp
 | C02 Datos/negocio | C00/C01 | SQL, migraciones, API, transiciones, historial | Invariantes, idempotencia y concurrencia; RLS | Dominio demo integrado; SQL probado aislado; transacciones remotas pendientes |
 | C03 Acceso | C02 | OTP real, sesiones, roles, enlaces scope/revocación | Aislamiento API entre clientes, recuperación y correo real | Permisos/enlaces probados aislados; OTP e integración pendientes |
 | C04 Drive | Inicia C01, integra C02/C03 | OAuth, selección, subidas, streaming privado, versiones | Video real reanudado y reproducido en teléfono; permisos y cuota | Primitivas probadas aisladas; integración y Google real pendientes |
-| C05 Panel interno | Inicia C01, integra C02/C03 | Semana, bloqueos, filtros, alta, responsable, fechas, detalle | Hermana identifica quién debe avanzar; persistencia y errores | Integrado en demo; pendiente prueba de la hermana |
+| C05 Panel interno | Inicia C01, integra C02/C03 | Semana, bloqueos, filtros, alta, responsable, fechas, detalle | Hermana identifica quién debe avanzar; persistencia y errores | Base mensual, producción y archivos locales integrados; pendiente prueba Miguel/Eliana |
 | C06 Calendario cliente | Inicia C01, integra C02/C03 | Mes/agenda, enlace lectura/sesión, icono móvil | No filtra internos; fechas consistentes; acceso Android/iPhone | Integrado en demo; sesión y teléfonos reales pendientes |
 | C07 Aprobaciones | C02/C03/C04 | Preview/copy, aprobar/cambiar/comentar, historial | Versión exacta, reintentos, nueva revisión invalida anterior | Integrado en demo; medios reales pendientes |
 | C08 Material | C02/C03/C04 | Pedido, varios archivos, progreso, verificación interna | Fallos parciales, recibido≠completo, reanudación real | Demo integrada; transporte aislado, subida real pendiente |
@@ -35,7 +35,7 @@ Supabase Auth OTP+SMTP Resend configurado; renovación de sesión, recuperación
 OAuth server-side drive.file con refresh; configuración de producción Google (evitar expiración de 7 días del modo Testing). Crear carpeta propia al autorizar integración; Picker para archivos existentes. Subir en chunks reanudables y verificar proveedor; obtener streaming Range sin exponer token OAuth ni cargar archivo completo en memoria. Separar versión revisada de fuente editable. Rechazar archivo cambiado/eliminado. Prueba grande real, interrupción, reproducción/seek y permisos en móvil, conexión revocada y espacio insuficiente. No dar aprobado este bloque con mocks.
 
 ## C05 — coordinación
-Semana con vencidos y sin fecha siempre visibles; filtros cliente/responsable/pendientes. Crear con cliente+título, responsable inicial creador; editar fecha y responsable rápido; detalle lateral con material/revisiones/historial. Demostración de una semana representativa con la hermana.
+Semana con vencidos y sin fecha de meses actuales/anteriores; Producción global con filtros cliente/área/etapa. Clientes con plan y base mensual explícita editable. Crear con cliente+título, responsable inicial creador; editar fecha y responsable rápido; detalle lateral con material/revisiones/historial. Demostración de una semana representativa con la hermana.
 
 ## C06 — cliente
 Calendario mensual y agenda móvil, estados comprensibles, links a pedidos vigentes con autorización específica. Calendario mediante login o enlace de lectura sin notas internas. Añadir icono pantalla inicio; sin aprobaciones offline. Probar Android+iPhone antes del piloto.

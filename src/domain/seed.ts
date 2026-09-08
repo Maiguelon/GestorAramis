@@ -15,16 +15,16 @@ export function createSeed(today = localDate()): WorkspaceState {
   return {
     schemaVersion: 1,
     clients: [
-      { id: 'client-oliva', name: 'Casa Oliva', initials: 'CO', color: '#8b2634', contactName: 'Contacto ficticio · Olivia', phone: '' },
-      { id: 'client-norte', name: 'Estudio Norte', initials: 'EN', color: '#5c9cd9', contactName: 'Contacto ficticio · Nicolás', phone: '' },
-      { id: 'client-bruma', name: 'Bruma Café', initials: 'BC', color: '#f4b943', contactName: 'Contacto ficticio · Bruno', phone: '' },
+      { id: 'client-oliva', name: 'Casa Oliva', initials: 'CO', color: '#8b2634', contactName: 'Contacto ficticio · Olivia', phone: '', monthlyPlan: { posts: 8, reels: 4 }, revision: 0, generatedMonths: [] },
+      { id: 'client-norte', name: 'Estudio Norte', initials: 'EN', color: '#5c9cd9', contactName: 'Contacto ficticio · Nicolás', phone: '', monthlyPlan: { posts: 8, reels: 4 }, revision: 0, generatedMonths: [] },
+      { id: 'client-bruma', name: 'Bruma Café', initials: 'BC', color: '#f4b943', contactName: 'Contacto ficticio · Bruno', phone: '', monthlyPlan: { posts: 8, reels: 4 }, revision: 0, generatedMonths: [] },
     ],
-    members: [{ id: 'member-lucia', name: 'Lucía · demo', initials: 'L' }, { id: 'member-mateo', name: 'Mateo · demo', initials: 'M' }],
+    members: [{ id: 'member-lucia', name: 'Miguel · demo', initials: 'M' }, { id: 'member-mateo', name: 'Eliana · demo', initials: 'E' }, { id: 'member-eric', name: 'Eric · demo', initials: 'E' }],
     pieces: [
-      { ...base, id: 'piece-oliva-material', clientId: 'client-oliva', title: 'Así se vive Casa Oliva', format: 'reel', status: 'production', plannedDate: addDays(today, 1), internalNote: 'Necesitamos tomas del espacio y una presentación. Nota privada ficticia.' },
+      { ...base, id: 'piece-oliva-material', clientId: 'client-oliva', title: 'Así se vive Casa Oliva', workArea: 'marketing', productionStage: 'recording', script: 'Grabar tres tomas verticales del espacio y una presentación breve.', format: 'reel', status: 'production', plannedDate: addDays(today, 1), internalNote: 'Necesitamos tomas del espacio y una presentación. Nota privada ficticia.' },
       { ...base, id: 'piece-oliva-review', clientId: 'client-oliva', title: 'Tu rincón favorito', format: 'carousel', status: 'review', plannedDate: addDays(today, 2), caption: olivaCaption },
       { ...base, id: 'piece-oliva-approved', clientId: 'client-oliva', title: 'Ideas para compartir', format: 'post', status: 'approved', plannedDate: addDays(today, 3), caption: 'Pequeños detalles para disfrutar juntos. Contenido ficticio.' },
-      { ...base, id: 'piece-norte-production', clientId: 'client-norte', title: 'Detrás de cada proyecto', format: 'reel', status: 'production', ownerId: 'member-mateo', plannedDate: addDays(today, 4), caption: 'Borrador interno que aún no está listo para compartir.' },
+      { ...base, id: 'piece-norte-production', clientId: 'client-norte', title: 'Detrás de cada proyecto', workArea: 'design', productionStage: 'ready', script: 'Editar una presentación breve del proyecto. Abrir con el resultado final y cerrar con el nombre del estudio.', teamAssets: [structuredClone(coverNorte)], format: 'reel', status: 'production', ownerId: 'member-mateo', plannedDate: addDays(today, 4), caption: 'Borrador interno que aún no está listo para compartir.' },
       { ...base, id: 'piece-norte-overdue', clientId: 'client-norte', title: 'Tres preguntas antes de empezar', format: 'carousel', status: 'review', plannedDate: addDays(today, -1), caption: 'Cada proyecto empieza por escuchar. Contenido de demostración.' },
       { ...base, id: 'piece-bruma-published', clientId: 'client-bruma', title: 'El ritual de la mañana', format: 'post', status: 'published', plannedDate: addDays(today, -2), caption: 'Tu pausa favorita comienza acá. Contenido ficticio.' },
       { ...base, id: 'piece-bruma-idea', clientId: 'client-bruma', title: 'Conocé a quienes preparan tu café', format: 'story', status: 'planned', visibleToClient: false, ownerId: 'member-mateo', plannedDate: null, caption: 'Idea privada en preparación.' },
@@ -46,9 +46,9 @@ export function createSeed(today = localDate()): WorkspaceState {
       { id: 'share-material-oliva', token: 'demo-material', scope: 'material', targetId: 'material-oliva-1', clientId: 'client-oliva', revokedAt: null, createdAt },
     ],
     activities: [
-      { id: 'activity-oliva-material', pieceId: 'piece-oliva-material', text: 'Pedido de material preparado.', actor: 'Lucía · demo', createdAt, visibility: 'client' },
-      { id: 'activity-oliva-private', pieceId: 'piece-oliva-review', text: 'Nota privada: ajustar la planificación con el equipo.', actor: 'Lucía · demo', createdAt, visibility: 'internal' },
-      { id: 'activity-oliva-review', pieceId: 'piece-oliva-review', text: 'Versión 1 enviada para revisión.', actor: 'Lucía · demo', createdAt, visibility: 'client' },
+      { id: 'activity-oliva-material', pieceId: 'piece-oliva-material', text: 'Pedido de material preparado.', actor: 'Miguel · demo', createdAt, visibility: 'client' },
+      { id: 'activity-oliva-private', pieceId: 'piece-oliva-review', text: 'Nota privada: ajustar la planificación con el equipo.', actor: 'Miguel · demo', createdAt, visibility: 'internal' },
+      { id: 'activity-oliva-review', pieceId: 'piece-oliva-review', text: 'Versión 1 enviada para revisión.', actor: 'Miguel · demo', createdAt, visibility: 'client' },
       { id: 'activity-oliva-approved', pieceId: 'piece-oliva-approved', text: 'Versión 1 aprobada.', actor: 'Olivia · demo', createdAt: now, visibility: 'client' },
     ],
   };

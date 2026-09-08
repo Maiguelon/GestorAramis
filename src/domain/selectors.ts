@@ -1,6 +1,9 @@
 import type { Asset, ClientView, Command, MaterialRequest, Piece, PublicPiece, Review, Share, WorkspaceState } from '../../contracts/domain';
 import { DomainError, isCalendarDate } from './engine';
 
+/** A monthly plan keeps its identity if its publication date moves. Legacy data falls back to its date. */
+export function pieceMonth(piece: Piece): string { return piece.planMonth ?? piece.plannedDate?.slice(0, 7) ?? piece.createdAt.slice(0, 7); }
+
 export function localDate(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }

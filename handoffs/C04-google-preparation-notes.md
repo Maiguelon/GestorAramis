@@ -9,3 +9,7 @@ No priorizar alta de Eliana ni prueba con dos personas antes de integrar materia
 Solicitar enlace/ID del proyecto y correo Google que conectará el Drive. Secretos OAuth fuera del chat y de Git; instalar luego como secretos del servidor. Testing es sólo temporal; revisar publicación OAuth y duración del refresh token antes de uso habitual. Picker/permisos sobre carpetas existentes se validan durante integración.
 
 Verificación: documentación solamente, git diff --check. Sin pruebas de Google ni cambios al producto.
+
+## Revisión posterior de consola
+
+Proyecto `gestor-aramis`, cuenta indicada `miguelcarreteroangel@gmail.com`. Google Drive API ya habilitada. Cliente OAuth Gestor Aramis Web existe con callback exacto previsto; no se creó ni rotó una credencial. External/Testing; usuarios de prueba y scopes aún vacíos. drive.file quedó seleccionado en formulario, no guardado; se pidió confirmación de scope y alta del usuario de prueba. Falta respuesta sobre ubicación del JSON, sin leer secretos. Audience advierte Branding incompleto: datos de nombre/correos/dominio presentes, enlaces de web/privacidad/términos vacíos. Revisar antes de publicar, sin inventar páginas ni asumir validación. Ningún acceso a archivos Drive ni prueba de integración todavía.

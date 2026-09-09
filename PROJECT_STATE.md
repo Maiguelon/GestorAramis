@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Google Cloud — revisión de configuración (2026-09-09)
+
+Proyecto existente `gestor-aramis`, cuenta de conexión indicada por Miguel: `miguelcarreteroangel@gmail.com`. Verificado desde consola: Drive API en lista de APIs habilitadas; cliente OAuth web Gestor Aramis Web creado, callback correcto `https://gestor-aramis.pages.dev/api/google/callback`; audiencia External/Testing. No hay usuarios de prueba ni scopes guardados. Preparado drive.file en selector, sin guardar a la espera de confirmación solicitada para completar scope y usuario de prueba. Pendiente ubicación del JSON descargado; no se leyeron secretos.
+
+Audience muestra aviso de Branding incompleto; nombre, soporte y contacto presentes, dominio de Pages presente, enlaces de homepage/privacidad/términos vacíos. Revisar antes de publicar OAuth; no inventar URLs legales. Integración/callback siguen pendientes. Se mantiene el alcance de preparación, sin cambios de producto ni Drive.
+
 ## Notas y siguiente paso acordado — 2026-09-09
 
 Sólo documentación en este bloque; no implementar UI ni Drive todavía. Miguel considera suficiente la prueba interna con su usuario hasta integrar materiales; no priorizar el alta de Eliana ahora. Siguiente paso: preparar Google Cloud/Drive con el titular y luego implementar/probar integración real.

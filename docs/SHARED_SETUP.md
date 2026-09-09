@@ -49,7 +49,7 @@ npm.cmd run test:e2e:shared
 
 `test:e2e` prueba la demo; `test:e2e:shared` utiliza servicios simulados en un puerto separado (5175), sin tocar Supabase real. La evidencia de ingreso/guardados reales está registrada por separado en PROJECT_STATE.md.
 
-En Cloudflare Pages, configurar el build con `VITE_APP_MODE=production`, URL y clave pública de Supabase. Configurar para Functions `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` y `ARAMIS_WORKSPACE_ID`. La compilación normal en Cloudflare usa `npm run build`, salida `dist`. No subir `.env*`, `.dev.vars`, datos de prueba o secretos al repositorio. Publicar requiere la sesión del titular de Cloudflare. No hace falta cambiar el DNS de Aramis para el primer ensayo en un subdominio de Pages.
+La versión compartida ya está publicada en https://gestor-aramis.pages.dev mediante carga directa con Wrangler. Seguir `PAGES_DEPLOY.md`: `pages:prepare` crea un paquete separado del `dist` de demostración; `pages:deploy` reconstruye y publica. No subir `.env*`, `.dev.vars`, datos de prueba o secretos al repositorio. No hay integración automática con GitHub ni cambios al DNS de Aramis.
 
 ## Límites del bloque
 

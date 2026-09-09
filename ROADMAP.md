@@ -17,7 +17,7 @@ Pendiente → En curso → Probado en aislamiento → Integrado. Bloqueado siemp
 | C07 Aprobaciones | C02/C03/C04 | Preview/copy, aprobar/cambiar/comentar, historial | Versión exacta, reintentos, nueva revisión invalida anterior | Integrado en demo; medios reales pendientes |
 | C08 Material | C02/C03/C04 | Pedido, varios archivos, progreso, verificación interna | Fallos parciales, recibido≠completo, reanudación real | Demo integrada; transporte aislado, subida real pendiente |
 | C09 WhatsApp | C05/C07/C08 | Mensaje/link manual, enviado, registro de respuesta externa | Abrir no marca enviado; misma regla de aprobación | Integrado en demo; envío siempre manual |
-| C10 Piloto | C02–C09 reales | Subdominio, observabilidad, backup/restore, rollback, guía | Recorrido completo y restauración, 3 clientes/2 semanas | Pendiente de servicios reales |
+| C10 Piloto | C02–C09 reales | Subdominio, observabilidad, backup/restore, rollback, guía | Recorrido completo y restauración, 3 clientes/2 semanas | Núcleo interno publicado en Pages; smoke alojado pasa; piloto completo pendiente |
 
 ## C00 — preparación
 Fijar entidades clientes, integrantes, piezas, versiones, solicitudes, archivos, respuestas, shares y actividad. IDs opacos. Fecha de calendario local YYYY-MM-DD, historial ISO UTC. Estados planned/production/review/approved/scheduled/published; archived separado. Un responsable interno persistente. Visibilidad cliente explícita. Una revisión vigente con copy+assets exactos.

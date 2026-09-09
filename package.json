@@ -17,7 +17,11 @@
     "worker:dev": "wrangler dev --ip 127.0.0.1 --port 8787",
     "worker:check": "wrangler deploy --dry-run --outdir work/worker-build",
     "pages:check": "wrangler pages functions build --outdir work/pages-build",
-    "pages:dev": "wrangler pages dev dist --ip 127.0.0.1 --port 8788"
+    "pages:dev": "wrangler pages dev dist --ip 127.0.0.1 --port 8788",
+    "pages:prepare": "node scripts/prepare-pages.mjs",
+    "pages:preview": "wrangler pages dev --cwd work/pages-deploy --ip 127.0.0.1 --port 8788",
+    "pages:smoke": "node scripts/smoke-pages.mjs",
+    "pages:deploy": "npm run pages:prepare && wrangler pages deploy --cwd work/pages-deploy --project-name gestor-aramis --branch main"
   },
   "dependencies": {
     "@fontsource/dm-serif-display": "5.3.0",

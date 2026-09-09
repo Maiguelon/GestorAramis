@@ -1,5 +1,17 @@
 # Estado del proyecto
 
+## Publicación de prueba — 2026-09-09
+
+Base `54f2477`. Núcleo compartido publicado en **https://gestor-aramis.pages.dev**. Despliegue inicial: `53d35498.gestor-aramis.pages.dev`. Cuenta de Cloudflare autorizada personalmente por Miguel mediante Wrangler; proyecto `gestor-aramis` creado por carga directa, sin integración GitHub, push, DNS ni plan de pago.
+
+- `pages:prepare` valida configuración pública, compila TypeScript/Vite sin sourcemaps y empaqueta API en un directorio ignorado separado de la demo. `pages:preview`, `pages:smoke` y `pages:deploy` documentados en `docs/PAGES_DEPLOY.md`.
+- Eliminado `_redirects` inválido: Pages ya sirve las rutas React por defecto. Rutas `/api/*` usan el mismo handler probado; configuración con URL/clave pública y workspace fijo, sin service_role.
+- Build de publicación pasa. Smoke local (8788) y real sobre el dominio estable pasan: login visible, ruta ampliada protegida, health configurado, workspace/comandos sin sesión 401/no-store, otro origen 403 y sin errores JavaScript. No son pruebas de guardado autenticado online.
+- Miguel ingresó personalmente en el dominio publicado. Verificados lectura del cliente Prueba de conexión y sus tres piezas, guardado confirmado del guion de Posteo 02 y persistencia/sesión tras navegación completa a `/text/:id`. El guion queda identificado como prueba de publicación del 9/9/2026. No se leyó ni compartió su contraseña.
+- Drive, cuenta Eliana, correo y POV cliente real siguen pendientes. Este despliegue es una prueba del núcleo interno, no el piloto V1 completo.
+
+Retomar: leer `docs/PAGES_DEPLOY.md` y `handoffs/C10-pages-first-deploy.md`. No crear otro proyecto ni reaplicar migraciones. Núcleo online probado con Miguel; siguiente bloque: habilitar identidad de Eliana y probar colaboración real, luego Drive según alcance acordado.
+
 ## Checkpoint actual — 2026-09-09
 
 Base anterior: `6da041d`. Este bloque conecta el trabajo interno a Supabase; no amplía el POV cliente ni integra Drive todavía.

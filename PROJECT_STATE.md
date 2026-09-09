@@ -1,5 +1,17 @@
 # Estado del proyecto
 
+## Notas y siguiente paso acordado — 2026-09-09
+
+Sólo documentación en este bloque; no implementar UI ni Drive todavía. Miguel considera suficiente la prueba interna con su usuario hasta integrar materiales; no priorizar el alta de Eliana ahora. Siguiente paso: preparar Google Cloud/Drive con el titular y luego implementar/probar integración real.
+
+Pendientes a contrastar con el código antes de implementar:
+- Diseño: entrada predeterminada a pendientes de producción, deadlines y acciones posibles; resto secundario y accesible mediante filtros/navegación. No confundir preferencia de entrada con permisos de seguridad.
+- Eric graba y sube desde celular: selección de varias tomas, progreso y recuperación ante cortes deben verificarse en teléfono real; responsive no basta.
+- Preferencia por nuevas cargas en carpetas de clientes y meses. Propuesta aún por validar: cliente/mes del plan/pieza/Material y Entregables. Evaluar selección de carpetas existentes con drive.file; no asumir acceso a descendientes ni reorganizar existentes. No mover archivos automáticamente al cambiar una fecha.
+- Guiones y descarga de todo ya presentes en demo: verificar su funcionamiento real al conectar Drive. Conservar regla pendiente de tomas completas para reels.
+
+Handoff: `handoffs/C04-google-preparation-notes.md`. No se crearon recursos de Google ni credenciales en esta sesión.
+
 ## Publicación de prueba — 2026-09-09
 
 Base `54f2477`. Núcleo compartido publicado en **https://gestor-aramis.pages.dev**. Despliegue inicial: `53d35498.gestor-aramis.pages.dev`. Cuenta de Cloudflare autorizada personalmente por Miguel mediante Wrangler; proyecto `gestor-aramis` creado por carga directa, sin integración GitHub, push, DNS ni plan de pago.

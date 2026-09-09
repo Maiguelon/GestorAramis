@@ -46,7 +46,7 @@ describe('download-all ZIP', () => {
     expect(zip.type).toBe('application/zip');
     const files = await extract(zip);
     expect(files.map(file => file.name)).toEqual(['toma ñ 01.mp4', 'texto.txt', 'vacío.txt']);
-    expect(files[0]!.data).toEqual(binary);
+    expect(files[0]!.data.equals(binary)).toBe(true);
     expect(files[1]!.data.toString()).toBe('123456789');
     expect(files[2]!.data.length).toBe(0);
   });

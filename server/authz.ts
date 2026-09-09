@@ -73,10 +73,13 @@ export async function verifySupabaseUser(
   let response: Response;
   try {
     response = await fetcher(new URL('/auth/v1/user', url), {
-      headers: { Authorization: authorization, apikey: config.publishableKey }, redirect: 'error',
+      headers: { Authorization: authorization, apikey: config.publishableKey }, redirect: 'manual',
     });
   } catch { throw new ServiceError('authentication_unavailable', 503); }
-  if (!response.ok) throw new ServiceError(response.status >= 500 ? 'authentication_unavailable' : 'unauthenticated', response.status >= 500 ? 503 : 401);
+  if (!response.ok) {
+    const unavailable = response.status >= 500 || response.status >= 300 && response.status < 400;
+    throw new ServiceError(unavailable ? 'authentication_unavailable' : 'unauthenticated', unavailable ? 503 : 401);
+  }
   const body: unknown = await response.json().catch(() => null);
   if (!body || typeof body !== 'object' || !('id' in body) || typeof body.id !== 'string' || !body.id) {
     throw new ServiceError('unauthenticated', 401);

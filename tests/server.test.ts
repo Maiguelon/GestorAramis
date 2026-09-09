@@ -10,19 +10,20 @@ import { decryptRefreshToken, DRIVE_SCOPE, encryptRefreshToken, exchangeGoogleCo
 describe('production worker fails closed', () => {
   it('health reveals no credentials and makes no integration claim', async () => {
     const response = await worker.fetch(new Request('https://app.test/api/health'), { GOOGLE_CLIENT_SECRET: 'NEVER_PRINT' });
-    expect(await response.json()).toEqual({ service: 'gestor-aramis', status: 'scaffold', businessApi: 'unavailable' });
+    expect(await response.json()).toEqual({ service: 'gestor-aramis', status: 'ok', businessApi: 'team-core', configured: false });
   });
   it('missing config cannot silently run the demo', async () => {
     const response = await worker.fetch(new Request('https://app.test/api/pieces'), {});
     expect(response.status).toBe(503);
-    expect(await response.json()).toEqual({ error: 'configuration_missing' });
+    expect(await response.json()).toEqual({ error: 'configuration_missing', code: 'configuration_missing' });
   });
   it('configured services do not enable incomplete business endpoints', async () => {
     const response = await worker.fetch(new Request('https://app.test/api/drive/upload', { method: 'POST' }), {
       SUPABASE_URL: 'https://example.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'test', SUPABASE_SERVICE_ROLE_KEY: 'secret',
+      ARAMIS_WORKSPACE_ID: '00000000-0000-4000-8000-000000000001',
     });
     expect(response.status).toBe(501);
-    expect(await response.json()).toEqual({ error: 'feature_unavailable' });
+    expect(await response.json()).toEqual({ error: 'feature_unavailable', code: 'feature_unavailable' });
   });
 });
 
@@ -142,7 +143,7 @@ describe('Drive uploads and private video streams', () => {
     const init = fetcher.mock.calls[0][1]!;
     expect(new Headers(init.headers).get('X-Upload-Content-Length')).toBe('100');
     expect(JSON.parse(init.body as string).appProperties.requestId).toBe('request');
-    expect(init.redirect).toBe('error');
+    expect(init.redirect).toBe('manual');
   });
   it('refuses off-origin resumable locations before leaking tokens', async () => {
     const fetcher = vi.fn(async () => new Response(null, { headers: { Location: 'https://evil.test/upload?upload_id=steal' } }));

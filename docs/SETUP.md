@@ -1,8 +1,8 @@
 # Cuentas y conexión de servicios — Gestor Aramis
 
-Estado al 6 de septiembre de 2026: se puede trabajar y probar localmente sin crear cuentas. La aplicación usa una demostración local declarada. Existen una migración PostgreSQL probada y módulos de servidor probados en aislamiento; **crear las cuentas y agregar sus claves todavía no convierte el prototipo en una aplicación conectada**. Faltan los adaptadores, las rutas de negocio y las pruebas con servicios reales indicadas abajo.
+Actualización al 9 de septiembre de 2026: el bloque de clientes, planes mensuales, piezas y acceso del equipo ya tiene API y adaptador Supabase. Para conectarlo, seguir **[SHARED_SETUP.md](SHARED_SETUP.md)** y el estado real en **[PROJECT_STATE.md](../PROJECT_STATE.md)**. La demo sigue disponible por separado. Drive, enlaces de cliente, aprobaciones remotas y correo todavía requieren los bloques siguientes.
 
-No se creó ninguna cuenta, proyecto remoto, carpeta de Drive ni despliegue durante esta entrega. No se enviaron correos ni mensajes externos. El Drive compartido por el usuario sigue siendo una referencia; no autoriza reorganizarlo.
+El usuario creó el proyecto Supabase en São Paulo y su usuario de acceso. Se instalaron las dos migraciones mediante el dashboard. No hay despliegue Cloudflare, carpeta de Drive ni envío de correos o mensajes externos. El Drive compartido por el usuario sigue siendo una referencia; no autoriza reorganizarlo. Las secciones siguientes conservan las instrucciones de los servicios pendientes; para equipo y despliegue de este bloque prevalece SHARED_SETUP.md.
 
 ## 1. Qué puede continuar sin intervención del usuario
 
@@ -17,7 +17,7 @@ npm run dev
 
 `npm test -- tests/server.test.ts` ejecuta PostgreSQL local mediante PGlite, configura roles de prueba y aplica la migración real. No requiere Docker, Supabase, Drive ni red. Los dos archivos de `supabase/tests/` contienen datos ficticios y sustitutos de Auth para esas pruebas: **no se ejecutan en Supabase real**.
 
-La respuesta de `/api/health` identifica el servidor como `scaffold`. Las demás rutas API devuelven `503 configuration_missing` si falta configuración, o `501 feature_unavailable` si está presente pero la operación todavía no fue implementada. No devuelven datos de demostración.
+`/api/health` identifica `team-core` e indica si están presentes las variables; no certifica conexión a la base. `/api/workspace` y `/api/commands` requieren una sesión de equipo real. Las rutas restantes devuelven `503 configuration_missing` si falta configuración, o `501 feature_unavailable` si aún no existen. No devuelven datos de demostración.
 
 ## 2. Qué pedir al usuario cuando toque probar en línea
 

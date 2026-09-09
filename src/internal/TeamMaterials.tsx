@@ -6,7 +6,7 @@ import { createZip, safeFileName, type ZipEntry } from '../lib/download-zip';
 
 export default function TeamMaterials({ piece, act, onBusy }: {
   piece: Piece;
-  act: (command: Command) => CommandResult | undefined;
+  act: (command: Command) => Promise<CommandResult | undefined>;
   onBusy: (busy: boolean) => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -35,15 +35,15 @@ export default function TeamMaterials({ piece, act, onBusy }: {
       setError(reason instanceof Error ? reason.message : 'No pudimos guardar el material.');
     } finally {
       if (stored.length) {
-        const result = act({ type: 'update-piece', pieceId: piece.id, expectedRevision: revision, patch: { teamAssets: [...existing, ...stored] } });
+        const result = await act({ type: 'update-piece', pieceId: piece.id, expectedRevision: revision, patch: { teamAssets: [...existing, ...stored] } });
         if (!result) setPending(stored);
       }
       setProgress(''); setBusy(false);
     }
   }
-  function attachPending() {
+  async function attachPending() {
     const existing = piece.teamAssets ?? [];
-    const result = act({ type: 'update-piece', pieceId: piece.id, expectedRevision: piece.revision, patch: { teamAssets: [...existing, ...pending.filter(asset => !existing.some(item => item.id === asset.id))] } });
+    const result = await act({ type: 'update-piece', pieceId: piece.id, expectedRevision: piece.revision, patch: { teamAssets: [...existing, ...pending.filter(asset => !existing.some(item => item.id === asset.id))] } });
     if (result) setPending([]);
   }
   async function downloadAll() {

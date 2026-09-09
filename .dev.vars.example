@@ -1,0 +1,5 @@
+# Copiar a .dev.vars (ignorado). Usado por Worker local / Pages Functions.
+SUPABASE_URL="https://PROJECT_REF.supabase.co"
+SUPABASE_PUBLISHABLE_KEY=""
+ARAMIS_WORKSPACE_ID=""
+# El acceso del equipo usa su JWT y RLS. No necesita service_role.

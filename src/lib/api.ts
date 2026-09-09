@@ -3,6 +3,7 @@ import type { Command, CommandResult, WorkspaceState } from '../../contracts/dom
 import { applyCommand, DomainError, isCalendarDate, isPlanMonth } from '../domain/engine';
 import { createSeed } from '../domain/seed';
 import { assertPublicCommandAccess, getClientView } from '../domain/selectors';
+import { sharedWorkspace } from './shared-api';
 
 export const APP_MODE = import.meta.env.VITE_APP_MODE || 'demo';
 export const DEMO_STORAGE_KEY = 'aramis.workspace.demo.v1';
@@ -131,12 +132,13 @@ export function resetDemo() {
   notify();
 }
 export function useWorkspace() {
-  const [state, setState] = useState(readWorkspace);
+  const [state, setState] = useState(() => APP_MODE === 'demo' ? readWorkspace() : sharedWorkspace.getSnapshot().workspace!.state);
   const [error, setError] = useState('');
-  useEffect(() => subscribe(() => { try { setState(readWorkspace()); } catch (error) { setError(error instanceof Error ? error.message : 'No pudimos leer los datos.'); } }), []);
-  function execute(command: Command) {
-    try { const result = runCommand(command); setError(''); return result; }
+  const [shared, setShared] = useState(sharedWorkspace.getSnapshot);
+  useEffect(() => APP_MODE === 'demo' ? subscribe(() => { try { setState(readWorkspace()); } catch (error) { setError(error instanceof Error ? error.message : 'No pudimos leer los datos.'); } }) : sharedWorkspace.subscribe(() => { const next = sharedWorkspace.getSnapshot(); setShared(next); if (next.workspace) setState(next.workspace.state); if (!next.busy && !next.uncertain && !next.error) setError(''); }), []);
+  async function execute(command: Command): Promise<CommandResult> {
+    try { const result = APP_MODE === 'demo' ? runCommand(command) : await sharedWorkspace.execute(command); setError(''); return result; }
     catch (error) { setError(error instanceof Error ? error.message : 'No pudimos guardar el cambio.'); throw error; }
   }
-  return { state, execute, error };
+  return { state, execute, error: APP_MODE === 'demo' ? error : shared.error || error, memberId: APP_MODE === 'demo' ? 'member-lucia' : shared.workspace?.memberId ?? '', shared, retryPending: sharedWorkspace.retryPending };
 }

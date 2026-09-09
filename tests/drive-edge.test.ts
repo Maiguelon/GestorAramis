@@ -94,7 +94,7 @@ describe('Drive immutable binary review snapshots', () => {
     expect(init.method).toBe('PATCH');
     expect(JSON.parse(init.body)).toEqual({ keepForever: true });
     expect(new Headers(init.headers).get('Authorization')).toBe('Bearer token');
-    expect(init.redirect).toBe('error');
+    expect(init.redirect).toBe('manual');
   });
 
   it.each([
@@ -147,7 +147,7 @@ describe('Drive immutable binary review snapshots', () => {
     const [url, init] = fetcher.mock.calls[2];
     expect(url).toBe('https://www.googleapis.com/drive/v3/files/file/revisions/original-revision?alt=media');
     expect(new Headers(init.headers).get('Range')).toBe('bytes=0-2');
-    expect(init.redirect).toBe('error');
+    expect(init.redirect).toBe('manual');
   });
 
   it.each([404, 403])('never falls back to current file content if revision media returns %s', async (status) => {

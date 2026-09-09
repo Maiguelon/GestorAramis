@@ -88,7 +88,8 @@ function validateExpectation(expected: UploadExpectation): void {
 }
 
 async function upstream(fetcher: Fetcher, url: string, init: RequestInit): Promise<Response> {
-  try { return await fetcher(url, { ...init, redirect: 'error' }); }
+  // Workers supports manual/follow only; callers validate status (including resumable 308).
+  try { return await fetcher(url, { ...init, redirect: 'manual' }); }
   catch { throw new ServiceError('drive_unavailable', 502); }
 }
 

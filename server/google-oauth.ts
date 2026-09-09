@@ -56,7 +56,7 @@ async function tokenRequest(
   let response: Response;
   try {
     response = await fetcher(TOKEN_URL, {
-      method: 'POST', redirect: 'error',
+      method: 'POST', redirect: 'manual',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ client_id: config.clientId, client_secret: config.clientSecret, ...fields }),
     });

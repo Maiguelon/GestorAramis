@@ -2,7 +2,7 @@
 
 ## Google Cloud — revisión de configuración (2026-09-09)
 
-Proyecto existente `gestor-aramis`, cuenta de conexión indicada por Miguel: `miguelcarreteroangel@gmail.com`. Verificado desde consola: Drive API en lista de APIs habilitadas; cliente OAuth web Gestor Aramis Web creado, callback correcto `https://gestor-aramis.pages.dev/api/google/callback`; audiencia External/Testing. No hay usuarios de prueba ni scopes guardados. Preparado drive.file en selector, sin guardar a la espera de confirmación solicitada para completar scope y usuario de prueba. Pendiente ubicación del JSON descargado; no se leyeron secretos.
+Proyecto existente `gestor-aramis`, cuenta de conexión indicada por Miguel: `miguelcarreteroangel@gmail.com`. Verificado desde consola: Drive API en lista de APIs habilitadas; cliente OAuth web Gestor Aramis Web creado, callback correcto `https://gestor-aramis.pages.dev/api/google/callback`; audiencia External/Testing. Miguel confirmó completar ajustes: drive.file guardado (notificación de éxito) y correo agregado como usuario de prueba (1 usuario en tabla). JSON OAuth localizado en Descargas; validado por script que proyecto, cliente y callback coinciden y contiene secreto, sin imprimir contenido ni copiarlo a Git. Credenciales aún no instaladas en Cloudflare ni usadas para conectar Drive.
 
 Audience muestra aviso de Branding incompleto; nombre, soporte y contacto presentes, dominio de Pages presente, enlaces de homepage/privacidad/términos vacíos. Revisar antes de publicar OAuth; no inventar URLs legales. Integración/callback siguen pendientes. Se mantiene el alcance de preparación, sin cambios de producto ni Drive.
 

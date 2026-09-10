@@ -5,13 +5,13 @@ Versión acordada el 2026-09-06. Objetivo: coordinación interna visible para la
 ## Estados y regla de cierre
 Pendiente → En curso → Probado en aislamiento → Integrado. Bloqueado siempre indica la dependencia. Demo/local y servicios reales se informan por separado. Una interfaz simulada NO completa un bloque de producción.
 
-| Bloque | Dependencias | Entrega | Aceptación | Estado al 2026-09-09 |
+| Bloque | Dependencias | Entrega | Aceptación | Estado al 2026-09-10 |
 |---|---|---|---|---|
 | C00 Contratos | — | Roadmap, estado, decisiones, AGENTS, tipos, fixtures | Coherencia entre datos, operaciones y permisos | Integrado localmente |
 | C01 Aplicación | C00 | Rutas, componentes, marca, build y modo demo | Arranca y navega en escritorio/móvil, estados de error/vacío | Integrado en demo |
 | C02 Datos/negocio | C00/C01 | SQL, migraciones, API, transiciones, historial | Invariantes, idempotencia y concurrencia; RLS | Núcleo de equipo integrado; migraciones instaladas en Supabase; ver evidencia real en PROJECT_STATE |
 | C03 Acceso | C02 | Sesión equipo, luego OTP, roles, enlaces scope/revocación | Aislamiento API entre clientes, recuperación y correo real | Login equipo correo/contraseña integrado; usuario Miguel creado; OTP/enlaces remotos pendientes |
-| C04 Drive | Inicia C01, integra C02/C03 | OAuth, selección, subidas, streaming privado, versiones | Video real reanudado y reproducido en teléfono; permisos y cuota | Primitivas probadas aisladas; integración y Google real pendientes |
+| C04 Drive | Inicia C01, integra C02/C03 | OAuth, selección, subidas, streaming privado, versiones | Video real reanudado y reproducido en teléfono; permisos y cuota | Integración interna implementada y probada con mocks; esquema/secretos alojados; consentimiento y prueba Google real pendientes |
 | C05 Panel interno | Inicia C01, integra C02/C03 | Semana, bloqueos, filtros, alta, responsable, fechas, detalle | Hermana identifica quién debe avanzar; persistencia y errores | Planificación compartida conectada; materiales disponibles en demo, Drive pendiente; falta prueba Miguel/Eliana |
 | C06 Calendario cliente | Inicia C01, integra C02/C03 | Mes/agenda, enlace lectura/sesión, icono móvil | No filtra internos; fechas consistentes; acceso Android/iPhone | Integrado en demo; sesión y teléfonos reales pendientes |
 | C07 Aprobaciones | C02/C03/C04 | Preview/copy, aprobar/cambiar/comentar, historial | Versión exacta, reintentos, nueva revisión invalida anterior | Integrado en demo; medios reales pendientes |

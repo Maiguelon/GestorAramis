@@ -36,6 +36,21 @@ export class SharedWorkspaceStore {
   private pending: { command: Command; requestId: string } | null = null;
   constructor(private baseUrl = '', private transport: typeof fetch = (...args) => fetch(...args), private newId = () => crypto.randomUUID(), private journal?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>) {}
   getSnapshot = () => this.snapshot;
+  /** Same-origin authenticated transport for Drive. The returned body can stream. */
+  async authenticatedFetch(path: string, init: RequestInit = {}): Promise<Response> {
+    if (!path.startsWith('/api/drive/') || /[\\?#]/.test(path)) throw new SharedApiError('VALIDATION', 'Ruta no permitida.');
+    if (!this.token || !this.userId) throw new SharedApiError('SESSION_REQUIRED', 'Ingresá para abrir el espacio del equipo.');
+    const generation = this.generation;
+    const controller = new AbortController(); this.controllers.add(controller);
+    const timer = setTimeout(() => controller.abort(), 30_000);
+    try {
+      const headers = new Headers(init.headers); headers.set('Authorization', `Bearer ${this.token}`);
+      const response = await this.transport(path, { ...init, headers, cache: 'no-store', credentials: 'same-origin',
+        signal: init.signal ? AbortSignal.any([controller.signal, init.signal]) : controller.signal });
+      if (generation !== this.generation) { await response.body?.cancel(); throw new SharedApiError('SESSION_CHANGED', 'La sesión cambió.'); }
+      return response;
+    } finally { clearTimeout(timer); this.controllers.delete(controller); }
+  }
   getPendingCommand = () => this.pending?.command ?? null;
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   private update(patch: Partial<SharedSnapshot>) {

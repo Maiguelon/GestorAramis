@@ -1,6 +1,7 @@
 import { verifySupabaseUser } from './authz';
 import { ServiceError, type Fetcher } from './errors';
 import { callWorkspaceRpc } from './workspace-repository';
+import { googleCallbackRedirect, handleDriveRequest } from './drive-service';
 
 export interface WorkerEnv {
   SUPABASE_URL?: string;
@@ -10,6 +11,7 @@ export interface WorkerEnv {
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   GOOGLE_REDIRECT_URI?: string;
+  DRIVE_ENCRYPTION_KEY?: string;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -67,7 +69,7 @@ async function commandBody(request: Request): Promise<{ command: Record<string, 
   return { command, requestId: body.requestId };
 }
 
-/** Same-origin API. Auth JWT reaches Postgres; no service-role bypass for team operations. */
+/** Same-origin API. Workspace commands use the user JWT; Drive's private bridge rechecks staff. */
 export async function handleRequest(request: Request, env: WorkerEnv, fetcher: Fetcher = fetch): Promise<Response> {
   try {
     const url = new URL(request.url);
@@ -80,6 +82,8 @@ export async function handleRequest(request: Request, env: WorkerEnv, fetcher: F
       return Response.json({ service: 'gestor-aramis', status: 'ok', businessApi: 'team-core', configured }, { headers: HEADERS });
     }
     const config = configuration(env);
+    if (url.pathname === '/api/google/callback') return googleCallbackRedirect(request);
+    if (url.pathname.startsWith('/api/drive/')) return await handleDriveRequest(request, env, config, fetcher);
     if (!['/api/workspace', '/api/commands'].includes(url.pathname)) throw new ServiceError('feature_unavailable', 501);
     if ((url.pathname === '/api/workspace' && request.method !== 'GET')
       || (url.pathname === '/api/commands' && request.method !== 'POST')) throw new ServiceError('method_not_allowed', 405);

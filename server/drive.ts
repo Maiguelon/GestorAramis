@@ -3,6 +3,8 @@ import { ServiceError, type Fetcher } from './errors';
 const API = 'https://www.googleapis.com/drive/v3/files';
 const UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
 const FILE_FIELDS = 'id,name,mimeType,size,md5Checksum,parents,appProperties,trashed,headRevisionId';
+const FOLDER_FIELDS = 'id,name,mimeType,parents,appProperties,trashed';
+const FOLDER_MIME = 'application/vnd.google-apps.folder';
 const REVISION_FIELDS = 'id,mimeType,size,md5Checksum,keepForever';
 const ID = /^[A-Za-z0-9_-]{1,160}$/;
 const INLINE_MIMES = new Set(['video/mp4', 'video/webm', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -14,6 +16,8 @@ export interface UploadExpectation {
   clientId: string;
   requestId: string;
   parentFolderId: string;
+  /** ID reserved through generateDriveId and persisted before starting the upload. */
+  driveFileId?: string;
   name: string;
   mimeType: string;
   size: number;
@@ -64,6 +68,15 @@ export interface SnapshotDestination {
   name: string;
 }
 
+export interface DriveFolderExpectation {
+  /** Caller must reserve and persist this ID before creating the folder. */
+  id: string;
+  name: string;
+  parentId?: string;
+  workspaceId: string;
+  logicalKey: string;
+}
+
 function safeId(id: string): string {
   if (typeof id !== 'string' || !ID.test(id)) throw new ServiceError('invalid_file', 400);
   return id;
@@ -81,6 +94,7 @@ function sessionUrl(value: string): string {
 
 function validateExpectation(expected: UploadExpectation): void {
   [expected.uploadId, expected.workspaceId, expected.clientId, expected.requestId, expected.parentFolderId].forEach(safeId);
+  if (expected.driveFileId !== undefined) safeId(expected.driveFileId);
   if (!expected.name.trim() || expected.name.length > 255 || /[\u0000-\u001f]/.test(expected.name) ||
     !/^[\w.+-]+\/[\w.+-]+$/.test(expected.mimeType) || !Number.isSafeInteger(expected.size) || expected.size <= 0) {
     throw new ServiceError('invalid_upload', 400);
@@ -104,6 +118,100 @@ function upstreamError(status: number): ServiceError {
 function headers(token: string): Headers {
   if (!token || /[\r\n]/.test(token)) throw new ServiceError('google_reconnect_required', 502);
   return new Headers({ Authorization: `Bearer ${token}` });
+}
+
+/** Reserve once and persist the ID; retry creation with that same ID after an uncertain response. */
+export async function generateDriveId(token: string, fetcher: Fetcher = fetch): Promise<string> {
+  const query = new URLSearchParams({ count: '1', space: 'drive', type: 'files', fields: 'ids' });
+  const response = await upstream(fetcher, `${API}/generateIds?${query}`, { headers: headers(token) });
+  if (!response.ok) throw upstreamError(response.status);
+  const data = await response.json().catch(() => null) as { ids?: unknown } | null;
+  if (!data || !Array.isArray(data.ids) || data.ids.length !== 1 || typeof data.ids[0] !== 'string' || !ID.test(data.ids[0])) {
+    throw new ServiceError('invalid_drive_response', 502);
+  }
+  return data.ids[0];
+}
+
+/** The stable permission ID prevents an accidental reconnect from replacing another account's tree. */
+export async function getDriveAccount(token: string, fetcher: Fetcher = fetch): Promise<{ email: string; permissionId: string }> {
+  const query = new URLSearchParams({ fields: 'user(emailAddress,permissionId)' });
+  const response = await upstream(fetcher, `https://www.googleapis.com/drive/v3/about?${query}`, { headers: headers(token) });
+  if (!response.ok) throw upstreamError(response.status);
+  const data = await response.json().catch(() => null) as { user?: { emailAddress?: unknown; permissionId?: unknown } } | null;
+  const user = data?.user;
+  if (!user || typeof user.emailAddress !== 'string' || user.emailAddress.length > 320 ||
+    !/^[^\s@]+@[^\s@]+$/.test(user.emailAddress) || /[\u0000-\u001f\u007f]/.test(user.emailAddress) ||
+    typeof user.permissionId !== 'string' || !ID.test(user.permissionId)) {
+    throw new ServiceError('invalid_drive_response', 502);
+  }
+  return { email: user.emailAddress, permissionId: user.permissionId };
+}
+
+async function verifiedFolder(response: Response, expected: DriveFolderExpectation): Promise<{ id: string; name: string }> {
+  const data = await response.json().catch(() => null) as Partial<DriveFile> | null;
+  if (!data || typeof data.id !== 'string' || !ID.test(data.id) || typeof data.name !== 'string' || !data.name.trim() ||
+    typeof data.mimeType !== 'string' || typeof data.trashed !== 'boolean' ||
+    (data.parents !== undefined && (!Array.isArray(data.parents) || !data.parents.every(parent => typeof parent === 'string' && ID.test(parent)))) ||
+    !data.appProperties || typeof data.appProperties !== 'object' || Array.isArray(data.appProperties) ||
+    !Object.values(data.appProperties).every(value => typeof value === 'string')) {
+    throw new ServiceError('invalid_drive_response', 502);
+  }
+  if (data.id !== expected.id || data.mimeType !== FOLDER_MIME || data.trashed ||
+    data.appProperties.workspaceId !== expected.workspaceId || data.appProperties.logicalKey !== expected.logicalKey ||
+    (expected.parentId !== undefined && !data.parents?.includes(expected.parentId))) {
+    throw new ServiceError('drive_folder_mismatch', 409);
+  }
+  // Renaming a known folder in Drive does not change its identity and must not create a duplicate.
+  return { id: data.id, name: data.name };
+}
+
+/**
+ * Creates only a specifically reserved app-owned folder. Never searches, adopts or alters existing
+ * client folders by name. Concurrent calls and retries resolve the same ID and verify its binding.
+ */
+export async function ensureDriveFolder(
+  token: string, expected: DriveFolderExpectation, fetcher: Fetcher = fetch,
+): Promise<{ id: string; name: string }> {
+  [expected.id, expected.workspaceId].forEach(safeId);
+  if (expected.parentId !== undefined) safeId(expected.parentId);
+  if (typeof expected.name !== 'string' || !expected.name.trim() || expected.name.length > 255 || /[\u0000-\u001f]/.test(expected.name) ||
+    typeof expected.logicalKey !== 'string' || !expected.logicalKey.trim() || /[\u0000-\u001f]/.test(expected.logicalKey) ||
+    new TextEncoder().encode('logicalKey' + expected.logicalKey).length > 124) {
+    throw new ServiceError('invalid_folder', 400);
+  }
+  const query = new URLSearchParams({ fields: FOLDER_FIELDS, supportsAllDrives: 'true' });
+  const read = () => upstream(fetcher, `${API}/${expected.id}?${query}`, { headers: headers(token) });
+  const existing = await read();
+  if (existing.ok) return verifiedFolder(existing, expected);
+  if (existing.status !== 404) throw upstreamError(existing.status);
+
+  const requestHeaders = headers(token);
+  requestHeaders.set('Content-Type', 'application/json; charset=UTF-8');
+  let created: Response | undefined;
+  let creationError = new ServiceError('drive_unavailable', 502);
+  try {
+    created = await upstream(fetcher, `${API}?${query}`, {
+      method: 'POST', headers: requestHeaders,
+      body: JSON.stringify({
+        id: expected.id, name: expected.name, mimeType: FOLDER_MIME,
+        ...(expected.parentId === undefined ? {} : { parents: [expected.parentId] }),
+        appProperties: { workspaceId: expected.workspaceId, logicalKey: expected.logicalKey },
+      }),
+    });
+  } catch (error) {
+    if (!(error instanceof ServiceError) || error.code !== 'drive_unavailable') throw error;
+    creationError = error;
+  }
+  if (created) {
+    if (created.ok) return verifiedFolder(created, expected);
+    // A conflict can be our successful concurrent create; 5xx/408 may have committed before failing.
+    if (created.status !== 409 && created.status !== 408 && created.status < 500) throw upstreamError(created.status);
+    creationError = created.status === 409 ? new ServiceError('drive_folder_mismatch', 409) : upstreamError(created.status);
+  }
+  const recovered = await read();
+  if (recovered.ok) return verifiedFolder(recovered, expected);
+  if (recovered.status === 404) throw creationError;
+  throw upstreamError(recovered.status);
 }
 
 async function parseFile(response: Response): Promise<DriveFile> {
@@ -229,7 +337,8 @@ export async function initiateDriveUpload(
   const query = new URLSearchParams({ uploadType: 'resumable', fields: FILE_FIELDS, supportsAllDrives: 'true' });
   const response = await upstream(fetcher, `${UPLOAD}?${query}`, {
     method: 'POST', headers: requestHeaders,
-    body: JSON.stringify({ name: expected.name, mimeType: expected.mimeType, parents: [expected.parentFolderId], appProperties: {
+    body: JSON.stringify({ ...(expected.driveFileId === undefined ? {} : { id: expected.driveFileId }),
+      name: expected.name, mimeType: expected.mimeType, parents: [expected.parentFolderId], appProperties: {
       uploadId: expected.uploadId, workspaceId: expected.workspaceId, clientId: expected.clientId, requestId: expected.requestId,
     } }),
   });
@@ -240,7 +349,8 @@ export async function initiateDriveUpload(
 }
 
 function verifyCompletedFile(file: DriveFile, expected: UploadExpectation): void {
-  if (file.trashed || file.size !== String(expected.size) || file.mimeType !== expected.mimeType ||
+  if ((expected.driveFileId !== undefined && file.id !== expected.driveFileId) ||
+    file.trashed || file.size !== String(expected.size) || file.mimeType !== expected.mimeType ||
     !file.parents.includes(expected.parentFolderId) || !file.md5Checksum ||
     file.appProperties.uploadId !== expected.uploadId || file.appProperties.workspaceId !== expected.workspaceId ||
     file.appProperties.clientId !== expected.clientId || file.appProperties.requestId !== expected.requestId) {
@@ -248,7 +358,11 @@ function verifyCompletedFile(file: DriveFile, expected: UploadExpectation): void
   }
 }
 
-/** Completion is based on Google state and metadata, never the browser's claimed file ID. */
+/**
+ * Completion is based on Google state and metadata, never the browser's claimed file ID.
+ * A vanished session may have finished before persistence failed. Recover only through the
+ * previously reserved file ID, with the same ownership/size/type checks as normal completion.
+ */
 export async function checkDriveUpload(
   token: string, upload: DriveUpload, fetcher: Fetcher = fetch,
 ): Promise<{ status: 'pending'; receivedBytes: number } | { status: 'complete'; file: DriveFile }> {
@@ -264,6 +378,12 @@ export async function checkDriveUpload(
     const receivedBytes = match ? Number(match[1]) + 1 : NaN;
     if (!Number.isSafeInteger(receivedBytes) || receivedBytes < 1 || receivedBytes > upload.expected.size) throw new ServiceError('invalid_drive_response', 502);
     return { status: 'pending', receivedBytes };
+  }
+  if ((response.status === 404 || response.status === 410) && upload.expected.driveFileId) {
+    try { await response.body?.cancel(); } catch { /* Provider error details are not returned. */ }
+    const file = await getDriveFile(token, upload.expected.driveFileId, fetcher);
+    verifyCompletedFile(file, upload.expected);
+    return { status: 'complete', file };
   }
   if (response.status !== 200 && response.status !== 201) throw upstreamError(response.status);
   const completion = await response.json().catch(() => null) as { id?: unknown } | null;
@@ -313,6 +433,19 @@ export async function streamDriveAsset(
   if (range) requestHeaders.set('Range', range);
   const response = await upstream(fetcher, `${API}/${safeId(asset.driveFileId)}?alt=media&supportsAllDrives=true`, { headers: requestHeaders });
   return checkedMediaResponse(response, asset, range);
+}
+
+/** Internal download only. Preserves byte streaming and forces an attachment with a safe name. */
+export async function streamTeamDriveAsset(
+  token: string, asset: StoredAsset, range: string | null, fetcher: Fetcher = fetch,
+): Promise<Response> {
+  const response = await streamDriveAsset(token, asset, range, fetcher);
+  if (response.status === 416) return response;
+  const normalized = new TextDecoder().decode(new TextEncoder().encode(asset.name));
+  const name = Array.from(normalized.replace(/[\u0000-\u001f\u007f/\\]/g, '_')).slice(0, 160).join('').trim() || 'archivo';
+  const encoded = encodeURIComponent(name).replace(/['()*]/g, character => '%' + character.charCodeAt(0).toString(16).toUpperCase());
+  response.headers.set('Content-Disposition', `attachment; filename="archivo"; filename*=UTF-8''${encoded}`);
+  return response;
 }
 
 /** Caller must authorize the persisted review/asset relationship and current share before invoking. */

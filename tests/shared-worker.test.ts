@@ -68,12 +68,12 @@ describe('shared team Worker API', () => {
     expect((await handleRequest(post(body), env, fetcher)).status).toBe(400);
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
-  it('keeps Drive, public actions and review commands unavailable', async () => {
+  it('keeps public actions and review commands unavailable and reports unconfigured Drive', async () => {
     const fetcher = transport();
     expect((await handleRequest(post({ requestId, command: { type: 'create-review' } }), env, fetcher)).status).toBe(501);
-    expect((await handleRequest(request('/api/drive/upload'), env, fetcher)).status).toBe(501);
+    expect(await (await handleRequest(request('/api/drive/status'), env, fetcher)).json()).toEqual({configured:false,connected:false});
     expect((await handleRequest(request('/api/public/calendar'), env, fetcher)).status).toBe(501);
-    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledTimes(3);
   });
   it('rejects cross-origin reads and writes, and wrong methods before contacting Supabase', async () => {
     const fetcher = transport();

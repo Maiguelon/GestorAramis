@@ -1,0 +1,26 @@
+.drive-connection .drive-connected{display:flex;align-items:center;gap:8px;overflow-wrap:anywhere;color:#246846}
+.drive-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:16px 0}
+.drive-actions .text-button{min-height:40px}
+.drive-callback{max-width:700px;margin:8vh auto;padding:24px}
+.drive-callback h1{font-family:Lato,sans-serif;font-size:25px;margin:0 0 20px}
+.drive-callback p{line-height:1.6}
+.drive-materials{min-width:0}
+.drive-materials .error-banner p{margin:4px 0;overflow-wrap:anywhere}
+.drive-file-picker{min-height:68px;margin-bottom:12px}
+.drive-file-picker:has(input:disabled){opacity:.6;cursor:wait}
+.drive-upload-list{display:grid;gap:10px;margin:14px 0 20px}
+.drive-upload{padding:13px 15px;border:1px solid #d7dde5;border-radius:8px;background:#f7f8fa;min-width:0}
+.drive-upload.error{border-color:#c7969e;background:#fff7f8}
+.drive-upload.done{border-color:#bad1c4;background:#f4faf6}
+.drive-upload-heading{display:flex;justify-content:space-between;align-items:baseline;gap:14px;font-size:14px;margin-bottom:6px}
+.drive-upload-heading strong{overflow-wrap:anywhere;min-width:0}
+.drive-upload-heading small{white-space:nowrap;color:#53627a}
+.drive-upload progress{display:block;width:100%;height:8px;margin:10px 0;accent-color:#1b2a41}
+.drive-upload-state{display:flex;gap:6px;align-items:center;font-size:13px;line-height:1.5;color:#43516a}
+.drive-upload-state span{overflow-wrap:anywhere}
+.drive-upload-state small{margin-left:auto;white-space:nowrap}
+.drive-upload .text-button{margin-top:8px;margin-right:16px;min-height:36px}
+.drive-asset video,.drive-asset img{max-height:330px;object-fit:contain;background:#edf0f4}
+.drive-asset .team-asset-info{min-width:0}
+.drive-asset .team-asset-info strong,.drive-asset .team-asset-info small{overflow-wrap:anywhere}
+@media(max-width:600px){.drive-actions{gap:8px}.drive-actions .button{flex:1;justify-content:center}.drive-file-picker{min-height:80px;text-align:center}.drive-upload-heading{font-size:13px}.drive-upload .text-button{min-height:44px}.drive-callback{margin:24px auto;padding:14px}.drive-asset .button{min-height:44px}.drive-upload-state{align-items:flex-start}}

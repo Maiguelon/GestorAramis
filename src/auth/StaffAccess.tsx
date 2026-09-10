@@ -40,6 +40,7 @@ export default function StaffAccess({ children }: { children: ReactNode }) {
   }, [session?.user.id]);
   async function signOut() {
     sharedWorkspace.setSession(null, null); setSession(null); setNotice('');
+    void fetch('/api/drive/media-session', { method: 'DELETE', credentials: 'same-origin', signal: AbortSignal.timeout(3000) }).catch(() => {});
     try {
       const result = await client?.auth.signOut({ scope: 'local' });
       if (result?.error) setNotice('Cerramos la sesión en este navegador. No pudimos confirmar la revocación en el servicio; revisá tu conexión.');

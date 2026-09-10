@@ -38,6 +38,6 @@ El smoke comprueba el sitio en un navegador nuevo, ruta ampliada de texto proteg
 
 Publicación del 2026-09-09: https://53d35498.gestor-aramis.pages.dev. Dominio estable: https://gestor-aramis.pages.dev. Compilación y smoke locales y alojados pasan. Miguel ingresó y se verificaron lectura, guardado del guion de Posteo 02 y persistencia en una carga nueva de la vista de texto. No se cambió DNS, dominio propio ni plan de pago. Login por contraseña no utiliza redirecciones de correo; configurar URL de Auth y retornos al incorporar recuperación/OTP.
 
-El núcleo compartido permite clientes, planes, piezas, guiones y producción. Drive, medios compartidos, calendario/aprobaciones de clientes y correo siguen pendientes. Sólo Miguel tiene usuario habilitado.
+El núcleo compartido permite clientes, planes, piezas, guiones y producción. La integración interna de Drive se incorpora en el bloque del 10/9/2026; configuración y límites en `DRIVE_SETUP.md`, evidencia actual en `PROJECT_STATE.md`. Calendario/aprobaciones de clientes y correo siguen pendientes. Sólo Miguel tiene usuario habilitado.
 
 Para retirar una actualización futura se puede volver a un despliegue previo desde Cloudflare Pages → proyecto → Deployments. Esta primera publicación todavía no tiene una versión anterior estable. El rollback del sitio no revierte datos ni migraciones de Supabase; conservar compatibilidad antes de publicar cambios de esquema.

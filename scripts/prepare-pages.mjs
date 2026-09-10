@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
@@ -54,4 +54,16 @@ await writeFile(join(staging, 'wrangler.json'), JSON.stringify({
   compatibility_date: '2026-09-01',
   vars: { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key, ARAMIS_WORKSPACE_ID: workspace },
 }, null, 2) + '\n');
+const privateValues = ['SUPABASE_SERVICE_ROLE_KEY','GOOGLE_CLIENT_SECRET','DRIVE_ENCRYPTION_KEY'].map(name=>backend[name]).filter(Boolean);
+async function checkNoSecrets(directory) {
+  for (const entry of await readdir(directory,{withFileTypes:true})) {
+    const path=join(directory,entry.name);
+    if(entry.isDirectory()) await checkNoSecrets(path);
+    else {
+      const bytes=await readFile(path);
+      if(privateValues.some(value=>bytes.includes(Buffer.from(value)))) throw new Error(`Private value found in deployment output: ${relative(staging,path)}. Do not publish.`);
+    }
+  }
+}
+await checkNoSecrets(staging);
 console.log('Pages package ready in work/pages-deploy. Nothing has been published.');

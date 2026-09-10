@@ -17,13 +17,13 @@ describe('production worker fails closed', () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: 'configuration_missing', code: 'configuration_missing' });
   });
-  it('configured services do not enable incomplete business endpoints', async () => {
-    const response = await worker.fetch(new Request('https://app.test/api/drive/upload', { method: 'POST' }), {
+  it('configured Drive requires an authenticated caller', async () => {
+    const response = await worker.fetch(new Request('https://app.test/api/drive/uploads', { method: 'POST' }), {
       SUPABASE_URL: 'https://example.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'test', SUPABASE_SERVICE_ROLE_KEY: 'secret',
       ARAMIS_WORKSPACE_ID: '00000000-0000-4000-8000-000000000001',
     });
-    expect(response.status).toBe(501);
-    expect(await response.json()).toEqual({ error: 'feature_unavailable', code: 'feature_unavailable' });
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'unauthenticated', code: 'unauthenticated' });
   });
 });
 

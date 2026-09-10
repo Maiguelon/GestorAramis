@@ -1,5 +1,16 @@
 # Estado del proyecto
 
+## Drive interno — integración en curso (2026-09-10)
+
+Este bloque reemplaza las notas anteriores que indicaban no implementar Drive todavía: Miguel autorizó la integración. UI interna, OAuth, RPC privada, carpetas reservadas, múltiples cargas reanudables, streaming privado y ZIP ya están implementados. Revisión independiente corrigió reintentos concurrentes, recuperación de carpeta reservada y refresh de tokens. Demo conservada; no se incorporaron cambios pendientes de entrada de Diseño ni POV cliente.
+
+- Migración `202609100001_drive_team.sql` aplicada una vez en Supabase alojado. Comprobación real por REST: `connection-get` con clave de servidor y miembro Miguel devuelve 200/null; clave pública sin sesión denegada 401/42501 y miembro inexistente con clave de servidor denegado 403/42501. La conexión Google todavía no existe.
+- JSON OAuth existente leído sin imprimir valores; credenciales y clave AES guardadas sólo en `.dev.vars` ignorado. Instalados cinco secretos de Pages **production**, mediante Wrangler, en el proyecto existente. Sin cambios DNS, pagos ni nuevas cuentas.
+- Paquete compartido compila y Worker dry-run pasa. Validación final: 382 pruebas unitarias, 20 recorridos demo y 15 recorridos compartidos con Auth/Drive simulados pasan. Incluyen pausa, respuesta perdida, sesión de carga vencida, ZIP binario y cancelación al cerrar sesión.
+- Miguel conserva sesión en el dominio publicado. Pendientes inmediatos: publicación de esta versión, consentimiento Google `drive.file`, carga/preview/descarga reales y registro de evidencia. Nunca afirmar conexión/carga real antes de esas verificaciones.
+
+Retomar por `docs/DRIVE_SETUP.md` y `handoffs/C04-drive-integration.md`. No volver a capturar claves, generar otra AES ni aplicar la migración. No copiar valores privados a la conversación. La integración real todavía no está terminada; teléfono real y permisos con una segunda identidad siguen pendientes del piloto.
+
 ## Google Cloud — revisión de configuración (2026-09-09)
 
 Proyecto existente `gestor-aramis`, cuenta de conexión indicada por Miguel: `miguelcarreteroangel@gmail.com`. Verificado desde consola: Drive API en lista de APIs habilitadas; cliente OAuth web Gestor Aramis Web creado, callback correcto `https://gestor-aramis.pages.dev/api/google/callback`; audiencia External/Testing. Miguel confirmó completar ajustes: drive.file guardado (notificación de éxito) y correo agregado como usuario de prueba (1 usuario en tabla). JSON OAuth localizado en Descargas; validado por script que proyecto, cliente y callback coinciden y contiene secreto, sin imprimir contenido ni copiarlo a Git. Credenciales aún no instaladas en Cloudflare ni usadas para conectar Drive.

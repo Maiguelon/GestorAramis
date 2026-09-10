@@ -13,6 +13,8 @@ const blankState = (): WorkspaceState => ({ schemaVersion: 1, clients: [], membe
 
 /** Auth and API are browser mocks. These tests do not prove real Supabase permissions. */
 async function mockServices(context: BrowserContext) {
+  await context.route('**/api/drive/status', route => route.fulfill({ json: { configured: false, connected: false } }));
+  await context.route('**/api/drive/media-session', route => route.fulfill({ json: { ok: true } }));
   let state = blankState();
   const operations: Array<{ command: Command; requestId: string }> = [];
   const replies = new Map<string, CommandResult>();

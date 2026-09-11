@@ -1,6 +1,6 @@
 # C04 — integración interna de Drive
 
-Fecha: 2026-09-10. Estado: integrado localmente, esquema y configuración alojados; falta consentimiento y prueba Google real.
+Fecha: 2026-09-10. Estado: publicado; esquema y configuración alojados; falta terminar consentimiento y prueba Google real. Código `9c9338f`, despliegue `efec34ff.gestor-aramis.pages.dev`.
 
 ## Alcance
 
@@ -18,7 +18,9 @@ Revisión cruzada: refresh usa sólo campos permitidos; reservas conservan padre
 
 Validación final: 382 unitarias + 20 recorridos demo + 15 compartidos con mocks pasan. Incluyen recuperación de sesión vencida, pausa/reinicio desde bytes confirmados, retorno OAuth de un uso, ZIP binario completo y cancelación de lectura tras cierre de sesión en otra pestaña. Typecheck y Worker dry-run pasan.
 
-Seguir: publicar Pages y ejecutar smoke. Abrir Configuración→Conectar Drive en la sesión existente de Miguel. El consentimiento Google requiere su confirmación porque concede acceso a archivos de su cuenta. Luego subir un archivo sintético identificado en Prueba de conexión, verificar material, persistencia y descarga. No usar videos personales de Descargas; esa solicitud fue cancelada anteriormente.
+Smoke del dominio estable pasa: login, ruta de texto protegida, API configurada y denegación anónima/de otros orígenes, incluyendo Drive. Sesión de Miguel y configuración real de Drive verificadas desde UI. Un retorno Google quedó pendiente durante la interrupción y venció; se rechazó correctamente y se inició uno nuevo.
+
+Seguir: completar la autorización desde Configuración→Conectar Drive en la sesión existente de Miguel. El consentimiento Google requiere su confirmación porque concede acceso a archivos de su cuenta. Luego subir un archivo sintético identificado en Prueba de conexión, verificar material, persistencia y descarga. No usar videos personales de Descargas; esa solicitud fue cancelada anteriormente.
 
 ## Límites
 

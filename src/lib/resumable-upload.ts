@@ -150,6 +150,10 @@ export async function uploadResumableFile(
     const end = wasProbe ? acknowledgedBytes : Math.min(acknowledgedBytes + chunkSize, total);
     const headers = new Headers({
       'Content-Range': wasProbe ? `bytes */${total}` : `bytes ${acknowledgedBytes}-${end - 1}/${total}`,
+      // Google's upload compatibility protocol represents incomplete chunks as
+      // HTTP 200 + X-Http-Status-Code-Override: 308. This avoids native fetch
+      // treating a resumable 308 with Location as a redirect; redirects stay blocked.
+      'X-GUploader-No-308': 'yes',
     });
     if (!wasProbe) headers.set('Content-Type', session.mimeType);
     // Fetch computes Content-Length from the Blob. Browsers forbid setting it manually.
@@ -168,13 +172,19 @@ export async function uploadResumableFile(
     aborted(options.signal);
     await discardBody(response);
 
-    if (response.status === 200 || response.status === 201) {
+    const override = response.headers.get('X-Http-Status-Code-Override');
+    if (override !== null && (override !== '308' || response.status !== 200)) {
+      throw new ResumableUploadError('invalid_upload_response');
+    }
+    const status = override === '308' ? 308 : response.status;
+
+    if (status === 200 || status === 201) {
       if (!wasProbe && end !== total) throw new ResumableUploadError('invalid_upload_response');
       acknowledgedBytes = total;
       progress('uploaded_unverified');
       return { status: 'uploaded_unverified', uploadId: session.uploadId, uploadedBytes: total };
     }
-    if (response.status === 308) {
+    if (status === 308) {
       const next = acknowledgedRange(response, total);
       if (next < acknowledgedBytes || (!wasProbe && next > end)) throw new ResumableUploadError('invalid_upload_response');
       if (next > acknowledgedBytes) {

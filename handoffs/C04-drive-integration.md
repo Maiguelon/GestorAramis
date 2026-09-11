@@ -1,6 +1,6 @@
 # C04 — integración interna de Drive
 
-Fecha: 2026-09-10. Estado: publicado; esquema y configuración alojados; falta terminar consentimiento y prueba Google real. Código `9c9338f`, despliegue `efec34ff.gestor-aramis.pages.dev`.
+Fecha: 2026-09-11. Estado: conexión Google confirmada; prueba de carga real en curso. Código publicado `9c9338f`, despliegue `efec34ff.gestor-aramis.pages.dev`; corrección del transporte pendiente de publicar.
 
 ## Alcance
 
@@ -12,7 +12,7 @@ Revisión cruzada: refresh usa sólo campos permitidos; reservas conservan padre
 
 - Cinco secretos del servidor instalados en Pages producción (no previews). Claves locales ignoradas por Git; `pages:prepare` no las empaqueta y verifica sus valores contra el paquete generado.
 - Migración aplicada al Supabase existente desde SQL Editor. REST real del puente responde200 para Miguel,401 para anónimo y403 para usuario ajeno/inexistente.
-- Ningún archivo o carpeta se creó aún en Google: OAuth no se completó. No hubo modificación del Drive preexistente.
+- Miguel completó personalmente OAuth; el gestor confirmó la conexión. La primera carga sintética creó las carpetas propias de la pieza Reel 01 del cliente Prueba de conexión, pero se interrumpió sin adjuntar el video. No hubo modificación del Drive preexistente.
 
 ## Evidencia y siguiente paso
 
@@ -20,7 +20,7 @@ Validación final: 382 unitarias + 20 recorridos demo + 15 compartidos con mocks
 
 Smoke del dominio estable pasa: login, ruta de texto protegida, API configurada y denegación anónima/de otros orígenes, incluyendo Drive. Sesión de Miguel y configuración real de Drive verificadas desde UI. Un retorno Google quedó pendiente durante la interrupción y venció; se rechazó correctamente y se inició uno nuevo.
 
-Seguir: completar la autorización desde Configuración→Conectar Drive en la sesión existente de Miguel. El consentimiento Google requiere su confirmación porque concede acceso a archivos de su cuenta. Luego subir un archivo sintético identificado en Prueba de conexión, verificar material, persistencia y descarga. No usar videos personales de Descargas; esa solicitud fue cancelada anteriormente.
+Seguir: publicar y comprobar la corrección del protocolo reanudable. Una prueba con Chromium y servidor HTTP real distinguió 308 sin Location (legible) de 308 con Location (rechazado como redirección); se pide la respuesta alternativa 200 + X-Http-Status-Code-Override: 308 sin permitir redirecciones. Verificar contra Google real, luego preview, persistencia y descargas. Los archivos sintéticos están en work/aramis-prueba-drive.webm (2.917.815 bytes) y work/aramis-prueba-drive-grande.webm (8.294.597 bytes); no usar videos personales de Descargas.
 
 ## Límites
 

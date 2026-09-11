@@ -5,7 +5,7 @@ import { DRIVE_CHUNK_SIZE as CHUNK, uploadResumableFile, type BrowserUploadSessi
 const sessionUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=PRIVATE-CAPABILITY';
 const session = (size: number): BrowserUploadSession => ({ uploadId: 'upload-record', sessionUrl, expectedSize: size, mimeType: 'video/mp4' });
 const blob = (size: number) => new Blob([new Uint8Array(size)], { type: 'video/mp4' });
-const pending = (bytes = 0) => new Response(null, { status: 308, headers: bytes ? { Range: `bytes=0-${bytes - 1}` } : {} });
+const pending = (bytes = 0) => new Response(null, { status: 200, headers: { 'X-Http-Status-Code-Override': '308', ...(bytes ? { Range: `bytes=0-${bytes - 1}` } : {}) } });
 const complete = () => new Response('provider metadata deliberately ignored', { status: 201 });
 const immediate = vi.fn(async () => {});
 
@@ -31,6 +31,7 @@ describe('resumable browser transport', () => {
     for (const init of requests) {
       expect(new Headers(init.headers).get('Authorization')).toBeNull();
       expect(new Headers(init.headers).get('Content-Length')).toBeNull();
+      expect(new Headers(init.headers).get('X-GUploader-No-308')).toBe('yes');
       expect(init.credentials).toBe('omit');
       expect(init.referrerPolicy).toBe('no-referrer');
       expect(init.redirect).toBe('error');
@@ -38,6 +39,18 @@ describe('resumable browser transport', () => {
     expect(progress.map((value) => value.acknowledgedBytes)).toEqual([CHUNK, CHUNK * 2, size]);
     expect(progress.at(-1)?.phase).toBe('uploaded_unverified');
     expect(JSON.stringify(result)).not.toContain('PRIVATE-CAPABILITY');
+  });
+
+  it('still understands a readable legacy 308 without treating it as completion', async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce(new Response(null, { status: 308 })).mockResolvedValueOnce(complete());
+    await expect(uploadResumableFile(blob(10), session(10), { fetcher })).resolves.toMatchObject({ status: 'uploaded_unverified' });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([{ status: 200, override: '201' }, { status: 200, override: '308,200' }, { status: 403, override: '308' }])('rejects an unexpected status override $status/$override', async ({ status, override }) => {
+    const fetcher = vi.fn(async () => new Response(null, { status, headers: { 'X-Http-Status-Code-Override': override } }));
+    await expect(uploadResumableFile(blob(10), session(10), { fetcher })).rejects.toMatchObject({ code: 'invalid_upload_response' });
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
   it('resumes from Google acknowledgement rather than the amount previously sent', async () => {

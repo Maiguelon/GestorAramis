@@ -294,7 +294,8 @@ function DriveAssetPreview({ asset, ready, version }: { asset: DriveAsset; ready
   const [failed, setFailed] = useState(false);
   useEffect(() => { setFailed(false); }, [version]);
   const image = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(asset.mimeType);
-  const video = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v'].includes(asset.mimeType);
+  // Match the server's inline video formats; MOV/M4V are served as downloads.
+  const video = ['video/mp4', 'video/webm'].includes(asset.mimeType);
   return <article className="team-asset drive-asset">
     {ready && !failed && video ? <video key={version} controls playsInline preload="metadata" src={driveAssetUrl(asset.id)} aria-label={asset.name} onError={() => setFailed(true)}/> : ready && !failed && image ? <img key={version} src={driveAssetUrl(asset.id)} alt={asset.name} loading="lazy" onError={() => setFailed(true)}/> : <FileText size={28}/>}
     <div className="team-asset-info"><strong>{asset.name}</strong><small>{fileSize(asset.size)} · Guardado en Drive</small>{!ready ? <small>Esperando acceso al archivo…</small> : failed ? <small>No se pudo mostrar la vista previa. Podés descargar el archivo o actualizar el material.</small> : !image && !video && <small>Este formato se consulta descargando el archivo.</small>}</div>

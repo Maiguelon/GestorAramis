@@ -1,6 +1,6 @@
 # Estado del proyecto
 
-## Drive interno — integración en curso (2026-09-10)
+## Drive interno — integración en curso (2026-09-11)
 
 Este bloque reemplaza las notas anteriores que indicaban no implementar Drive todavía: Miguel autorizó la integración. UI interna, OAuth, RPC privada, carpetas reservadas, múltiples cargas reanudables, streaming privado y ZIP ya están implementados. Revisión independiente corrigió reintentos concurrentes, recuperación de carpeta reservada y refresh de tokens. Demo conservada; no se incorporaron cambios pendientes de entrada de Diseño ni POV cliente.
 
@@ -8,7 +8,8 @@ Este bloque reemplaza las notas anteriores que indicaban no implementar Drive to
 - JSON OAuth existente leído sin imprimir valores; credenciales y clave AES guardadas sólo en `.dev.vars` ignorado. Instalados cinco secretos de Pages **production**, mediante Wrangler, en el proyecto existente. Sin cambios DNS, pagos ni nuevas cuentas.
 - Paquete compartido compila y Worker dry-run pasa. Validación final: 382 pruebas unitarias, 20 recorridos demo y 15 recorridos compartidos con Auth/Drive simulados pasan. Incluyen pausa, respuesta perdida, sesión de carga vencida, ZIP binario y cancelación al cerrar sesión.
 - Código guardado en commit `9c9338f` y publicado en `efec34ff.gestor-aramis.pages.dev`, dominio estable `https://gestor-aramis.pages.dev`. Smoke online pasa, incluyendo denegación anónima y de otros orígenes para Drive; UI real muestra configuración disponible con sesión de Miguel.
-- Pendientes inmediatos: terminar consentimiento Google `drive.file`, carga/preview/descarga reales y registro de evidencia. Un retorno Google que llegó durante la interrupción venció antes de procesarse; la app lo rechazó y se inició una autorización nueva. Nunca afirmar conexión/carga real antes de esas verificaciones.
+- Miguel completó personalmente el consentimiento Google `drive.file`; la app confirmó conexión exitosa. La primera carga sintética creó las carpetas propias de Prueba de conexión/2026-09/Reel 01/Material, pero el transporte se interrumpió antes de adjuntar el archivo. No se modificó el árbol anterior de Drive.
+- Corrección preparada: compatibilidad con respuestas reanudables 308 usando `X-GUploader-No-308` y su código de estado alternativo, conservando bloqueo de redirecciones. MOV/M4V ofrecen descarga explícita; el reproductor inline se limita a MP4/WebM, igual que el servidor. Pasan 386 unitarias y 17 recorridos compartidos, incluido HTTP local real con fetch nativo/CORS (progreso parcial y rechazo de redirecciones); typecheck y paquete Pages pasan. Faltan publicar la corrección y verificar carga/preview/descargas reales. No repetir OAuth ni capturar claves.
 
 Retomar por `docs/DRIVE_SETUP.md` y `handoffs/C04-drive-integration.md`. No volver a capturar claves, generar otra AES ni aplicar la migración. No copiar valores privados a la conversación. La integración real todavía no está terminada; teléfono real y permisos con una segunda identidad siguen pendientes del piloto.
 

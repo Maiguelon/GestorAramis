@@ -1,6 +1,27 @@
 # Estado del proyecto
 
-## Drive interno — integración en curso (2026-09-12)
+## Checkpoint vigente — Drive interno probado en escritorio (2026-09-12)
+
+La conexión real ya permite subir material del equipo, verlo y descargarlo desde **https://gestor-aramis.pages.dev**. Este bloque es la fuente vigente; las secciones siguientes son historia y no deben usarse para repetir configuración o pruebas ya completadas.
+
+- Código funcional `dffa2b8`, primero publicado en `288fa74a.gestor-aramis.pages.dev`; publicación final **`f27d6ae2.gestor-aramis.pages.dev`**, con smoke alojado aprobado. Corrige el Origin de la sesión reanudable y recupera archivos completos cuya respuesta final se perdió; conserva la compatibilidad 308 sin seguir redirecciones. Este checkpoint sólo aclara el alcance de reanudación en la misma pestaña y documenta pruebas reales.
+- Google OAuth completado por Miguel, conexión cifrada persistente y refresh probado. Migración Drive aplicada una vez, cinco secretos de Pages producción instalados. **No repetir OAuth, capturar claves, regenerar AES ni reaplicar migraciones.**
+- Tres videos sintéticos adjuntos en **Prueba de conexión → Reel 01 → Material**: 2.917.815 bytes y dos de 8.294.597 bytes. Los dos primeros se recuperaron tras una respuesta final ilegible; el tercero se subió desde cero con la corrección publicada. Tamaño y MD5 de los tres coinciden con sus originales; la UI confirma Guardado en Drive y los conserva al recargar.
+- Preview real sin errores (readyState 4), reproducción y seek comprobados. Descarga individual de 2.917.815 bytes idéntica al original. ZIP real de los dos primeros videos: 11.212.696 bytes, ambas entradas con tamaño y MD5 exactos. Sólo fixtures técnicas; no se usaron videos personales ni se importó la demo.
+- Árbol propio: Gestor Aramis / Prueba de conexión / 2026-09 / Reel 01 / Material. No se reorganizó el Drive anterior ni se adoptaron carpetas existentes.
+- Evidencia acumulada del código funcional: **404 unitarias y 19 recorridos compartidos** pasan, incluyendo HTTP nativo y fallos simulados. Los 20 recorridos demo pasaron antes de estas correcciones limitadas a Drive. En este cierre pasan de nuevo compilación TypeScript/Vite y empaquetado Worker; no se repiten suites por un cambio de texto.
+- La subida admite 2 GiB por archivo; ZIP completo hasta 256 MiB. Preview de video MP4/WebM; MOV/M4V conserva descarga. Reanudar requiere la misma pestaña y seleccionar el original: cerrar la pestaña puede perder la referencia pendiente. No equivale a una cola persistente entre sesiones.
+
+### Próximo trabajo
+
+1. Prueba de Miguel desde teléfono real: varias tomas, progreso, pausa/cortes y descarga. No está cubierta por responsive ni por los mocks. No hace falta crear otra cuenta para esta prueba.
+2. Retomar las notas internas: entrada de Diseño centrada en pendientes accionables y deadlines; decidir/implementar confirmación de tomas completas para reels. Prueba con Eliana cuando Miguel lo priorice; su alta no es un bloqueo ahora.
+3. Antes del piloto sostenido: resolver OAuth External/Testing, comprobar segunda identidad/permisos alojados, revocación, cuota y archivos representativos grandes. Picker de carpetas existentes y revisiones exactas de cliente siguen pendientes.
+4. Después del panel interno: calendario, enlaces y aprobaciones reales de clientes, correo y recorrido V1 completo. No declarar C04 ni V1 cerrados por estas pruebas de escritorio.
+
+Detalle reproducible y publicación final en `handoffs/C04-drive-integration.md`; límites/configuración en `docs/DRIVE_SETUP.md`. El commit de este cierre es un checkpoint local; no implica push ni despliegue automático desde Git.
+
+## Historial — integración Drive antes de la validación final (2026-09-12)
 
 Este bloque reemplaza las notas anteriores que indicaban no implementar Drive todavía: Miguel autorizó la integración. UI interna, OAuth, RPC privada, carpetas reservadas, múltiples cargas reanudables, streaming privado y ZIP ya están implementados. Revisión independiente corrigió reintentos concurrentes, recuperación de carpeta reservada y refresh de tokens. Demo conservada; no se incorporaron cambios pendientes de entrada de Diseño ni POV cliente.
 

@@ -30,8 +30,8 @@ La primera carga crea `Gestor Aramis / Cliente / YYYY-MM / Pieza / Material`. El
 ## Límites y recuperación
 
 - Máximo de 2 GiB por archivo. Subida directa en bloques de 4 MiB mediante una URL limitada a esa carga; los tokens de la cuenta Google quedan cifrados en el servidor.
-- Pausar/reintentar conserva lo recibido. Después de recargar hay que seleccionar el archivo original. Sólo se guardan UUID y metadatos para el reintento, nunca la URL de subida ni tokens Google en el almacenamiento del navegador.
-- Si vence una sesión de subida, quitarla de la lista y seleccionar el archivo para iniciar otra. Las sesiones abandonadas no equivalen a archivos adjuntos.
+- Pausar/reintentar conserva lo recibido. Después de recargar esta misma pestaña hay que seleccionar el archivo original. La reanudación usa sessionStorage: cerrar la pestaña o borrar sus datos puede perderla. Sólo se guardan UUID y metadatos para el reintento, nunca la URL de subida ni tokens Google en el almacenamiento del navegador.
+- Si vence una sesión o se pierde la respuesta final, el servidor comprueba si el archivo reservado ya llegó completo antes de adjuntarlo. Si no puede confirmarlo, la app conserva el error; una sesión abandonada no equivale a un archivo adjunto. Una carga incompleta con sesión vencida requiere iniciar otra.
 - ZIP completo hasta 256 MiB para limitar memoria del navegador. Si falla un archivo, no se entrega un ZIP parcial. Para conjuntos mayores, descargar individualmente o abrir la carpeta de Drive. Esto no limita el tamaño de cada subida.
 - Las previsualizaciones usan una cookie privada breve y lectura por rangos; cada solicitud vuelve a comprobar usuario y pertenencia. Los formatos que el navegador no puede reproducir siguen siendo descargables.
 - Una cuenta Google diferente no reemplaza una conexión existente por accidente. Usar **Renovar conexión** con la misma cuenta si se revoca o vence.

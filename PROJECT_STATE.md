@@ -1,6 +1,18 @@
 # Estado del proyecto
 
-## Checkpoint vigente — Drive interno probado en escritorio (2026-09-12)
+## Checkpoint vigente — entrada de Diseño (2026-09-12)
+
+Base `9142905`. Implementada la vista pedida para Eliana: seleccionar **Vista de trabajo → Diseño** en el menú abre Producción y recuerda la entrada por usuario/espacio en este navegador. Gestión conserva su entrada semanal. No se infiere el área de un nombre ni se crean roles o cuentas; es una preferencia visual, sin cambios de permisos.
+
+- Pendientes de Diseño por fecha de publicación (vencidos primero, luego futuras, sin fecha al final), filtros cliente/búsqueda y Pendientes/Por empezar/En curso con cantidades. Incluye producción de meses futuros; no filtra por responsable.
+- Grabación, área Marketing y pedidos de material sin completar quedan en **En espera**, plegado. Preparación, aprobación y publicación se consultan desde Gestión, también plegada en el menú. El estado listo sigue siendo el marcado por Marketing: no se deduce que las tomas estén completas por existir archivos.
+- Accesos directos a guion/texto en otra pestaña y a Material de la pieza. **Empezar a producir** usa el comando existente con revisión esperada y espera confirmación antes de mostrar edición/diseño. El resto de la pieza conserva su editor y protecciones de guardado.
+- Pasan **404 unitarias, 22 recorridos demo y 20 compartidos**. Nuevas pruebas: entrada recordada, navegación a Gestión, esperas, orden de fechas futuras/vencidas/sin fecha, filtros, material directo, guion, cambio de etapa y rechazo de un conflicto real dentro de la API simulada. No son pruebas de identidad Eliana ni teléfono físico.
+- Compilación compartida y empaquetado Pages/Worker pasan. Revisión visual en 1280 px y 390 px sin desborde; captura móvil espera el cierre de la transición del menú. Publicado en **`5d7aaccb.gestor-aramis.pages.dev`**, dominio estable actualizado; smoke alojado pasa. Con la sesión real de Miguel se verificaron la tarjeta Posteo 01, acceso directo a Material y preferencia recordada. No se modificó la etapa de la pieza alojada.
+
+Retomar publicación/evidencia en `handoffs/C05-design-entry.md`. Próximo: prueba de Miguel en celular cuando pueda, feedback con Eliana y decisión de tomas completas para reels. Drive sigue conectado como se detalla debajo; no repetir su preparación. El cambio de vista se configura una vez en cada navegador, no sincroniza preferencias entre dispositivos.
+
+## Base vigente de Drive — probado en escritorio (2026-09-12)
 
 La conexión real ya permite subir material del equipo, verlo y descargarlo desde **https://gestor-aramis.pages.dev**. Este bloque es la fuente vigente; las secciones siguientes son historia y no deben usarse para repetir configuración o pruebas ya completadas.
 
@@ -15,7 +27,7 @@ La conexión real ya permite subir material del equipo, verlo y descargarlo desd
 ### Próximo trabajo
 
 1. Prueba de Miguel desde teléfono real: varias tomas, progreso, pausa/cortes y descarga. No está cubierta por responsive ni por los mocks. No hace falta crear otra cuenta para esta prueba.
-2. Retomar las notas internas: entrada de Diseño centrada en pendientes accionables y deadlines; decidir/implementar confirmación de tomas completas para reels. Prueba con Eliana cuando Miguel lo priorice; su alta no es un bloqueo ahora.
+2. Entrada de Diseño implementada en el checkpoint superior; recoger feedback. Decidir/implementar confirmación de tomas completas para reels. Prueba con Eliana cuando Miguel lo priorice; su alta no es un bloqueo ahora.
 3. Antes del piloto sostenido: resolver OAuth External/Testing, comprobar segunda identidad/permisos alojados, revocación, cuota y archivos representativos grandes. Picker de carpetas existentes y revisiones exactas de cliente siguen pendientes.
 4. Después del panel interno: calendario, enlaces y aprobaciones reales de clientes, correo y recorrido V1 completo. No declarar C04 ni V1 cerrados por estas pruebas de escritorio.
 

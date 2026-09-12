@@ -14,9 +14,9 @@ import { sharedWorkspace } from '../lib/shared-api';
 
 type Execute = (command: Command) => Promise<CommandResult>;
 function displayDate(value: string) { return new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value)); }
-export default function PieceDetail({ piece, state, execute, onClose }: { piece: Piece; state: WorkspaceState; execute: Execute; onClose: () => void }) {
+export default function PieceDetail({ piece, state, execute, onClose, initialTab = 'details' }: { piece: Piece; state: WorkspaceState; execute: Execute; onClose: () => void; initialTab?: 'details' | 'material' }) {
   const [saving,setSaving] = useState(false);
-  const [tab, setTab] = useState('details');
+  const [tab, setTab] = useState<string>(initialTab);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [detailsDirty, setDetailsDirty] = useState(false);

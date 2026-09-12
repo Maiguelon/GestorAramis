@@ -64,6 +64,33 @@ async function createClient(page: Page, name = 'Cliente compartido') {
   await form.getByRole('button', { name: 'Crear cliente', exact: true }).click();
 }
 
+test('la vista Diseño es una preferencia local; empezar producción espera confirmación y conserva conflictos', async ({ page, context }) => {
+  const service = await mockServices(context);
+  const clientId = '20000000-0000-4000-8000-000000000001';
+  const pieceId = '30000000-0000-4000-8000-000000000001';
+  service.state.clients.push({ id: clientId, name: 'Cliente de Diseño', initials: 'CD', color: '#8b2634', contactName: '', phone: '' });
+  service.state.pieces.push({ id: pieceId, clientId, title: 'Pieza lista de prueba', format: 'post', status: 'production', productionStage: 'ready', workArea: 'design', ownerId: memberId, plannedDate: null, visibleToClient: false, caption: '', internalNote: '', archived: false, revision: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  await login(page);
+  await page.getByLabel('Vista de trabajo', { exact: true }).selectOption('design');
+  await expect(page.getByRole('heading', { name: 'Producción', exact: true })).toBeVisible();
+  expect(service.operations).toHaveLength(0);
+  await page.reload();
+  const task = page.getByRole('article', { name: 'Pieza lista de prueba', exact: true });
+  await expect(task).toBeVisible();
+  service.state.pieces[0].revision++;
+  await task.getByRole('button', { name: 'Empezar a producir' }).click();
+  await expect(page.locator('.design-production').getByRole('alert')).toBeVisible();
+  await expect(task).toContainText('Lista para producir');
+  expect(service.state.pieces[0].productionStage).toBe('ready');
+  await page.reload();
+  await task.getByRole('button', { name: 'Empezar a producir' }).click();
+  await expect(task).toContainText('En edición / diseño');
+  expect(service.state.pieces[0].productionStage).toBe('editing');
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Producción', exact: true })).toBeVisible();
+  await expect(task).toContainText('En edición / diseño');
+});
+
 test('acceso real requerido; cliente, base mensual, guion privado y capacidades pendientes', async ({ page, context }) => {
   const service = await mockServices(context);
   service.rejectLogin(true); await page.goto('/'); expect(service.reads).toBe(0);

@@ -142,9 +142,25 @@ describe('Drive uploads and private video streams', () => {
     await expect(initiateDriveUpload('access', expected, fetcher)).resolves.toEqual({ sessionUrl, expected });
     const init = fetcher.mock.calls[0][1]!;
     expect(new Headers(init.headers).get('X-Upload-Content-Length')).toBe('100');
+    expect(new Headers(init.headers).has('Origin')).toBe(false);
     expect(JSON.parse(init.body as string).appProperties.requestId).toBe('request');
     expect(init.redirect).toBe('manual');
   });
+  it.each(['https://gestor-aramis.pages.dev', 'https://app.test:8443', 'http://localhost:5174', 'http://127.0.0.1:5174', 'http://[::1]:5174'])(
+    'binds browser CORS to the trusted application origin during initiation: %s', async browserOrigin => {
+      const fetcher = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response(null, { headers: { Location: sessionUrl } }));
+      await expect(initiateDriveUpload('access', expected, fetcher, browserOrigin)).resolves.toEqual({ sessionUrl, expected });
+      expect(new Headers(fetcher.mock.calls[0][1]!.headers).get('Origin')).toBe(browserOrigin);
+      expect(fetcher.mock.calls[0][0].toString()).toMatch(/^https:\/\/www\.googleapis\.com\/upload\/drive\/v3\/files\?/);
+    },
+  );
+  it.each(['', 'null', '*', 'file:///tmp', 'http://app.test', 'http://localhost.evil.test', 'https://app.test/path', 'https://app.test/', 'https://app.test?query=1', 'https://app.test#fragment', 'https://name:password@app.test', 'https://app.test\r\nX-Fake: yes'])(
+    'rejects an invalid upload origin before contacting Google: %s', async browserOrigin => {
+      const fetcher = vi.fn();
+      await expect(initiateDriveUpload('access', expected, fetcher, browserOrigin)).rejects.toMatchObject({ code: 'invalid_upload_origin', status: 400 });
+      expect(fetcher).not.toHaveBeenCalled();
+    },
+  );
   it('refuses off-origin resumable locations before leaking tokens', async () => {
     const fetcher = vi.fn(async () => new Response(null, { headers: { Location: 'https://evil.test/upload?upload_id=steal' } }));
     await expect(initiateDriveUpload('access', expected, fetcher)).rejects.toMatchObject({ code: 'invalid_upload_session' });

@@ -250,6 +250,18 @@ describe('private media cookie and streaming', () => {
 });
 
 describe('internal upload HTTP verification', () => {
+  it('initializes browser uploads with the application origin so Google can expose completion', async () => {
+    const conn = await connection();
+    const h = harness(call => call.action === 'connection-get' ? conn
+      : call.action === 'upload-update' ? { ...upload, encryptedSession: call.payload.encryptedSession } : upload,
+      async () => new Response(null, { headers: { Location: sessionUrl } }));
+    const result = await handleRequest(post('/api/drive/uploads', uploadInput), env, h.fetcher);
+    expect(result.status).toBe(200);
+    expect(h.googleCalls).toHaveLength(1);
+    expect(new Headers(h.googleCalls[0].init.headers).get('Origin')).toBe('https://app.test');
+    expect(await result.json()).toEqual({ session: { uploadId: A, sessionUrl, expectedSize: 6, mimeType: 'video/mp4' } });
+  });
+
   it.each([{ parentFolderId: 'attacker-folder' }, { driveFileId: 'attacker-file' }, { userId: U2 }, { workspaceId: 'other' }])('rejects browser-supplied storage/identity bindings: %j', async forged => {
     const h = harness(() => null);
     expect((await handleRequest(post('/api/drive/uploads', { ...uploadInput, ...forged }), env, h.fetcher)).status).toBe(400);

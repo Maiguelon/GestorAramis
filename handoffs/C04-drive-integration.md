@@ -1,6 +1,6 @@
 # C04 — integración interna de Drive
 
-Fecha: 2026-09-11. Estado: conexión Google confirmada; prueba de carga real en curso. Código publicado `9c9338f`, despliegue `efec34ff.gestor-aramis.pages.dev`; corrección del transporte pendiente de publicar.
+Fecha: 2026-09-12. Estado: conexión Google y transferencia real confirmadas; falta confirmación en la app y medios. Corrección 308 `7b94cf8` publicada en `7b80ebd6`; Origin y recuperación de confirmación listos para publicar.
 
 ## Alcance
 
@@ -23,5 +23,7 @@ Smoke del dominio estable pasa: login, ruta de texto protegida, API configurada 
 Seguir: publicar y comprobar la corrección del protocolo reanudable. Una prueba con Chromium y servidor HTTP real distinguió 308 sin Location (legible) de 308 con Location (rechazado como redirección); se pide la respuesta alternativa 200 + X-Http-Status-Code-Override: 308 sin permitir redirecciones. Verificar contra Google real, luego preview, persistencia y descargas. Los archivos sintéticos están en work/aramis-prueba-drive.webm (2.917.815 bytes) y work/aramis-prueba-drive-grande.webm (8.294.597 bytes); no usar videos personales de Descargas.
 
 ## Límites
+
+Diagnóstico real posterior: los dos WebM llegaron completos a Drive, con tamaños y MD5 exactos. Las respuestas finales de sesiones iniciadas sin Origin devuelven200 pero sin Access-Control-Allow-Origin; fallan en Chromium independiente y en el navegador integrado. La API ahora pasa el origen de su URL a initiateDriveUpload (sólo HTTPS o HTTP local), y la UI consulta la confirmación del servidor al agotar reintentos, además de cuando caduca la sesión. Nunca marca guardado si el servidor no verifica. Nuevos checks:404 unitarias,19 recorridos compartidos. Recuperar desde los archivos originales de work; el archivo pequeño usa uploadId 6c44075c-654b-4b48-838a-191ac9363083 y el grande 6b43ad97-decc-4f47-afab-e02c6187d632. No volver a crear cuentas/credenciales ni aplicar migración.
 
 Carpeta propia del gestor; Picker de árbol existente pendiente. El ZIP de 256 MiB evita acumular videos grandes en memoria móvil; descarga individual admite archivos mayores. No se han probado todavía el teléfono de Eric, interrupciones de red reales, permisos con Eliana ni revisiones de clientes. Google sigue External/Testing; no publicar OAuth sin resolver sus requisitos correspondientes. No modificar reglas de producción por inferencia.

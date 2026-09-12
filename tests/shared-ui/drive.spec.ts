@@ -28,6 +28,7 @@ async function mockDrive(context: BrowserContext) {
   const acknowledged = new Map<string, number>();
   const completionCalls: string[] = [], callbackCalls: Array<{ code: string; state: string }> = [];
   let failStart = false, failComplete = '', failDownload = '', configured = true, connected = true, interruptAfterFirstChunk = false, expiredProbe = false;
+  let unreadableFinal = false, networkDown = false;
   await context.route(`${authOrigin}/auth/v1/**`, route => route.request().url().includes('/logout') ? route.fulfill({ status: 204 }) : route.fulfill({ json: route.request().url().includes('/token') ? session : user }));
   await context.route('**/api/workspace', route => route.fulfill({ json: { state, memberId, workspaceId: 'workspace-drive', workspaceName: 'Aramis · prueba Drive' } }));
   await context.route('**/api/drive/**', async route => {
@@ -45,6 +46,7 @@ async function mockDrive(context: BrowserContext) {
       const uploadId = url.pathname.split('/').at(-2)!; completionCalls.push(uploadId);
       const start = sessions.get(uploadId)!;
       if (start.name === failComplete) return route.fulfill({ status: 503, json: { code: 'service_unavailable' } });
+      if (!expiredProbe && acknowledged.get(uploadId) !== start.size) return route.fulfill({ status: 409, json: { code: 'upload_incomplete' } });
       const asset: DriveAsset = { id: uploadId, name: start.name, size: start.size, mimeType: start.mimeType, source: 'drive' };
       if (!completed.has(uploadId)) assets.push(asset); completed.set(uploadId, asset);
       return route.fulfill({ json: { asset } });
@@ -64,18 +66,21 @@ async function mockDrive(context: BrowserContext) {
     expect(request.headers().authorization).toBeUndefined();
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'PUT', 'Access-Control-Allow-Headers': 'Content-Type, Content-Range' } });
     const range = request.headers()['content-range'];
+    if (networkDown) return route.abort('failed');
     if (range.startsWith('bytes */')) {
       if (expiredProbe) return route.fulfill({status:404,headers:{'Access-Control-Allow-Origin':'*'}});
       const size = acknowledged.get(uploadId) ?? 0;
+      if (unreadableFinal && size === sessions.get(uploadId)?.size) return route.abort('failed');
       return route.fulfill({ status: size === sessions.get(uploadId)?.size ? 200 : 308, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'Range', ...(size ? { Range: `bytes=0-${size - 1}` } : {}) } });
     }
     chunks.push({ uploadId, range });
     if (interruptAfterFirstChunk && acknowledged.has(uploadId)) return route.fulfill({ status: 503, headers: { 'Access-Control-Allow-Origin': '*' } });
     const end = Number(/^bytes \d+-(\d+)\//.exec(range)?.[1]) + 1;
     acknowledged.set(uploadId, end);
+    if (unreadableFinal && end === sessions.get(uploadId)?.size) return route.abort('failed');
     return route.fulfill({ status: end === sessions.get(uploadId)?.size ? 200 : 308, body: '{}', contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'Range', Range: `bytes=0-${end - 1}` } });
   });
-  return { starts, assets, chunks, completionCalls, callbackCalls, expireProbe() {expiredProbe=true;}, interruptChunks(value: boolean) { interruptAfterFirstChunk = value; }, failStartOnce() { failStart = true; }, failCompletion(name: string) { failComplete = name; }, failDownloading(name: string) { failDownload = name; }, disconnect() { connected = false; }, unconfigure() { configured = false; connected = false; } };
+  return { starts, assets, chunks, completionCalls, callbackCalls, unreadableCompletion() {unreadableFinal=true;}, stopNetwork() {networkDown=true;}, expireProbe() {expiredProbe=true;}, interruptChunks(value: boolean) { interruptAfterFirstChunk = value; }, failStartOnce() { failStart = true; }, failCompletion(name: string) { failComplete = name; }, failDownloading(name: string) { failDownload = name; }, disconnect() { connected = false; }, unconfigure() { configured = false; connected = false; } };
 }
 async function login(page: Page, path = '/') {
   await page.goto(path);
@@ -107,6 +112,24 @@ test('sesión vencida recupera sólo la confirmación del servidor sin volver a 
   service.failCompletion('incompleto.mp4'); await select(page,[{name:'incompleto.mp4'}]);
   await expect(upload(page,'incompleto.mp4')).toContainText('La sesión de carga venció');
   expect(service.assets).toHaveLength(1); expect(service.chunks).toHaveLength(0);
+});
+
+test('respuesta final ilegible recupera el archivo verificado sin duplicar transferencia', async ({page,context}) => {
+  const service=await mockDrive(context); service.unreadableCompletion();
+  await login(page); await material(page); await select(page,[{name:'confirmado.mp4'}]);
+  await expect(upload(page,'confirmado.mp4')).toContainText('Guardado en Drive',{timeout:15000});
+  expect(service.chunks).toHaveLength(1); expect(service.starts).toHaveLength(1); expect(service.completionCalls).toHaveLength(1);
+  expect(service.assets).toHaveLength(1);
+  service.failCompletion('sin-confirmacion.mp4'); await select(page,[{name:'sin-confirmacion.mp4'}]);
+  await expect(upload(page,'sin-confirmacion.mp4').getByRole('button',{name:'Reintentar carga'})).toBeVisible({timeout:15000});
+  expect(service.assets).toHaveLength(1);
+});
+
+test('una interrupción antes de recibir bytes no se presenta como guardado', async ({page,context}) => {
+  const service=await mockDrive(context); service.stopNetwork();
+  await login(page); await material(page); await select(page,[{name:'pendiente.mp4'}]);
+  await expect(upload(page,'pendiente.mp4').getByRole('button',{name:'Reintentar carga'})).toBeVisible({timeout:15000});
+  expect(service.chunks).toHaveLength(0); expect(service.completionCalls).toHaveLength(1); expect(service.assets).toHaveLength(0);
 });
 
 test('varias tomas: conserva éxitos y reintenta sólo verificación fallida sin repetir transferencia', async ({ page, context }) => {

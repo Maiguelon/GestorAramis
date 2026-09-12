@@ -101,6 +101,19 @@ function validateExpectation(expected: UploadExpectation): void {
   }
 }
 
+function browserUploadOrigin(value: string): string {
+  let origin: URL;
+  try { origin = new URL(value); }
+  catch { throw new ServiceError('invalid_upload_origin', 400); }
+  const localHttp = origin.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(origin.hostname);
+  // Only a serialized origin is accepted, not a URL carrying a path, credentials,
+  // query or control characters. The caller derives it from its trusted request URL.
+  if (value !== origin.origin || (origin.protocol !== 'https:' && !localHttp)) {
+    throw new ServiceError('invalid_upload_origin', 400);
+  }
+  return origin.origin;
+}
+
 async function upstream(fetcher: Fetcher, url: string, init: RequestInit): Promise<Response> {
   // Workers supports manual/follow only; callers validate status (including resumable 308).
   try { return await fetcher(url, { ...init, redirect: 'manual' }); }
@@ -325,12 +338,17 @@ export async function copyPinnedDriveSnapshot(
   return pinDriveAssetRevision(token, asset, fetcher);
 }
 
-/** Server-only primitive. Caller must authorize staff/share and enforce request quota first. */
+/**
+ * Server-only primitive. Caller must authorize staff/share and enforce quota first.
+ * For browser uploads, pass the origin of the trusted application request URL.
+ * Google binds upload-session CORS during initiation, including the final response.
+ */
 export async function initiateDriveUpload(
-  token: string, expected: UploadExpectation, fetcher: Fetcher = fetch,
+  token: string, expected: UploadExpectation, fetcher: Fetcher = fetch, browserOrigin?: string,
 ): Promise<DriveUpload> {
   validateExpectation(expected);
   const requestHeaders = headers(token);
+  if (browserOrigin !== undefined) requestHeaders.set('Origin', browserUploadOrigin(browserOrigin));
   requestHeaders.set('Content-Type', 'application/json; charset=UTF-8');
   requestHeaders.set('X-Upload-Content-Type', expected.mimeType);
   requestHeaders.set('X-Upload-Content-Length', String(expected.size));

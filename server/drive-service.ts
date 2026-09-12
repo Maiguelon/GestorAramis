@@ -208,7 +208,7 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
       upload=await rpc<Upload>('upload-put',{...data,driveFileId,folderId,generation:connection.generation,encryptedSession:null});
     }
     if(!upload.encryptedSession){
-      const started=await initiateDriveUpload(token,expected(upload,config.workspaceId),bounded);
+      const started=await initiateDriveUpload(token,expected(upload,config.workspaceId),bounded,url.origin);
       upload=await rpc<Upload>('upload-update',{uploadId,encryptedSession:await seal({sessionUrl:started.sessionUrl},key,config.workspaceId+':upload:'+uploadId),status:'uploading'});
     }
     return uploadReply(upload,rpc,key,config.workspaceId);

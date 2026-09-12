@@ -165,9 +165,10 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
                 updateFile(item.uploadId, { acknowledged: progress.acknowledgedBytes, message: progress.phase === 'retrying' ? 'Conexión interrumpida. Reintentando…' : progress.phase === 'uploaded_unverified' ? 'Transferencia terminada. Falta verificar el archivo…' : 'Subiendo a Drive…' });
               } });
             } catch (reason) {
-              if (!(reason instanceof ResumableUploadError) || reason.code !== 'upload_session_expired' || abort.signal.aborted) throw reason;
-              // A completed upload can outlive its resumable URL. Only the server
-              // may recover its reserved, verified file; never initiate a duplicate.
+              if (!(reason instanceof ResumableUploadError) || !['upload_session_expired', 'upload_retry_exhausted'].includes(reason.code) || abort.signal.aborted) throw reason;
+              // Google may receive every byte while its final response is lost or
+              // unreadable by the browser. Verify the reserved file on the server
+              // before reporting interruption; never initiate a duplicate.
               try { asset = (await drivePost<{asset:DriveAsset}>(`/api/drive/uploads/${encodeURIComponent(item.uploadId)}/complete`,{},abort.signal)).asset; }
               catch { throw reason; }
             }

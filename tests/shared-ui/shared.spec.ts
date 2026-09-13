@@ -1,6 +1,7 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import type { Command, CommandResult, WorkspaceState } from '../../contracts/domain';
 import { applyCommand, DomainError } from '../../src/domain/engine';
+import { writeFile } from 'node:fs/promises';
 
 const userId = 'f0000000-0000-4000-8000-000000000001';
 const memberId = '10000000-0000-4000-8000-000000000001';
@@ -63,6 +64,31 @@ async function createClient(page: Page, name = 'Cliente compartido') {
   await form.getByLabel('Reels por mes', { exact: true }).fill('1');
   await form.getByRole('button', { name: 'Crear cliente', exact: true }).click();
 }
+
+test('logo del cliente se guarda, se ve en otra pestaña y puede quitarse', async ({ page, context }) => {
+  const service = await mockServices(context); await login(page); await createClient(page, 'Cliente con logo');
+  await page.getByRole('button', { name: 'Editar datos y plan' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Archivo del logo').setInputFiles({ name: 'invalido.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg/>') });
+  await expect(dialog.getByRole('alert')).toContainText('PNG, JPG o WebP');
+  const png = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 300; c.height = 150; c.getContext('2d')!.fillRect(0, 0, 300, 150); return c.toDataURL('image/png').split(',')[1]; });
+  await writeFile('work/logo-prueba.png', Buffer.from(png, 'base64'));
+  await dialog.getByLabel('Archivo del logo').setInputFiles({ name: 'logo.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+  await expect(dialog.getByRole('img', { name: 'Vista previa del logo' })).toBeVisible();
+  await expect(dialog.getByRole('img', { name: 'Vista previa del logo' })).toHaveJSProperty('naturalWidth', 192);
+  await page.screenshot({ path: 'work/client-logo-editor.png' });
+  await dialog.getByRole('button', { name: 'Guardar datos y plan' }).click();
+  await expect(page.getByRole('img', { name: 'Logo de Cliente con logo' })).toBeVisible();
+  expect(service.state.clients[0].logo).toMatch(/^data:image\/png;base64,/);
+  const other = await context.newPage(); await other.goto('/'); await other.getByRole('button', { name: 'Clientes', exact: true }).click();
+  await expect(other.getByRole('img', { name: 'Logo de Cliente con logo' })).toBeVisible();
+  await page.getByRole('button', { name: 'Editar datos y plan' }).click();
+  await dialog.getByRole('button', { name: 'Quitar logo' }).click();
+  await dialog.getByRole('button', { name: 'Guardar datos y plan' }).click();
+  await other.reload(); await other.getByRole('button', { name: 'Clientes', exact: true }).click();
+  await expect(other.getByRole('img', { name: 'Logo de Cliente con logo' })).toHaveCount(0);
+  expect(service.state.clients[0].logo).toBeNull(); await other.close();
+});
 
 test('la vista Diseño es una preferencia local; empezar producción espera confirmación y conserva conflictos', async ({ page, context }) => {
   const service = await mockServices(context);

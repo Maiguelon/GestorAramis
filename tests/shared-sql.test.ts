@@ -13,7 +13,7 @@ describe('shared staff RPCs in PostgreSQL (PGlite, not hosted Supabase)', () => 
   let db: PGlite;
   beforeAll(async () => {
     db = new PGlite();
-    for (const path of ['supabase/tests/bootstrap.sql', 'supabase/migrations/202609060001_initial.sql', 'supabase/tests/fixtures.sql', 'supabase/migrations/202609080001_shared_workspace.sql']) await db.exec(await readFile(path, 'utf8'));
+    for (const path of ['supabase/tests/bootstrap.sql', 'supabase/migrations/202609060001_initial.sql', 'supabase/tests/fixtures.sql', 'supabase/migrations/202609080001_shared_workspace.sql', 'supabase/migrations/202609120001_client_logo.sql']) await db.exec(await readFile(path, 'utf8'));
   }, 30_000);
   afterAll(async () => { await db?.close(); });
   async function asUser<T>(user: number, sql: string, params: unknown[] = []) {
@@ -28,6 +28,28 @@ describe('shared staff RPCs in PostgreSQL (PGlite, not hosted Supabase)', () => 
     return (await asUser<{ value: Envelope }>(user, 'select public.aramis_command($1,$2::jsonb,$3) as value', [workspace, JSON.stringify(command), requestId]))[0].value;
   }
   const createClient = (posts = 2, reels = 1) => command({ type: 'create-client', input: { name: ' Nuevo Cliente ', contactName: ' Contacto ', phone: ' 123 ', monthlyPlan: { posts, reels } } });
+  const logo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6pAAAAABJRU5ErkJggg==';
+  it('saves client logos transactionally, preserves them on partial updates and removes them explicitly', async () => {
+    const created = await createClient();
+    const clientId = created.entityId;
+    const requestId = randomUUID();
+    const patch = { type: 'update-client', clientId, expectedRevision: 0, patch: { logo } };
+    const saved = await command(patch, requestId);
+    expect(saved.state.clients.find(client => client.id === clientId)).toMatchObject({ logo, revision: 1 });
+    expect((await command(patch, requestId)).state.clients.find(client => client.id === clientId)?.revision).toBe(1);
+    await expect(command({ ...patch, patch: { logo: null } })).rejects.toThrow('CONFLICT');
+    const renamed = await command({ type: 'update-client', clientId, expectedRevision: 1, patch: { name: 'Logo conservado' } });
+    expect(renamed.state.clients.find(client => client.id === clientId)?.logo).toBe(logo);
+    const removed = await command({ type: 'update-client', clientId, expectedRevision: 2, patch: { logo: null } });
+    expect(removed.state.clients.find(client => client.id === clientId)?.logo).toBeNull();
+  });
+  it('rejects external URLs, SVG, invalid types and oversized logos without changing the client', async () => {
+    const created = await createClient();
+    for (const invalid of ['https://example.com/logo.png', 'data:image/svg+xml;base64,AAAA', 42, 'data:image/png;base64,iVBORw0KGgo' + 'A'.repeat(48000)]) {
+      await expect(command({ type: 'update-client', clientId: created.entityId, expectedRevision: 0, patch: { logo: invalid } })).rejects.toThrow('VALIDATION');
+    }
+    expect((await snapshot()).state.clients.find(client => client.id === created.entityId)).toMatchObject({ revision: 0, logo: null });
+  });
   const createPiece = (clientId = C, input: Record<string, unknown> = {}) => command({ type: 'create-piece', input: { clientId, ...input } });
   const updatePiece = (piece: Piece, patch: Record<string, unknown>, requestId?: string) => command({ type: 'update-piece', pieceId: piece.id, expectedRevision: piece.revision, patch }, requestId);
   function entityPiece(result: Envelope) { return result.state.pieces.find(p => p.id === result.entityId)!; }

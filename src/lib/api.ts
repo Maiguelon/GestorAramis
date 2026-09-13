@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Command, CommandResult, WorkspaceState } from '../../contracts/domain';
 import { applyCommand, DomainError, isCalendarDate, isPlanMonth } from '../domain/engine';
+import { validClientLogo } from '../../contracts/client-logo';
 import { createSeed } from '../domain/seed';
 import { assertPublicCommandAccess, getClientView } from '../domain/selectors';
 import { sharedWorkspace } from './shared-api';
@@ -53,7 +54,7 @@ function parseWorkspace(raw: string): WorkspaceState {
   let state: unknown;
   try { state = JSON.parse(raw); } catch { throw invalid(); }
   if (!object(state) || state.schemaVersion !== 1 ||
-    !arrayOf(state.clients, item => strings(item, ['id', 'name', 'initials', 'color', 'contactName', 'phone']) && optional(item.monthlyPlan, plan) && optional(item.generatedMonths, months) && optional(item.revision, value => Number.isSafeInteger(value) && Number(value) >= 0)) ||
+    !arrayOf(state.clients, item => strings(item, ['id', 'name', 'initials', 'color', 'contactName', 'phone']) && optional(item.logo, validClientLogo) && optional(item.monthlyPlan, plan) && optional(item.generatedMonths, months) && optional(item.revision, value => Number.isSafeInteger(value) && Number(value) >= 0)) ||
     !arrayOf(state.members, item => strings(item, ['id', 'name', 'initials'])) ||
     !arrayOf(state.pieces, item => strings(item, ['id', 'clientId', 'title', 'ownerId', 'caption', 'internalNote', 'createdAt', 'updatedAt']) && oneOf(item.format, ['reel', 'carousel', 'post', 'story']) && oneOf(item.status, ['planned', 'production', 'review', 'approved', 'scheduled', 'published']) && calendarDate(item.plannedDate) && typeof item.visibleToClient === 'boolean' && typeof item.archived === 'boolean' && Number.isSafeInteger(item.revision) && Number(item.revision) >= 0 && optional(item.planMonth, isPlanMonth) && optional(item.workArea, value => oneOf(value, ['marketing', 'design'])) && optional(item.productionStage, value => oneOf(value, ['ready', 'recording', 'editing'])) && optional(item.script, value => typeof value === 'string') && optional(item.teamAssets, value => arrayOf(value, isDemoAsset) && new Set((value as Array<{ id: string }>).map(asset => asset.id)).size === (value as unknown[]).length)) ||
     !arrayOf(state.reviews, item => strings(item, ['id', 'pieceId', 'caption', 'createdAt']) && Number.isSafeInteger(item.version) && Number(item.version) > 0 && oneOf(item.status, ['pending', 'approved', 'changes', 'superseded']) && nullableString(item.sentAt) && arrayOf(item.assets, isDemoAsset)) ||

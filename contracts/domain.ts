@@ -7,7 +7,7 @@ export type ShareScope = 'calendar' | 'review' | 'material';
 export type WorkArea = 'marketing' | 'design';
 export type ProductionStage = 'ready' | 'recording' | 'editing';
 export interface MonthlyPlan { posts: number; reels: number }
-export interface Client { id: string; name: string; initials: string; color: string; contactName: string; phone: string; monthlyPlan?: MonthlyPlan; revision?: number; generatedMonths?: string[] }
+export interface Client { logo?: string | null; id: string; name: string; initials: string; color: string; contactName: string; phone: string; monthlyPlan?: MonthlyPlan; revision?: number; generatedMonths?: string[] }
 export interface Member { id: string; name: string; initials: string }
 export interface Asset { id: string; name: string; mimeType: string; size: number; url?: string; driveFileId?: string; checksum?: string; source: 'demo' | 'drive' }
 export interface Piece { planMonth?: string; workArea?: WorkArea; productionStage?: ProductionStage; script?: string; teamAssets?: Asset[]; id: string; clientId: string; title: string; format: ContentFormat; status: PieceStatus; ownerId: string; plannedDate: string | null; visibleToClient: boolean; caption: string; internalNote: string; archived: boolean; revision: number; createdAt: string; updatedAt: string }
@@ -20,7 +20,7 @@ export interface WorkspaceState { schemaVersion: 1; clients: Client[]; members: 
 export type PublicPiece = Omit<Piece, 'internalNote' | 'ownerId' | 'planMonth' | 'workArea' | 'productionStage' | 'script' | 'teamAssets'>;
 export interface ClientView { client: Pick<Client, 'id' | 'name' | 'initials' | 'color'>; pieces: PublicPiece[]; reviews: Review[]; materials: MaterialRequest[]; responses: ResponseRecord[]; activities: Activity[]; scope: ShareScope; targetId: string }
 
-export type ClientInput = Pick<Client, 'name' | 'contactName' | 'phone'> & { monthlyPlan: MonthlyPlan };
+export type ClientInput = Pick<Client, 'name' | 'contactName' | 'phone'> & { monthlyPlan: MonthlyPlan; logo?: string | null };
 export type Command =
  | { type: 'create-client'; input: ClientInput }
  | { type: 'update-client'; clientId: string; expectedRevision: number; patch: Partial<ClientInput> }

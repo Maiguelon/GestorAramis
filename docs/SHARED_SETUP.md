@@ -11,6 +11,8 @@ Este bloque conecta clientes, planes mensuales, piezas, guiones, notas y producc
 
 ## Probar en esta computadora
 
+Logos de clientes: la migración `202609120001_client_logo.sql` ya se aplicó al proyecto alojado. En instalaciones nuevas se ejecuta después de `shared_workspace`; no repetir en Aramis. El logo se carga desde Datos y plan mensual y se confirma al guardar; no requiere configuración de Drive ni otro servicio.
+
 Crear `.env.shared.local` (ignorado por Git):
 
 ```dotenv

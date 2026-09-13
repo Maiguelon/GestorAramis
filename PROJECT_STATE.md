@@ -1,5 +1,13 @@
 # Estado del proyecto
 
+## Logos editables de clientes — 2026-09-12
+
+Implementado y publicado en `83c632a1.gestor-aramis.pages.dev` (dominio estable actualizado). Clientes → Datos y plan mensual / Editar datos y plan → Subir logo, Cambiar logo o Quitar logo → Guardar datos y plan. También disponible al crear cliente. Aparece en fichas y tareas del equipo; fallback a iniciales.
+
+Se aceptan PNG/JPG/WebP hasta 5 MiB, se normalizan a PNG de hasta 192 px conservando proporción/transparencia y se reduce hasta caber en 48.000 caracteres. Sólo se guarda la miniatura en Supabase junto al cliente, no el original en Drive. Migración `202609120001_client_logo.sql` aplicada una vez desde SQL Editor y confirmada exitosa; no repetirla. Conserva revisión esperada, transacción, permisos e idempotencia de las RPC existentes.
+
+406 unitarias (incluye SQL de persistencia, eliminación, conflicto y rechazo de URL/SVG/tamaño/tipo inválidos), 22 recorridos demo y 7 recorridos compartidos de shared.spec pasan. Compilación/Pages/Worker y smoke alojado pasan. Prueba real con sesión de Miguel: logo sintético guardado en Prueba de conexión, visible tras recargar en tarjeta Posteo 01; quitado y guardado al terminar. No se cambiaron los logos de clientes reales ni el Drive. Revisión visual del formulario completada. Handoff `handoffs/C05-client-logos.md`.
+
 ## Alta del equipo y prueba móvil informada — 2026-09-12
 
 Miguel creó personalmente las cuentas de Auth de Eliana y Eric e ingresó sus contraseñas. Se localizaron por los correos acordados, se comprobó email confirmado y se agregaron sus perfiles y membresías staff activas al espacio Aramis existente. Lectura posterior verificó exactamente una membresía activa por persona. No se leyeron ni modificaron contraseñas, no se enviaron invitaciones y no se creó otro workspace. Su primer ingreso personal sigue pendiente; la verificación administrativa no sustituye una prueba de login.

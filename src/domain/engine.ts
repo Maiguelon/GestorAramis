@@ -1,4 +1,5 @@
 import type { Asset, Command, CommandContext, CommandResult, Piece, Review, ShareScope, WorkspaceState } from '../../contracts/domain';
+import { validClientLogo } from '../../contracts/client-logo';
 
 export class DomainError extends Error {
   constructor(public readonly code: string, message: string) {
@@ -35,11 +36,12 @@ function validatePlan(plan: unknown): void {
 
 function validateClientFields(patch: Record<string, unknown>): void {
   if (!patch || typeof patch !== 'object' || Array.isArray(patch)) fail('VALIDATION', 'Los datos del cliente no son válidos.');
-  if (Object.keys(patch).some(key => !['name', 'contactName', 'phone', 'monthlyPlan'].includes(key))) fail('VALIDATION', 'La actualización incluye campos no admitidos.');
+  if (Object.keys(patch).some(key => !['name', 'contactName', 'phone', 'monthlyPlan', 'logo'].includes(key))) fail('VALIDATION', 'La actualización incluye campos no admitidos.');
   if (patch.name !== undefined) required(patch.name as string, 'El nombre');
   if (patch.contactName !== undefined && typeof patch.contactName !== 'string') fail('VALIDATION', 'El contacto no es válido.');
   if (patch.phone !== undefined && typeof patch.phone !== 'string') fail('VALIDATION', 'El teléfono no es válido.');
   if (patch.monthlyPlan !== undefined) validatePlan(patch.monthlyPlan);
+  if (patch.logo !== undefined && !validClientLogo(patch.logo)) fail('VALIDATION', 'El logo no es válido o supera el tamaño permitido.');
 }
 
 function clientInitials(name: string): string { return name.trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase(); }
@@ -110,7 +112,7 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
       if (typeof command.input.contactName !== 'string' || typeof command.input.phone !== 'string') fail('VALIDATION', 'Los datos de contacto no son válidos.');
       validatePlan(command.input.monthlyPlan);
       entityId = context.newId();
-      state.clients.push({ id: entityId, name, initials: clientInitials(name), color: ['#8b2634', '#5c9cd9', '#f4b943'][state.clients.length % 3], contactName: command.input.contactName.trim(), phone: command.input.phone.trim(), monthlyPlan: structuredClone(command.input.monthlyPlan), revision: 0, generatedMonths: [] });
+      state.clients.push({ ...(command.input.logo !== undefined ? {logo: command.input.logo} : {}), id: entityId, name, initials: clientInitials(name), color: ['#8b2634', '#5c9cd9', '#f4b943'][state.clients.length % 3], contactName: command.input.contactName.trim(), phone: command.input.phone.trim(), monthlyPlan: structuredClone(command.input.monthlyPlan), revision: 0, generatedMonths: [] });
       break;
     }
     case 'update-client': {

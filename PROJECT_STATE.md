@@ -158,3 +158,7 @@ Material del equipo añade Descargar todo (ZIP); no altera preview. Verifica tod
 Detalles → Expandir guion y texto abre /text/:pieceId con guion, copy y notas, de lectura y actualizable desde otra pestaña. Se exige guardar el borrador antes de abrir. Pieza archivada/no existente no expone texto. Sólo demo local, no link para clientes reales.
 Verificación de este cierre: npm test 190 pruebas / 7 archivos; 20 E2E; npm run build pasa. QA visual escritorio en work/qa. Sin reset de datos, cuentas, Drive ni publicación.
 Próximo paso: usuario prueba; pendientes de UX de Eliana y regla de completitud de reels sólo anotados, no implementados. Ver handoffs/C05-reading-zip-logos.md.
+
+## Limpieza de prueba — 2026-09-13
+Por pedido de Miguel, Prueba de conexión quedó archivado junto con Posteo 01, Posteo 02 y Reel 01. Piezas archivadas con revisión incrementada; archivo del cliente y revocación de enlaces completados por SQL Editor (Success). Ya no debe aparecer en el gestor. Se conservan los archivos técnicos en Drive y el historial; no reutilizar este cliente para nuevas pruebas sin autorización. Sin cambio de código ni despliegue.
+

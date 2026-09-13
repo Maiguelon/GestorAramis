@@ -6,7 +6,7 @@ Este bloque conecta clientes, planes mensuales, piezas, guiones, notas y producc
 
 1. Aplicar, en orden, `supabase/migrations/202609060001_initial.sql` y `supabase/migrations/202609080001_shared_workspace.sql` desde el editor SQL. Ambas contienen una transacción. Verificar éxito antes de continuar. No repetirlas si ya fueron aplicadas ni ejecutar los archivos de `supabase/tests/` en el proyecto real.
 2. Auth → Users → Add user → Create new user. Correo acordado y contraseña ingresada por su titular; Auto confirm evita enviar un correo. No agregar invitaciones ni abrir altas públicas desde la app.
-3. El administrador completa `supabase/setup/first-staff.sql` con el UUID del usuario de Auth y un UUID nuevo del espacio. Repetir para otra persona requiere su propio usuario, nombre y el mismo workspace. El navegador no puede otorgarse permisos. Eliana y Eric aún no están provisionados.
+3. Para un espacio nuevo, el administrador completa `supabase/setup/first-staff.sql` con el UUID del usuario de Auth y un UUID nuevo del espacio. Para sumar otra persona se usan su propio usuario, perfil y el workspace existente; no crear otro espacio ni repetir migraciones. El navegador no puede otorgarse permisos. Miguel, Eliana y Eric ya tienen membresías staff activas en Aramis; el primer ingreso de Eliana y Eric sigue pendiente de que lo prueben ellos.
 4. Guardar el UUID del espacio como `ARAMIS_WORKSPACE_ID` del servidor. La API verifica el JWT con Supabase Auth y envía ese JWT a la función SQL. No utiliza una clave `service_role` para estas operaciones.
 
 ## Probar en esta computadora
@@ -56,5 +56,5 @@ La versión compartida ya está publicada en https://gestor-aramis.pages.dev med
 - Correo y contraseña para equipo habilitado manualmente. OTP, SMTP, recuperación autónoma e ingreso habitual de clientes se conectan después.
 - Cada comando guarda una transacción y serializa por espacio; adecuado para el equipo pequeño actual. La carga inicial lee el espacio completo del equipo. Paginación y sincronización incremental se evalúan si el volumen lo exige.
 - El diario de reintentos es privado de la pestaña (sessionStorage), separado de la demo, sin tokens de acceso. Cerrar sesión lo borra; cerrar por completo una pestaña puede perder ese diario. Confirmar antes de salir.
-- Drive y archivos remotos no están conectados. Los videos locales de la demo siguen en su navegador original y no se anuncian como compartidos.
+- Drive y archivos del equipo ya están conectados; ver `DRIVE_SETUP.md`. Los videos locales de la demo siguen separados en su navegador original.
 - Las pruebas PGlite y de transporte simulado no sustituyen las pruebas de Auth, RLS y concurrencia alojadas. Registrar aparte la evidencia real en PROJECT_STATE.md y el handoff.

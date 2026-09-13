@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Alta del equipo y prueba móvil informada — 2026-09-12
+
+Miguel creó personalmente las cuentas de Auth de Eliana y Eric e ingresó sus contraseñas. Se localizaron por los correos acordados, se comprobó email confirmado y se agregaron sus perfiles y membresías staff activas al espacio Aramis existente. Lectura posterior verificó exactamente una membresía activa por persona. No se leyeron ni modificaron contraseñas, no se enviaron invitaciones y no se creó otro workspace. Su primer ingreso personal sigue pendiente; la verificación administrativa no sustituye una prueba de login.
+
+Eliana debe elegir Vista de trabajo → Diseño en su navegador; Eric puede conservar Gestión. Ambos usan el Drive del equipo ya conectado. Miguel confirmó que la carga desde su celular funciona y aceptó mantener la carpeta propia Gestor Aramis; no implementar adopción/reorganización de carpetas por inferencia. Interrupciones de red, otros teléfonos y colaboración cotidiana siguen por probar. Detalle en `handoffs/C03-team-access.md`.
+
 ## Checkpoint vigente — entrada de Diseño (2026-09-12)
 
 Base `9142905`. Implementada la vista pedida para Eliana: seleccionar **Vista de trabajo → Diseño** en el menú abre Producción y recuerda la entrada por usuario/espacio en este navegador. Gestión conserva su entrada semanal. No se infiere el área de un nombre ni se crean roles o cuentas; es una preferencia visual, sin cambios de permisos.

@@ -162,3 +162,10 @@ Próximo paso: usuario prueba; pendientes de UX de Eliana y regla de completitud
 ## Limpieza de prueba — 2026-09-13
 Por pedido de Miguel, Prueba de conexión quedó archivado junto con Posteo 01, Posteo 02 y Reel 01. Piezas archivadas con revisión incrementada; archivo del cliente y revocación de enlaces completados por SQL Editor (Success). Ya no debe aparecer en el gestor. Se conservan los archivos técnicos en Drive y el historial; no reutilizar este cliente para nuevas pruebas sin autorización. Sin cambio de código ni despliegue.
 
+
+### 2026-09-14 — Prueba de incorporación desde Drive (sólo lectura)
+- Hugo Peñaloza / Reel 02: prueba_drive.mp4 existe en la carpeta Material, verificado en la interfaz de Drive con la cuenta conectada.
+- Con la credencial OAuth actual del gestor, files.list de esa misma carpeta devuelve los cuatro archivos anteriores y omite prueba_drive.mp4. GET de metadatos y alt=media por su ID responden 404. No es un archivo ausente ni ubicado en otra carpeta: la conexión actual no tiene acceso al archivo agregado externamente.
+- No se cambiaron permisos, archivos, base ni aplicación; sólo renovación de access token en memoria para la comprobación. Script local ignorado: work/probe-drive-import.mjs. Evidencia y siguiente paso en handoffs/C04-drive-import-probe.md.
+- Siguiente: decidir acceso para incorporación desde Drive (selección explícita por archivo o autorización más amplia evaluada antes de solicitarla). No prometer sincronización automática con drive.file actual.
+- Preferencias acordadas, aún pendientes: nombre Planificación; carpeta por pieza desde su creación; evitar subcarpeta Material para nuevas piezas conservando compatibilidad existente. Diseño permanece en el gestor.

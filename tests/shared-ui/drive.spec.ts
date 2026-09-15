@@ -282,3 +282,18 @@ test('cerrar sesión desde otra pestaña cancela un ZIP que ya recibió encabeza
   expect(downloads).toBe(0);
   await other.close();
 });
+
+test('imports Drive material in the piece, retains it on sync failure and hides it after a successful removal sync', async ({ page, context }) => {
+  const mock=await mockDrive(context);
+  await context.route('**/api/drive/status',route=>route.fulfill({json:{configured:true,connected:true,canImport:true}}));
+  let fail=false,removed=false,calls=0;
+  await context.route('**/api/drive/pieces/*/sync',route=>{calls++;if(!fail){mock.assets.splice(0,mock.assets.length,...(removed?[]:[{id:'external',name:'prueba_drive.mp4',mimeType:'video/mp4',size:10,source:'drive' as const}]));}return fail?route.fulfill({status:502,json:{code:'drive_sync_incomplete'}}):route.fulfill({json:{assets:removed?[]:[{id:'external',name:'prueba_drive.mp4',mimeType:'video/mp4',size:10,source:'drive'}],folderUrl:'https://drive.google.com/drive/folders/material-folder',changed:false,skipped:0,syncedAt:new Date().toISOString()}});});
+  await login(page);await material(page);
+  await expect(page.getByText('prueba_drive.mp4',{exact:true})).toBeVisible();
+  await expect(page.getByText(/Drive revisado a las/)).toBeVisible();
+  const refresh=page.getByRole('button',{name:'Actualizar material',exact:true});
+  fail=true;await refresh.click();await expect(page.getByText(/No se pudo revisar toda la carpeta/)).toBeVisible();
+  await expect(page.getByText('prueba_drive.mp4',{exact:true})).toBeVisible();
+  fail=false;removed=true;await refresh.click();await expect(page.getByText('prueba_drive.mp4',{exact:true})).toHaveCount(0);
+  expect(calls).toBeGreaterThanOrEqual(3);
+});

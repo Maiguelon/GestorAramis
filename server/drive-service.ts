@@ -2,14 +2,15 @@ import type { WorkerEnv } from './index';
 import { hashShareToken, verifySupabaseUser } from './authz';
 import { ServiceError, type Fetcher } from './errors';
 import { callWorkspaceRpc } from './workspace-repository';
-import { decryptRefreshToken, encryptRefreshToken, exchangeGoogleCode, prepareGoogleOAuth, refreshGoogleTokens, type GoogleTokens, type OAuthState } from './google-oauth';
+import { decryptRefreshToken, encryptRefreshToken, exchangeGoogleCode, prepareGoogleOAuth, refreshGoogleTokens, DRIVE_READ_SCOPE, type GoogleTokens, type OAuthState } from './google-oauth';
+import { listImportFiles } from './drive-import';
 import { checkDriveUpload, ensureDriveFolder, generateDriveId, getDriveAccount, initiateDriveUpload, streamDriveAsset, streamTeamDriveAsset, type UploadExpectation } from './drive';
 import type { Piece } from '../contracts/domain';
 
 type Envelope = { iv: number[]; ciphertext: number[] };
 interface Connection { generation: string; encryptedTokens: Envelope; accountEmail: string; accountPermissionId: string; rootFolderId: string | null }
 interface Upload { uploadId: string; pieceId: string; clientId: string; name: string; mimeType: string; size: number; fingerprint: string; driveFileId: string; folderId: string; generation: string; encryptedSession: Envelope | null; status: string }
-interface TeamAsset { id: string; pieceId: string; clientId: string; workspaceId: string; name: string; mimeType: string; size: number; driveFileId: string; checksum: string; generation: string }
+interface TeamAsset { external?:boolean; id: string; pieceId: string; clientId: string; workspaceId: string; name: string; mimeType: string; size: number; driveFileId: string; checksum: string; generation: string }
 type CoreConfig = { url: string; publishableKey: string; workspaceId: string };
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const HEADERS = { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex, nofollow' };
@@ -85,11 +86,12 @@ async function connected(rpc:Rpc,key:CryptoKey,env:WorkerEnv,workspace:string,fe
   let tokens=await open<GoogleTokens>(connection.encryptedTokens,key,workspace+':tokens');
   if(!tokens.accessToken||!tokens.refreshToken||!Number.isFinite(tokens.expiresAt))throw new ServiceError('google_reconnect_required',502);
   if(tokens.expiresAt<Date.now()+60_000){
-    tokens=await refreshGoogleTokens(googleConfig(env),tokens.refreshToken,fetcher);
+    const refreshed=await refreshGoogleTokens(googleConfig(env),tokens.refreshToken,fetcher);
+    tokens={...refreshed,scopes:refreshed.scopes??tokens.scopes};
     const encryptedTokens=await seal(tokens,key,workspace+':tokens');
     await rpc('connection-save',{generation:connection.generation,accountEmail:connection.accountEmail,accountPermissionId:connection.accountPermissionId,rootFolderId:connection.rootFolderId,encryptedTokens,expectedGeneration:connection.generation});
   }
-  return {connection,token:tokens.accessToken};
+  return {connection,token:tokens.accessToken,canImport:tokens.scopes?.includes(DRIVE_READ_SCOPE)===true};
 }
 async function ensureFolder(rpc:Rpc,token:string,workspaceId:string,logicalKey:string,name:string,parentId:string|undefined,fetcher:Fetcher):Promise<string> {
   let mapping=await rpc<{folderId:string;name?:string|null;parentId?:string|null}|null>('folder-get',{logicalKey});
@@ -104,9 +106,10 @@ async function pieceFolder(rpc:Rpc,token:string,workspaceId:string,piece:Piece,c
   const month=piece.planMonth ?? piece.plannedDate?.slice(0,7) ?? piece.createdAt.slice(0,7);
   const monthly=await ensureFolder(rpc,token,workspaceId,`month:${piece.clientId}:${month}`,month,client,fetcher);
   const folder=await ensureFolder(rpc,token,workspaceId,`piece:${piece.id}`,piece.title||'Sin título',monthly,fetcher);
-  return ensureFolder(rpc,token,workspaceId,`piece:${piece.id}:material`,'Material',folder,fetcher);
+  const legacy=await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${piece.id}:material`});
+  return legacy?.folderId??folder;
 }
-const publicAsset=(a:TeamAsset)=>({id:a.id,name:a.name,mimeType:a.mimeType,size:a.size,source:'drive'});
+const publicAsset=(a:TeamAsset)=>({id:a.id,name:a.name,mimeType:a.mimeType,size:a.size,source:'drive',...(a.external?{version:a.checksum}:{})});
 function expected(upload:Upload,workspaceId:string):UploadExpectation {
   return {uploadId:upload.uploadId,workspaceId,clientId:upload.clientId,requestId:upload.pieceId,parentFolderId:upload.folderId,name:upload.name,mimeType:upload.mimeType,size:upload.size,driveFileId:upload.driveFileId};
 }
@@ -153,7 +156,8 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
     const statusRpc=driveRpc(env,config,user.id,bounded);
     const conn=await statusRpc<Connection|null>('connection-get');
     const root=conn?await statusRpc<{folderId:string}|null>('folder-get',{logicalKey:'root'}):null;
-    return json({configured:true,connected:!!conn,...(conn?{accountEmail:conn.accountEmail,rootFolderId:root?.folderId??conn.rootFolderId}:{})});
+    const tokens=conn?await open<GoogleTokens>(conn.encryptedTokens,await keyFor(env),config.workspaceId+':tokens'):null;
+    return json({configured:true,connected:!!conn,canImport:tokens?.scopes?.includes(DRIVE_READ_SCOPE)===true,...(conn?{accountEmail:conn.accountEmail,rootFolderId:root?.folderId??conn.rootFolderId}:{})});
   }
   const google=googleConfig(env),key=await keyFor(env),rpc=driveRpc(env,config,user.id,bounded);
   if(path==='/api/drive/media-session'&&method==='POST'){
@@ -189,8 +193,30 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
   const assetsMatch=/^\/api\/drive\/pieces\/([a-f0-9-]+)\/assets$/i.exec(path);
   if(assetsMatch&&method==='GET'){
     const pieceId=id(assetsMatch[1]);const assets=await rpc<TeamAsset[]>('list-assets',{pieceId});
-    const folder=await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${pieceId}:material`});
+    const folder=await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${pieceId}:material`})??await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${pieceId}`});
     return json({assets:assets.map(publicAsset),...(folder?{folderUrl:`https://drive.google.com/drive/folders/${encodeURIComponent(folder.folderId)}`}:{})});
+  }
+  const syncMatch=/^\/api\/drive\/pieces\/([a-f0-9-]+)\/(sync|folder)$/i.exec(path);
+  if(syncMatch&&method==='POST'){
+    only(await readBody(request),[]);
+    const pieceId=id(syncMatch[1]);
+    const piece=workspace.state.pieces.find(p=>p.id===pieceId&&!p.archived);
+    if(!piece)throw new ServiceError('NOT_FOUND',404);
+    const {connection,token,canImport}=await connected(rpc,key,env,config.workspaceId,bounded);
+    const mapped=syncMatch[2]==='sync'?(await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${pieceId}:material`})??await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${pieceId}`})):null;
+    const folderId=mapped?.folderId??await pieceFolder(rpc,token,config.workspaceId,piece,workspace.state.clients.find(c=>c.id===piece.clientId)?.name??'Cliente',bounded);
+    const folderUrl=`https://drive.google.com/drive/folders/${folderId}`;
+    if(syncMatch[2]==='folder')return json({folderUrl});
+    if(!canImport)throw new ServiceError('google_import_scope_missing',409);
+    const startedAt=new Date().toISOString();
+    const {files,skipped}=await listImportFiles(token,folderId,bounded);
+    const response=await bounded(`${config.url}/rest/v1/rpc/aramis_drive_import`,{method:'POST',redirect:'manual',
+      headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY!,'Content-Type':'application/json',...(env.SUPABASE_SERVICE_ROLE_KEY!.startsWith('eyJ')?{Authorization:`Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`}:{})},
+      body:JSON.stringify({p_workspace_id:config.workspaceId,p_user_id:user.id,p_piece_id:pieceId,p_folder_id:folderId,p_generation:connection.generation,p_started_at:startedAt,p_files:files})});
+    if(!response.ok)throw new ServiceError('service_unavailable',502);
+    const result=await response.json() as {changed:boolean};
+    const assets=await rpc<TeamAsset[]>('list-assets',{pieceId});
+    return json({assets:assets.map(publicAsset),folderUrl,changed:result.changed,skipped,syncedAt:new Date().toISOString()});
   }
   if(path==='/api/drive/uploads'&&method==='POST'){
     const data=await readBody(request);only(data,['uploadId','pieceId','name','mimeType','size','fingerprint']);
@@ -238,4 +264,19 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
     return new Response(response.body,{status:response.status,headers});
   }
   throw new ServiceError('not_found',404);
+}
+
+/** Best effort after a committed create command. The piece itself is the durable retry target;
+ * opening Material retries any missing folder without ever rolling back the saved piece. */
+export async function preparePieceFolders(env:WorkerEnv,config:CoreConfig,userId:string,pieces:Piece[],clients:{id:string;name:string}[],fetcher:Fetcher=fetch){
+  try {
+    const signal=AbortSignal.timeout(25_000);
+    const bounded:Fetcher=(input,init)=>fetcher(input,{...init,signal});
+    const rpc=driveRpc(env,config,userId,bounded);
+    const {token}=await connected(rpc,await keyFor(env),env,config.workspaceId,bounded);
+    for(const piece of pieces){
+      if(signal.aborted)break;
+      await pieceFolder(rpc,token,config.workspaceId,piece,clients.find(c=>c.id===piece.clientId)?.name??'Cliente',bounded);
+    }
+  }catch{/* Missing/revoked Drive cannot invalidate a committed piece. Material offers retry. */}
 }

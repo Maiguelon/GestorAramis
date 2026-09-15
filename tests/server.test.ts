@@ -75,10 +75,10 @@ describe('capabilities and staff identity', () => {
 
 describe('Google OAuth server primitives', () => {
   const config = { clientId: 'test-id', clientSecret: 'test-secret', redirectUri: 'https://app.test/api/google/callback' };
-  it('requests only drive.file offline with PKCE and server-bound state', async () => {
+  it('requests file creation plus read-only import offline with PKCE and server-bound state', async () => {
     const result = await prepareGoogleOAuth(config, { userId: 'u', workspaceId: 'w' }, 0);
     const url = new URL(result.url);
-    expect(url.searchParams.get('scope')).toBe(DRIVE_SCOPE);
+    expect(url.searchParams.get('scope')).toBe(DRIVE_SCOPE + ' https://www.googleapis.com/auth/drive.readonly');
     expect(url.searchParams.get('access_type')).toBe('offline');
     expect(url.searchParams.get('code_challenge_method')).toBe('S256');
     expect(result.record.stateHash).toBe(await hashShareToken(url.searchParams.get('state')!));

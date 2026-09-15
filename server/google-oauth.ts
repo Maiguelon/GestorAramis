@@ -2,6 +2,7 @@ import { hashShareToken, issueShareToken } from './authz';
 import { ServiceError, type Fetcher } from './errors';
 
 export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+export const DRIVE_READ_SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 export interface GoogleConfig { clientId: string; clientSecret: string; redirectUri: string }
@@ -16,7 +17,7 @@ export interface OAuthStateStore {
   /** Atomic read-and-delete; a callback can consume a state only once. */
   consume(stateHash: string): Promise<OAuthState | null>;
 }
-export interface GoogleTokens { accessToken: string; refreshToken: string; expiresAt: number }
+export interface GoogleTokens { accessToken: string; refreshToken: string; expiresAt: number; scopes?: string[] }
 
 function validateConfig(config: GoogleConfig): void {
   let redirect: URL;
@@ -42,7 +43,7 @@ export async function prepareGoogleOAuth(
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   url.search = new URLSearchParams({
     client_id: config.clientId, redirect_uri: config.redirectUri, response_type: 'code',
-    scope: DRIVE_SCOPE, access_type: 'offline', prompt: 'consent',
+    scope: `${DRIVE_SCOPE} ${DRIVE_READ_SCOPE}`, access_type: 'offline', prompt: 'consent',
     state: state.token, code_challenge: challenge, code_challenge_method: 'S256',
   }).toString();
   return { url: url.toString(), record: { stateHash: state.tokenHash, verifier, ...staff, expiresAt: now + 10 * 60_000 } };
@@ -72,7 +73,8 @@ async function tokenRequest(
   }
   const refreshToken = typeof data.refresh_token === 'string' && data.refresh_token ? data.refresh_token : previousRefreshToken;
   if (!refreshToken) throw new ServiceError('google_reconnect_required', 502);
-  return { accessToken: data.access_token, refreshToken, expiresAt: now + data.expires_in * 1000 };
+  return { accessToken: data.access_token, refreshToken, expiresAt: now + data.expires_in * 1000,
+    ...(typeof data.scope === 'string' ? { scopes: data.scope.split(' ') } : {}) };
 }
 
 /** Call after re-verifying the callback's staff session. Tokens MUST NOT be sent to a browser. */

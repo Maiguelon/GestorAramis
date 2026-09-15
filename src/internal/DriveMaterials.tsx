@@ -65,6 +65,9 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
   const [zipping, setZipping] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState('');
   const [selectionErrors, setSelectionErrors] = useState<string[]>([]);
+  const refreshing = useRef(false);
+  const [syncing,setSyncing] = useState(false);
+  const [syncNote,setSyncNote] = useState('');
   const busy = working || selecting || zipping;
   const readSerial = useRef(0);
   const callbacks = useRef({ onChanged, onBusy });
@@ -105,13 +108,26 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
     }
   }
   async function refresh() {
+    if(refreshing.current)return;
+    refreshing.current=true; setSyncing(true);
     const serial = ++readSerial.current;
     try {
       const connection = await driveRequest<DriveStatus>('/api/drive/status');
       if (!mounted.current || serial !== readSerial.current) return;
       setStatus(connection);
       if (!connection.connected) { setAssets([]); setFolderUrl(''); setMediaReady(false); setLoading(false); return; }
-      const result = await driveRequest<{ assets: DriveAsset[]; folderUrl?: string }>(`/api/drive/pieces/${encodeURIComponent(pieceId)}/assets`);
+      let result = await driveRequest<{ assets: DriveAsset[]; folderUrl?: string }>(`/api/drive/pieces/${encodeURIComponent(pieceId)}/assets`);
+      if (!result.folderUrl) {
+        try { const folder=await drivePost<{folderUrl:string}>(`/api/drive/pieces/${encodeURIComponent(pieceId)}/folder`); result={...result,...folder}; }
+        catch { if(mounted.current)setSyncNote('Carpeta pendiente. Usá Actualizar material para reintentar.'); }
+      }
+      if(connection.canImport&&result.folderUrl){
+        try{
+          const synced=await drivePost<{assets:DriveAsset[];folderUrl:string;changed:boolean;skipped:number;syncedAt:string}>(`/api/drive/pieces/${encodeURIComponent(pieceId)}/sync`);
+          result=synced;
+          if(mounted.current){setSyncNote(`Drive revisado a las ${new Date(synced.syncedAt).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}.${synced.skipped?' Algunos elementos se omitieron: sólo se incorporan archivos multimedia o PDF completos de hasta 2 GB.':''}`);if(synced.changed)callbacks.current.onChanged?.();}
+        }catch(reason){if(mounted.current)setSyncNote(uploadMessage(reason));}
+      }else if(connection.canImport===false){if(mounted.current)setSyncNote('Renová la conexión en Configuración para ver también lo subido directamente a Drive.');}
       if (!Array.isArray(result.assets)) throw new DriveApiError('service_unavailable');
       if (!mounted.current || serial !== readSerial.current) return;
       setAssets(result.assets); setFolderUrl(result.folderUrl && /^https:\/\/drive\.google\.com\/drive\/folders\/[A-Za-z0-9_-]+$/.test(result.folderUrl) ? result.folderUrl : ''); setError('');
@@ -120,14 +136,14 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
         if (reason instanceof DriveApiError && [401, 403].includes(reason.status)) { setAssets([]); setFolderUrl(''); setMediaReady(false); }
         setError(uploadMessage(reason));
       }
-    } finally { if (mounted.current && serial === readSerial.current) setLoading(false); }
+    } finally { if(serial===readSerial.current){refreshing.current=false;if(mounted.current){setSyncing(false);setLoading(false);}} }
   }
   useEffect(() => {
     void refresh();
     const refreshVisible = () => { if (document.visibilityState === 'visible' && !processing.current) void refresh(); };
-    const timer = window.setInterval(refreshVisible, 15_000);
+    const timer = window.setInterval(refreshVisible, 30_000);
     window.addEventListener('focus', refreshVisible);
-    return () => { readSerial.current++; clearInterval(timer); window.removeEventListener('focus', refreshVisible); };
+    return () => { readSerial.current++; refreshing.current=false; clearInterval(timer); window.removeEventListener('focus', refreshVisible); };
   }, [pieceId]);
   useEffect(() => {
     if (!status?.connected) return;
@@ -177,7 +193,7 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
           if (!asset) asset = (await drivePost<{ asset: DriveAsset }>(`/api/drive/uploads/${encodeURIComponent(item.uploadId)}/complete`, {}, abort.signal)).asset;
           if (!asset || asset.source !== 'drive' || asset.size !== item.size || typeof asset.id !== 'string') throw new DriveApiError('upload_incomplete');
           updateFile(item.uploadId, { phase: 'done', acknowledged: item.size, message: 'Guardado en Drive', session: undefined, file: undefined });
-          if (mounted.current) { readSerial.current++; setAssets(current => [...current.filter(entry => entry.id !== asset!.id), asset!]); callbacks.current.onChanged?.(); }
+          if (mounted.current) { readSerial.current++; refreshing.current=false; setAssets(current => [...current.filter(entry => entry.id !== asset!.id), asset!]); callbacks.current.onChanged?.(); }
         } catch (reason) {
           updateFile(item.uploadId, { phase: abort.signal.aborted ? 'paused' : 'error', message: abort.signal.aborted ? 'Carga pausada. Podés continuar con el mismo archivo.' : uploadMessage(reason) });
         } finally { controller.current = null; }
@@ -270,10 +286,11 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
     <div className="subsection-heading"><h3>Material del equipo</h3><span className="form-hint">{assets.length} {assets.length === 1 ? 'archivo' : 'archivos'}</span></div>
     <p className="form-hint">Videos, fotos y referencias para esta pieza. Podés seleccionar varias tomas desde el celular, hasta 2 GB por archivo.</p>
     {loading && <p role="status">Buscando material…</p>}
+    {syncNote && <p className="form-hint" role="status">{syncNote}</p>}
     {!loading && status && !status.connected && <p className="notice-banner">{status.configured ? 'Conectá Google Drive desde Configuración para subir y consultar material.' : 'La carga, vista previa y descarga de material estarán disponibles al conectar Google Drive.'}</p>}
     {error && <p className="error-banner" role="alert">{error}</p>}
     {selectionErrors.length > 0 && <div className="error-banner" role="alert">{selectionErrors.map((message, index) => <p key={index}>{message}</p>)}</div>}
-    <div className="drive-actions"><button type="button" className="button secondary" disabled={busy || !assets.length || !status?.connected} onClick={() => void downloadAll()}><Download size={15}/>{zipping ? 'Preparando ZIP…' : 'Descargar todo (ZIP)'}</button><button type="button" className="text-button" disabled={busy} onClick={() => { void refresh(); if (status?.connected) void renewMedia(true); }}><RefreshCw size={15}/>Actualizar material</button>{folderUrl && <a className="text-button" href={folderUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/>Abrir carpeta</a>}</div>
+    <div className="drive-actions"><button type="button" className="button secondary" disabled={busy || !assets.length || !status?.connected} onClick={() => void downloadAll()}><Download size={15}/>{zipping ? 'Preparando ZIP…' : 'Descargar todo (ZIP)'}</button><button type="button" className="text-button" disabled={busy || syncing} onClick={() => { void refresh(); if (status?.connected) void renewMedia(true); }}><RefreshCw size={15}/>{syncing ? 'Revisando Drive…' : 'Actualizar material'}</button>{folderUrl && <a className="text-button" href={folderUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/>Abrir carpeta</a>}</div>
     {assets.reduce((sum, asset) => sum + asset.size, 0) > DRIVE_ZIP_LIMIT && <p className="form-hint">El ZIP admite hasta 256 MB para cuidar la memoria del celular. Este conjunto debe descargarse por archivo.</p>}
     {status?.connected && <label className="team-file-picker drive-file-picker"><Upload size={17}/>{selecting ? 'Preparando archivos…' : 'Agregar material del equipo'}<input aria-label="Agregar material del equipo" type="file" accept={DRIVE_FILE_ACCEPT} multiple disabled={selecting || zipping} onChange={event => { const files = Array.from(event.currentTarget.files ?? []); event.currentTarget.value = ''; void selectFiles(files); }}/></label>}
     {queue.some(item => item.phase !== 'done') && <p className="form-hint">Mantené esta pestaña abierta durante la carga. Si recargás esta misma pestaña, volvé a seleccionar los archivos originales para continuar.</p>}
@@ -286,7 +303,7 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
       {['error', 'paused', 'needs_file'].includes(item.phase) && <button type="button" className="text-button muted" onClick={() => remove(item)}><X size={15}/>Quitar de la lista</button>}
     </article>)}</div>
     {downloadProgress && <p className="form-hint" role="status">{downloadProgress}</p>}
-    <div className="team-asset-list">{assets.map(asset => <DriveAssetPreview key={asset.id} asset={asset} ready={mediaReady} version={mediaVersion}/>)}</div>
+    <div className="team-asset-list">{assets.map(asset => <DriveAssetPreview key={asset.id+':'+(asset.version??'')} asset={asset} ready={mediaReady} version={mediaVersion}/>)}</div>
     {!loading && status?.connected && !assets.length && !working && <p className="form-hint">Todavía no hay material adjunto a esta pieza.</p>}
   </section>;
 }
@@ -298,7 +315,7 @@ function DriveAssetPreview({ asset, ready, version }: { asset: DriveAsset; ready
   // Match the server's inline video formats; MOV/M4V are served as downloads.
   const video = ['video/mp4', 'video/webm'].includes(asset.mimeType);
   return <article className="team-asset drive-asset">
-    {ready && !failed && video ? <video key={version} controls playsInline preload="metadata" src={driveAssetUrl(asset.id)} aria-label={asset.name} onError={() => setFailed(true)}/> : ready && !failed && image ? <img key={version} src={driveAssetUrl(asset.id)} alt={asset.name} loading="lazy" onError={() => setFailed(true)}/> : <FileText size={28}/>}
+    {ready && !failed && video ? <video key={version} controls playsInline preload="none" src={driveAssetUrl(asset.id)} aria-label={asset.name} onError={() => setFailed(true)}/> : ready && !failed && image ? <img key={version} src={driveAssetUrl(asset.id)} alt={asset.name} loading="lazy" onError={() => setFailed(true)}/> : <FileText size={28}/>}
     <div className="team-asset-info"><strong>{asset.name}</strong><small>{fileSize(asset.size)} · Guardado en Drive</small>{!ready ? <small>Esperando acceso al archivo…</small> : failed ? <small>No se pudo mostrar la vista previa. Podés descargar el archivo o actualizar el material.</small> : !image && !video && <small>Este formato se consulta descargando el archivo.</small>}</div>
     {ready && <a className="button secondary" href={driveAssetUrl(asset.id, true)} download={safeFileName(asset.name)}><Download size={15}/>Descargar</a>}
   </article>;

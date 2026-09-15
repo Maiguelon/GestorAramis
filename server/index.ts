@@ -1,7 +1,8 @@
 import { verifySupabaseUser } from './authz';
 import { ServiceError, type Fetcher } from './errors';
 import { callWorkspaceRpc } from './workspace-repository';
-import { googleCallbackRedirect, handleDriveRequest } from './drive-service';
+import { googleCallbackRedirect, handleDriveRequest, preparePieceFolders } from './drive-service';
+import type { Piece } from '../contracts/domain';
 
 export interface WorkerEnv {
   SUPABASE_URL?: string;
@@ -70,7 +71,7 @@ async function commandBody(request: Request): Promise<{ command: Record<string, 
 }
 
 /** Same-origin API. Workspace commands use the user JWT; Drive's private bridge rechecks staff. */
-export async function handleRequest(request: Request, env: WorkerEnv, fetcher: Fetcher = fetch): Promise<Response> {
+export async function handleRequest(request: Request, env: WorkerEnv, fetcher: Fetcher = fetch, context?: {waitUntil(task:Promise<unknown>):void}): Promise<Response> {
   try {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) throw new ServiceError('not_found', 404);
@@ -88,10 +89,15 @@ export async function handleRequest(request: Request, env: WorkerEnv, fetcher: F
     if ((url.pathname === '/api/workspace' && request.method !== 'GET')
       || (url.pathname === '/api/commands' && request.method !== 'POST')) throw new ServiceError('method_not_allowed', 405);
     const boundedFetch: Fetcher = (input, init) => fetcher(input, { ...init, signal: AbortSignal.timeout(30_000) });
-    await verifySupabaseUser(request, config, boundedFetch);
+    const user=await verifySupabaseUser(request, config, boundedFetch);
     const authorization = request.headers.get('Authorization')!;
     const command = url.pathname === '/api/commands' ? await commandBody(request) : undefined;
     const result = await callWorkspaceRpc(config, authorization, command, boundedFetch);
+    if(context&&command&&['create-piece','generate-month'].includes(String(command.command.type))){
+      const saved=result as {entityId:string;state:{pieces:Piece[];clients:{id:string;name:string}[]}};
+      const pieces=saved.state.pieces.filter(p=>!p.archived&&(command.command.type==='create-piece'?p.id===saved.entityId:p.clientId===command.command.clientId&&p.planMonth===command.command.month));
+      context.waitUntil(preparePieceFolders(env,config,user.id,pieces,saved.state.clients,fetcher));
+    }
     return Response.json(result, { headers: HEADERS });
   } catch (error) {
     const safe = error instanceof ServiceError ? error : new ServiceError('internal_error', 500);
@@ -99,4 +105,4 @@ export async function handleRequest(request: Request, env: WorkerEnv, fetcher: F
   }
 }
 
-export default { fetch: (request: Request, env: WorkerEnv) => handleRequest(request, env) };
+export default { fetch: (request: Request, env: WorkerEnv, context?: {waitUntil(task:Promise<unknown>):void}) => handleRequest(request, env, fetch, context) };

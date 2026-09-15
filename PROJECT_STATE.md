@@ -169,3 +169,10 @@ Por pedido de Miguel, Prueba de conexión quedó archivado junto con Posteo 01, 
 - No se cambiaron permisos, archivos, base ni aplicación; sólo renovación de access token en memoria para la comprobación. Script local ignorado: work/probe-drive-import.mjs. Evidencia y siguiente paso en handoffs/C04-drive-import-probe.md.
 - Siguiente: decidir acceso para incorporación desde Drive (selección explícita por archivo o autorización más amplia evaluada antes de solicitarla). No prometer sincronización automática con drive.file actual.
 - Preferencias acordadas, aún pendientes: nombre Planificación; carpeta por pieza desde su creación; evitar subcarpeta Material para nuevas piezas conservando compatibilidad existente. Diseño permanece en el gestor.
+
+### 2026-09-14 — Sincronización de material desde Drive
+- Implementación y alcance en handoffs/C04-drive-import.md. Publicada en 5c198b22.gestor-aramis.pages.dev y alias habitual. Migración 202609140001_drive_import.sql instalada una vez (SQL Editor: Success). No repetirla.
+- UI Planificación, carpetas nuevas sin subcarpeta Material y provisión anticipada tras crear pieza/base mensual; reintento al abrir Material ante fallos. Sin reorganización de carpetas existentes.
+- Importación protegida por drive.readonly, desactivada en conexiones antiguas hasta consentimiento. Poll visible por pieza, reconciliación idempotente, medios privados externos con comprobación de carpeta/checksum.
+- Pruebas: 425 tests de suite + 2 nuevos de provisión de carpetas, todos pasan; 14 recorridos compartidos simulados pasan; build Pages y smoke público pasan.
+- Pendiente inmediato: consentimiento Google de lectura ampliada presentado en navegador para miguelcarreteroangel@gmail.com y confirmación solicitada al usuario. Luego comprobar prueba_drive.mp4 (Hugo / Reel 02) real. OAuth sigue Testing; resolver publicación y renovar credencial para evitar caducidad semanal.

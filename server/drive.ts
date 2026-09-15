@@ -37,6 +37,8 @@ export interface DriveFile {
   headRevisionId?: string;
 }
 export interface StoredAsset {
+  external?: boolean;
+  folderId?: string;
   driveFileId: string;
   name: string;
   mimeType: string;
@@ -229,6 +231,7 @@ export async function ensureDriveFolder(
 
 async function parseFile(response: Response): Promise<DriveFile> {
   const data = await response.json().catch(() => null) as Partial<DriveFile> | null;
+  if(data&&data.appProperties===undefined)data.appProperties={};
   if (!data || typeof data.id !== 'string' || !ID.test(data.id) || typeof data.name !== 'string' ||
     typeof data.mimeType !== 'string' || typeof data.size !== 'string' || !/^\d+$/.test(data.size) ||
     !Number.isSafeInteger(Number(data.size)) || typeof data.trashed !== 'boolean' ||
@@ -444,7 +447,9 @@ export async function streamDriveAsset(
   validateStoredAsset(asset);
   const file = await getDriveFile(token, asset.driveFileId, fetcher);
   if (file.trashed || !asset.checksum || file.md5Checksum !== asset.checksum || file.size !== String(asset.size) ||
-    file.mimeType !== asset.mimeType || file.appProperties.workspaceId !== asset.workspaceId || file.appProperties.clientId !== asset.clientId) {
+    file.mimeType !== asset.mimeType || (asset.external
+      ? !asset.folderId || !file.parents.includes(asset.folderId)
+      : file.appProperties.workspaceId !== asset.workspaceId || file.appProperties.clientId !== asset.clientId)) {
     throw new ServiceError('asset_changed_or_inaccessible', 409);
   }
   const requestHeaders = headers(token);

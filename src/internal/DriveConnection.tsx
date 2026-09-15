@@ -28,6 +28,8 @@ export default function DriveConnection() {
   }
   return <section className="settings-card drive-connection">
     <h2>Google Drive</h2>
+    <p>Para incorporar material subido desde Drive, Google pedirá permiso para ver y descargar todos los archivos accesibles por esta cuenta. El gestor consultará sólo las carpetas vinculadas a sus piezas. La creación y edición se mantienen limitadas a los archivos autorizados a la app.</p>
+    {status?.connected&&status.canImport===false&&<p className="error-banner">Hace falta renovar la conexión para activar la incorporación desde Drive. Las cargas desde el gestor siguen disponibles.</p>}
     {status?.connected ? <><p className="drive-connected"><Check size={17}/>Conectado{status.accountEmail ? ` · ${status.accountEmail}` : ''}</p><p>El material de las piezas se guarda por cliente, mes del plan y pieza. Los archivos quedan disponibles para el equipo desde el gestor.</p>{status.rootFolderId && <a className="button secondary" href={`https://drive.google.com/drive/folders/${encodeURIComponent(status.rootFolderId)}`} target="_blank" rel="noopener noreferrer"><FolderOpen size={16}/>Abrir carpeta del gestor</a>}</> : <p>{status ? status.configured ? 'Conectá la cuenta que guardará el material del equipo.' : 'Falta terminar la configuración de Google Drive.' : 'Consultando conexión…'}</p>}
     {error && <p className="error-banner" role="alert">{error}</p>}
     <div className="drive-actions"><button type="button" className="button secondary" disabled={busy || !status?.configured} onClick={() => void connect()}>{status?.connected ? <RefreshCw size={16}/> : <ExternalLink size={16}/>} {busy ? 'Abriendo Google…' : status?.connected ? 'Renovar conexión' : 'Conectar Drive'}</button></div>

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { handleRequest, type WorkerEnv } from '../server/index';
-import { decryptRefreshToken, encryptRefreshToken, DRIVE_SCOPE } from '../server/google-oauth';
+import { decryptRefreshToken, encryptRefreshToken, DRIVE_SCOPE, DRIVE_READ_SCOPE } from '../server/google-oauth';
 import type { Fetcher } from '../server/errors';
 
 // HTTP contract doubles only. PostgreSQL policy tests live in drive-sql; no live services here.
@@ -56,6 +56,12 @@ function harness(rpc: (call: RpcCall) => unknown | Promise<unknown>, google?: Fe
         return revoked || ![`Bearer ${TOKEN}`, `Bearer ${TOKEN2}`].includes(auth ?? '') ? Response.json({ message: 'PRIVATE_AUTH_DETAILS' }, { status: 401 }) : Response.json({ id: auth === `Bearer ${TOKEN2}` ? U2 : U });
       }
       if (url.pathname === '/rest/v1/rpc/aramis_workspace') { otherCalls.push({ url: url.toString(), init }); return Response.json(workspace); }
+      if (url.pathname === '/rest/v1/rpc/aramis_command') return Response.json({...workspace,entityId:P});
+      if (url.pathname === '/rest/v1/rpc/aramis_drive_import') {
+        const payload=JSON.parse(String(init.body));
+        const call={action:'import',payload,userId:payload.p_user_id,init};rpcCalls.push(call);
+        return Response.json(await rpc(call));
+      }
       if (url.pathname === '/rest/v1/rpc/aramis_drive') {
         const data = JSON.parse(String(init.body)) as { p_action: string; p_payload: Payload; p_user_id: string; p_workspace_id: string };
         const call = { action: data.p_action, payload: data.p_payload, userId: data.p_user_id, init };
@@ -121,7 +127,7 @@ describe('Drive HTTP authorization and OAuth', () => {
     const { url: authorizationUrl } = await started.json() as { url: string };
     const oauth = new URL(authorizationUrl), state = oauth.searchParams.get('state')!;
     expect(oauth.origin).toBe('https://accounts.google.com');
-    expect(oauth.searchParams.get('scope')).toBe(DRIVE_SCOPE);
+    expect(oauth.searchParams.get('scope')).toBe(DRIVE_SCOPE + ' https://www.googleapis.com/auth/drive.readonly');
     expect(oauth.searchParams.get('code_challenge_method')).toBe('S256');
     const stored = h.rpcCalls.find(call => call.action === 'state-put')!.payload;
     expect(JSON.stringify(stored)).not.toContain(state);
@@ -323,5 +329,65 @@ describe('internal upload HTTP verification', () => {
     for (let repeat = 0; repeat < 2; repeat++) expect((await handleRequest(post(`/api/drive/uploads/${A}/complete`), env, h.fetcher)).status).toBe(200);
     expect(h.googleCalls).toHaveLength(0);
     expect(h.rpcCalls.some(call => call.action === 'upload-complete')).toBe(false);
+  });
+});
+
+describe('external Drive synchronization HTTP',()=>{
+  async function setup(canImport=true, fail=false){
+    const conn=await connection();
+    conn.encryptedTokens=await sealed({accessToken:ACCESS,refreshToken:REFRESH,expiresAt:Date.now()+3600000,scopes:canImport?[DRIVE_SCOPE,DRIVE_READ_SCOPE]:[DRIVE_SCOPE]},'tokens');
+    return harness(call=>call.action==='connection-get'?conn:call.action==='folder-get'?{folderId:'material-folder'}:call.action==='list-assets'?[{...asset,external:true}]:call.action==='import'?{changed:true}:null,
+      async()=>fail?new Response('',{status:503}):Response.json({files:[{...driveFile,appProperties:undefined}]}));
+  }
+  it('uses only the persisted folder and sends verified metadata to the private RPC',async()=>{
+    const h=await setup();const response=await handleRequest(post(`/api/drive/pieces/${P}/sync`),env,h.fetcher);
+    expect(response.status).toBe(200);const value=await response.json();expect(value).toMatchObject({changed:true,skipped:0,assets:[{id:A,name:'toma.mp4'}]});
+    const imported=h.rpcCalls.find(c=>c.action==='import')!;
+    expect(imported.payload).toMatchObject({p_piece_id:P,p_folder_id:'material-folder',p_workspace_id:W,p_files:[{id:'reserved-file',size:6,checksum:asset.checksum}]});
+    expect(new Headers(imported.init.headers).get('apikey')).toBe(env.SUPABASE_SERVICE_ROLE_KEY);
+    expect(JSON.stringify(value)).not.toContain(ACCESS);
+  });
+  it('rejects user-supplied folder/file overrides and unrelated pieces before listing Drive',async()=>{
+    const h=await setup();
+    expect((await handleRequest(post(`/api/drive/pieces/${P}/sync`,{folderId:'elsewhere'}),env,h.fetcher)).status).toBe(400);
+    expect((await handleRequest(post(`/api/drive/pieces/${A}/sync`),env,h.fetcher)).status).toBe(404);
+    expect(h.googleCalls).toHaveLength(0);
+  });
+  it('does not reconcile when read permission is absent or Google fails',async()=>{
+    const old=await setup(false);expect((await handleRequest(post(`/api/drive/pieces/${P}/sync`),env,old.fetcher)).status).toBe(409);
+    expect(old.googleCalls).toHaveLength(0);expect(old.rpcCalls.some(c=>c.action==='import')).toBe(false);
+    const failed=await setup(true,true);expect((await handleRequest(post(`/api/drive/pieces/${P}/sync`),env,failed.fetcher)).status).toBe(502);
+    expect(failed.rpcCalls.some(c=>c.action==='import')).toBe(false);
+  });
+});
+
+describe('eager folders after saving a piece',()=>{
+  it('creates the tree once in the background, without Material, and retry reuses IDs',async()=>{
+    const conn=await connection();const mappings=new Map<string,Payload>();const folders=new Map<string,Payload>();let nextId=0;
+    const h=harness(call=>{
+      if(call.action==='connection-get')return conn;
+      if(call.action==='folder-get')return mappings.get(String(call.payload.logicalKey))??null;
+      if(call.action==='folder-put'){mappings.set(String(call.payload.logicalKey),call.payload);return call.payload;}
+      throw Error('unexpected RPC');
+    },async(input,init)=>{
+      const url=new URL(String(input));
+      if(url.pathname.endsWith('/generateIds'))return Response.json({ids:['folder-'+(++nextId)]});
+      if(init?.method==='POST') {const body=JSON.parse(String(init.body));folders.set(body.id,{...body,parents:body.parents??[],trashed:false});return Response.json(folders.get(body.id));}
+      const f=folders.get(url.pathname.split('/').at(-1)!);return f?Response.json(f):new Response('',{status:404});
+    });
+    const pending:Promise<unknown>[]=[];
+    const saved=await handleRequest(post('/api/commands',{requestId:A,command:{type:'create-piece',input:{clientId:C,ownerId:U}}}),env,h.fetcher,{waitUntil:p=>pending.push(p)});
+    expect(saved.status).toBe(200);expect(pending).toHaveLength(1);await Promise.all(pending);
+    expect(folders.size).toBe(4);expect(mappings.has('piece:'+P+':material')).toBe(false);
+    const retry=await handleRequest(post(`/api/drive/pieces/${P}/folder`),env,h.fetcher);
+    expect(retry.status).toBe(200);expect(folders.size).toBe(4);expect(await retry.json()).toEqual({folderUrl:'https://drive.google.com/drive/folders/folder-4'});
+    mappings.set('piece:'+P+':material',{folderId:'legacy-material'});
+    const legacy=await handleRequest(post(`/api/drive/pieces/${P}/folder`),env,h.fetcher);
+    expect(await legacy.json()).toEqual({folderUrl:'https://drive.google.com/drive/folders/legacy-material'});
+  });
+  it('confirms the saved piece even if Drive is disconnected',async()=>{
+    const h=harness(()=>null);const pending:Promise<unknown>[]=[];
+    const saved=await handleRequest(post('/api/commands',{requestId:A,command:{type:'create-piece',input:{clientId:C,ownerId:U}}}),env,h.fetcher,{waitUntil:p=>pending.push(p)});
+    expect(saved.status).toBe(200);await Promise.all(pending);expect(h.googleCalls).toHaveLength(0);
   });
 });

@@ -38,5 +38,5 @@ export type Command =
  | { type: 'mark-sent'; scope: 'review' | 'material'; targetId: string };
 export interface CommandContext { actor: string; now: string; newId: () => string; token: () => string }
 export interface CommandResult { state: WorkspaceState; entityId: string }
-export const STATUS_LABELS: Record<PieceStatus, string> = { planned: 'En preparación', production: 'En producción', review: 'Para aprobar', approved: 'Aprobado', scheduled: 'Programado', published: 'Publicado' };
+export const STATUS_LABELS: Record<PieceStatus, string> = { planned: 'Planificación', production: 'En producción', review: 'Para aprobar', approved: 'Aprobado', scheduled: 'Programado', published: 'Publicado' };
 export const FORMAT_LABELS: Record<ContentFormat, string> = { reel: 'Reel', carousel: 'Carrusel', post: 'Post', story: 'Historia' };

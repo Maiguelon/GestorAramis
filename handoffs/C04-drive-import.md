@@ -20,8 +20,20 @@ Fecha: 2026-09-14. Autorizado: sincronización desde Drive, carpeta anticipada p
 - Sesión real de Miguel abre app; Configuración confirma conexión antigua y pide renovación. Declarados scopes en Google Cloud. Consentimiento ampliado preparado; todavía PENDIENTE confirmación del usuario al momento de este registro.
 
 ## Pendientes / límites
-- Confirmar nuevo consentimiento y verificar lectura/importación/reproducción real de prueba_drive.mp4, Hugo Peñaloza / Reel 02. No declarar integración validada hasta entonces.
+- Consentimiento e importación/reproducción real comprobados el 2026-09-16; ver cierre debajo.
 - Google continúa Testing: expiración OAuth de 7 días sigue pendiente de resolver; no cambiada audiencia/publicación.
 - Retiro automático afecta archivos incorporados desde Drive; archivos originalmente subidos por el gestor conservan registro y fallan de forma segura si se eliminan/cambian fuera de la app.
 - Mover un archivo importado entre piezas no lo reasigna automáticamente. No seguir shortcuts ni escanear subcarpetas arbitrarias.
 - No reejecutar migración. Ante rollback del código, conservar columnas/RPC; la versión vieja no debe usarse para reproducir importados externos.
+
+## Cierre real — 2026-09-16
+- Miguel confirmó expresamente el permiso ampliado. Consentimiento completado en Google para miguelcarreteroangel@gmail.com; callback del gestor confirmó conexión. Sin cambiar audiencia Testing.
+- Antes de renovar, el archivo de prueba seguía excluido y daba 404. Después, listado de la carpeta devuelve cinco archivos y prueba_drive.mp4 responde 200 en metadata y 206 para bytes 0–1023 (1024 bytes verificados).
+- La prueba real encontró un TypeError en Cloudflare al ejecutar files.list: redirect:error no admitido por el runtime desplegado. Reproducido también con Wrangler/workerd local (compatibility_date 2026-09-01). Se cambia a manual, igual que el resto de llamadas Drive; respuestas 3xx se rechazan sin reenviar credenciales. Test de regresión de redirecciones añadido.
+- La RPC de incorporación fue probada directamente con el listado completo de la carpeta: changed:true. Tras corregir el transporte, Actualizar material desde la app termina con “Drive revisado…” y conserva cinco archivos sin duplicados.
+- Sesión real de Miguel: prueba_drive.mp4 aparece en Hugo / Reel 02 (51.8 MB). Video terminó de reproducirse dentro de la app: currentTime=duration=41.076009, readyState=4, sin error. Botón Descargar dispara evento download del navegador; no se verificó el archivo completo guardado en disco.
+- STATUS_LABELS también usa Planificación: corregida la etiqueta pendiente en filas mensuales y detalle, además del tablero.
+- Suite completa: 428 tests / 15 archivos pasan. Build Pages pasa. No cambios de estado de producción ni modificaciones de archivos en Drive.
+- Diagnóstico de fallos sync conserva sólo código seguro y clase de error; sin URLs, datos de archivos, cuerpos remotos ni credenciales.
+- Despliegue final: https://663ef731.gestor-aramis.pages.dev y alias https://gestor-aramis.pages.dev. Smoke público pasa (rutas, configuración y rechazos de acceso anónimo/cross-origin).
+- Siguiente: Eric prueba carga nativa de Drive en la carpeta vinculada de una pieza; Eliana revisa Material en el gestor. Actualiza al abrir, al recuperar foco y cada 30 segundos visible; no sincroniza con la app cerrada. Resolver Google Testing sigue pendiente.

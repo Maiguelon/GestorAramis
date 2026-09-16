@@ -101,6 +101,10 @@ export async function handleRequest(request: Request, env: WorkerEnv, fetcher: F
     return Response.json(result, { headers: HEADERS });
   } catch (error) {
     const safe = error instanceof ServiceError ? error : new ServiceError('internal_error', 500);
+    if (new URL(request.url).pathname.endsWith('/sync')) {
+      // Operational diagnostics only: never log credentials, file names, URLs or upstream bodies.
+      console.warn('drive_sync_failed', safe.code, error instanceof Error ? error.name : 'Unknown');
+    }
     return Response.json({ error: safe.code, code: safe.code }, { status: safe.status, headers: HEADERS });
   }
 }

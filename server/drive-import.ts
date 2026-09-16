@@ -16,7 +16,8 @@ export async function listImportFiles(token: string, folderId: string, fetcher: 
       fields: 'nextPageToken,incompleteSearch,files(id,name,mimeType,size,md5Checksum,parents,trashed)',
       supportsAllDrives: 'true', includeItemsFromAllDrives: 'true', ...(pageToken ? {pageToken} : {}) });
     const response = await fetcher(`https://www.googleapis.com/drive/v3/files?${query}`, {
-      headers: {Authorization: `Bearer ${token}`}, redirect: 'error',
+      // Match the other Drive calls: never forward credentials through redirects.
+      headers: {Authorization: `Bearer ${token}`}, redirect: 'manual',
     });
     if (!response.ok) throw new ServiceError(response.status === 401 ? 'google_reconnect_required' : response.status === 403 ? 'drive_access_denied' : 'service_unavailable',502);
     const data = await response.json() as {files?: Record<string,unknown>[]; nextPageToken?: string; incompleteSearch?: boolean};

@@ -176,3 +176,10 @@ Por pedido de Miguel, Prueba de conexión quedó archivado junto con Posteo 01, 
 - Importación protegida por drive.readonly, desactivada en conexiones antiguas hasta consentimiento. Poll visible por pieza, reconciliación idempotente, medios privados externos con comprobación de carpeta/checksum.
 - Pruebas: 425 tests de suite + 2 nuevos de provisión de carpetas, todos pasan; 14 recorridos compartidos simulados pasan; build Pages y smoke público pasan.
 - Pendiente inmediato: consentimiento Google de lectura ampliada presentado en navegador para miguelcarreteroangel@gmail.com y confirmación solicitada al usuario. Luego comprobar prueba_drive.mp4 (Hugo / Reel 02) real. OAuth sigue Testing; resolver publicación y renovar credencial para evitar caducidad semanal.
+
+### 2026-09-16 — Drive externo comprobado en producción
+- Consentimiento ampliado autorizado por Miguel y completado. prueba_drive.mp4 ya se lee e incorpora a Hugo Peñaloza / Reel 02; cinco archivos sin duplicados tras Actualizar material. Reproducción completa de 41.076009 segundos dentro de la app y evento de descarga individual comprobados.
+- Corregido fallo real de Cloudflare: redirect:error generaba TypeError en files.list, aunque Node lo admitía. Usar manual y rechazar 3xx. Reproducido en workerd local; nuevo test protege rechazo de redirecciones. Log de sync sólo código/clase de error seguros.
+- Planificación aplicado también a la etiqueta compartida de estado (filas y detalle). Suite completa 428 tests pasa y build Pages pasa. Evidencia y límites en handoffs/C04-drive-import.md.
+- No repetir migraciones ni consentimiento. Próximo: prueba del equipo usando carga nativa de Drive; resolver modo Google Testing (sigue activo), sin prometer vigilancia con app cerrada ni carga web en segundo plano.
+- Publicación final 663ef731.gestor-aramis.pages.dev; alias habitual actualizado. Smoke público pasa; pieza real abierta para Miguel en el navegador.

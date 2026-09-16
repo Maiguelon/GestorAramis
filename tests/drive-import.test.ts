@@ -21,6 +21,14 @@ describe('Drive external material, provider contracts (not live Google)',()=>{
     let calls=0;
     await expect(listImportFiles('token','folder',async()=>++calls===1?Response.json({files:[file],nextPageToken:'next'}):new Response('',{status:503}))).rejects.toThrow();
   });
+  it('rejects provider redirects without forwarding the Google credential',async()=>{
+    const fetcher=vi.fn(async(_input:RequestInfo|URL,init?:RequestInit)=>{
+      expect(init?.redirect).toBe('manual');
+      return new Response(null,{status:302,headers:{Location:'https://unrelated.example/files'}});
+    });
+    await expect(listImportFiles('token','folder',fetcher)).rejects.toMatchObject({code:'service_unavailable'});
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
   it('excludes shortcuts, incomplete uploads and oversized files without following them',async()=>{
     const result=await listImportFiles('token','folder',async()=>Response.json({files:[file,{...file,id:'shortcut',mimeType:'application/vnd.google-apps.shortcut'},{...file,id:'pending',md5Checksum:undefined},{...file,id:'large',size:String(3*1024**3)}]}));
     expect(result.files).toHaveLength(1);expect(result.skipped).toBe(3);

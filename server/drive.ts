@@ -35,6 +35,7 @@ export interface DriveFile {
   trashed: boolean;
   /** Present only for binary files; optional for upload/legacy metadata compatibility. */
   headRevisionId?: string;
+  thumbnailLink?: string;
 }
 export interface StoredAsset {
   external?: boolean;
@@ -245,13 +246,53 @@ async function parseFile(response: Response): Promise<DriveFile> {
   return data as DriveFile;
 }
 
-export async function getDriveFile(token: string, fileId: string, fetcher: Fetcher = fetch): Promise<DriveFile> {
-  const query = new URLSearchParams({ fields: FILE_FIELDS, supportsAllDrives: 'true' });
+export async function getDriveFile(token: string, fileId: string, fetcher: Fetcher = fetch, thumbnail = false): Promise<DriveFile> {
+  const query = new URLSearchParams({ fields: FILE_FIELDS + (thumbnail ? ',thumbnailLink' : ''), supportsAllDrives: 'true' });
   const response = await upstream(fetcher, `${API}/${safeId(fileId)}?${query}`, { headers: headers(token) });
   if (!response.ok) throw upstreamError(response.status);
   const file = await parseFile(response);
   if (file.id !== fileId) throw new ServiceError('invalid_drive_response', 502);
   return file;
+}
+
+/** Private team thumbnail. Provider URLs/tokens never leave the server. */
+export async function driveAssetThumbnail(token: string, asset: StoredAsset, fetcher: Fetcher = fetch): Promise<Response> {
+  validateStoredAsset(asset);
+  const file = await getDriveFile(token, asset.driveFileId, fetcher, true);
+  if (file.trashed || !asset.folderId || !file.parents.includes(asset.folderId) ||
+      file.md5Checksum !== asset.checksum || file.size !== String(asset.size) || file.mimeType !== asset.mimeType ||
+      (!asset.external && (file.appProperties.workspaceId !== asset.workspaceId || file.appProperties.clientId !== asset.clientId))) {
+    throw new ServiceError('asset_changed_or_inaccessible', 409);
+  }
+  if (!file.thumbnailLink) throw new ServiceError('thumbnail_unavailable', 404);
+  let url: URL;
+  try { url = new URL(file.thumbnailLink); } catch { throw new ServiceError('invalid_drive_response', 502); }
+  // Only Google image hosts; no redirects, arbitrary origins or browser-supplied URLs.
+  if (url.protocol !== 'https:' || !/^lh\d+\.googleusercontent\.com$/.test(url.hostname) ||
+      url.port || url.username || url.password || url.hash) throw new ServiceError('invalid_drive_response', 502);
+  const response = await upstream(fetcher, url.toString(), { headers: headers(token), signal: AbortSignal.timeout(15_000) });
+  if (response.status !== 200) { await response.body?.cancel(); throw upstreamError(response.status); }
+  const type = response.headers.get('Content-Type')?.split(';')[0].trim();
+  const limit = 2 * 1024 * 1024;
+  if (!type || !['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(type) ||
+      Number(response.headers.get('Content-Length')) > limit || !response.body) return invalidMediaResponse(response);
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = []; let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read(); if (done) break;
+      size += value.length;
+      if (size > limit) { await reader.cancel(); throw new ServiceError('invalid_drive_response', 502); }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  if (!size) throw new ServiceError('invalid_drive_response', 502);
+  const bytes = new Uint8Array(size); let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+  return new Response(bytes, { headers: {
+    'Content-Type': type, 'Content-Length': String(size), 'Cache-Control': 'private, no-store',
+    'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
+  } });
 }
 
 /** Reversible trash only, for a persisted team asset; never accepts a browser Drive ID. */

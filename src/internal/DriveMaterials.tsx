@@ -3,7 +3,7 @@ import { Check, Download, ExternalLink, FileText, Pause, Play, RefreshCw, Trash2
 import { createZip, safeFileName, type ZipEntry } from '../lib/download-zip';
 import { sharedWorkspace } from '../lib/shared-api';
 import { uploadResumableFile, ResumableUploadError, type BrowserUploadSession } from '../lib/resumable-upload';
-import { DRIVE_FILE_ACCEPT, DRIVE_ZIP_LIMIT, DriveApiError, driveAssetUrl, drivePost, driveRequest, fileSize, fingerprintDriveFile, validateDriveFile, type DriveAsset, type DriveStatus, type DriveUploadReply } from '../lib/drive-api';
+import { DRIVE_FILE_ACCEPT, DRIVE_ZIP_LIMIT, DriveApiError, driveAssetUrl, driveThumbnailUrl, drivePost, driveRequest, fileSize, fingerprintDriveFile, validateDriveFile, type DriveAsset, type DriveStatus, type DriveUploadReply } from '../lib/drive-api';
 import './drive-materials.css';
 import { Modal } from '../components/ui';
 
@@ -329,14 +329,28 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
 
 function DriveAssetPreview({ asset, ready, version, onTrash, disabled, trashing }: { asset: DriveAsset; ready: boolean; version: number; onTrash:()=>void; disabled:boolean; trashing:boolean }) {
   const [failed, setFailed] = useState(false);
-  useEffect(() => { setFailed(false); }, [version]);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => { setFailed(false); setPlaying(false); }, [version]);
   const image = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(asset.mimeType);
   // Match the server's inline video formats; MOV/M4V are served as downloads.
   const video = ['video/mp4', 'video/webm'].includes(asset.mimeType);
+  const videoThumbnail = asset.mimeType.startsWith('video/');
   return <article className="team-asset drive-asset">
-    {ready && !failed && video ? <video key={version} controls playsInline preload="none" src={driveAssetUrl(asset.id)} aria-label={asset.name} onError={() => setFailed(true)}/> : ready && !failed && image ? <img key={version} src={driveAssetUrl(asset.id)} alt={asset.name} loading="lazy" onError={() => setFailed(true)}/> : <FileText size={28}/>}
+    {ready && !failed && video && playing ? <video key={version} controls autoPlay playsInline preload="none" src={driveAssetUrl(asset.id)} aria-label={asset.name} onError={() => setFailed(true)}/> : ready && videoThumbnail ? <DriveVideoThumbnail key={version} asset={asset} onPlay={video ? () => { setFailed(false); setPlaying(true); } : undefined}/> : ready && !failed && image ? <img key={version} src={driveAssetUrl(asset.id)} alt={asset.name} loading="lazy" onError={() => setFailed(true)}/> : <FileText size={28}/>}
     <div className="team-asset-info"><strong>{asset.name}</strong><small>{fileSize(asset.size)} · Guardado en Drive</small>{!ready ? <small>Esperando acceso al archivo…</small> : failed ? <small>No se pudo mostrar la vista previa. Podés descargar el archivo o actualizar el material.</small> : !image && !video && <small>Este formato se consulta descargando el archivo.</small>}</div>
     {ready && <a className="button secondary" href={driveAssetUrl(asset.id, true)} download={safeFileName(asset.name)}><Download size={15}/>Descargar</a>}
     <button type="button" className="text-button" disabled={disabled} aria-label={`Mover ${asset.name} a la papelera`} onClick={onTrash}><Trash2 size={15}/>{trashing?'Moviendo…':'Mover a la papelera'}</button>
   </article>;
+}
+
+function DriveVideoThumbnail({ asset, onPlay }: { asset: DriveAsset; onPlay?: () => void }) {
+  const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const content = <>
+    {state !== 'failed' && <img src={driveThumbnailUrl(asset.id)} alt={`Miniatura de ${asset.name}`} width="160" height="120" loading="lazy" decoding="async" onLoad={() => setState('ready')} onError={() => setState('failed')}/>}
+    {state !== 'ready' && <span className="drive-thumbnail-placeholder"><FileText size={24}/><span>{state === 'failed' ? 'Miniatura no disponible' : 'Cargando miniatura…'}</span></span>}
+    {onPlay && <span className="drive-thumbnail-play"><Play size={16}/>Reproducir</span>}
+  </>;
+  return onPlay
+    ? <button type="button" className="drive-thumbnail" aria-label={`Reproducir ${asset.name}`} onClick={onPlay}>{content}</button>
+    : <div className="drive-thumbnail">{content}</div>;
 }

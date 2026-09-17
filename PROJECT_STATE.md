@@ -1,5 +1,13 @@
 # Estado del proyecto
 
+## Miniaturas de video — 2026-09-17
+
+Publicado en 38e9bc92.gestor-aramis.pages.dev, alias habitual actualizado. Videos muestran miniaturas privadas generadas por Drive, incluidos MOV/M4V; éstos conservan descarga del original sin reproducción. MP4/WebM crean reproductor sólo al pulsar Reproducir. Imágenes lazy, estados de carga/no disponible y reintento con Actualizar material. Sin conversión, servicios pagos, migración ni ampliación OAuth.
+
+450 tests de suite, 15 recorridos compartidos de Drive, compilación TypeScript/Vite/Pages y smoke remoto pasan. Endpoint thumbnail protegido por la misma sesión y validaciones de asset, conexión y carpeta; URLs/tokens Google no salen del servidor, no hay caché compartida. Evidencia real: tres MOV de Club Luján entregan JPEG de 10–11 KB; descarga parcial del original retorna 206/attachment. Comprobación visual en la versión publicada con sesión de Miguel: miniaturas MOV visibles dentro de Tercera Fecha del Regional / Material, pieza dejada abierta.
+
+Alcance, límites y pruebas en handoffs/C04-drive-thumbnails.md. Bloque cerrado; próximo sólo si Miguel lo pide: evaluar visor de Google para reproducir MOV. Duración y conversión no implementadas. Google Testing y pendientes anteriores siguen separados; no repetir configuración ni consentimiento.
+
 ## Logos editables de clientes — 2026-09-12
 
 Implementado y publicado en `83c632a1.gestor-aramis.pages.dev` (dominio estable actualizado). Clientes → Datos y plan mensual / Editar datos y plan → Subir logo, Cambiar logo o Quitar logo → Guardar datos y plan. También disponible al crear cliente. Aparece en fichas y tareas del equipo; fallback a iniciales.

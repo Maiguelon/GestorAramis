@@ -33,7 +33,8 @@ async function mockDrive(context: BrowserContext) {
   await context.route('**/api/workspace', route => route.fulfill({ json: { state, memberId, workspaceId: 'workspace-drive', workspaceName: 'Aramis · prueba Drive' } }));
   await context.route('**/api/drive/**', async route => {
     const request = route.request(), url = new URL(request.url());
-    if (!url.pathname.endsWith('/content') && request.method() !== 'DELETE') expect(request.headers().authorization).toBe(`Bearer ${accessToken}`);
+    if (!url.pathname.endsWith('/content') && !url.pathname.endsWith('/thumbnail') && request.method() !== 'DELETE') expect(request.headers().authorization).toBe(`Bearer ${accessToken}`);
+    if (url.pathname.endsWith('/thumbnail')) return route.fulfill({status:404});
     if (url.pathname.endsWith('/status')) return route.fulfill({ json: { configured, connected, accountEmail: 'drive@example.test' } });
     if (url.pathname.endsWith('/media-session')) return route.fulfill({ json: { ok: true } });
     if (url.pathname.includes('/pieces/')) return route.fulfill({ json: { assets, folderUrl: 'https://drive.google.com/drive/folders/folder_test' } });

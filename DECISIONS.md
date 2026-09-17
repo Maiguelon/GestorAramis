@@ -1,5 +1,8 @@
 # Decisiones
 
+## D20 — Miniaturas de video sin conversión (2026-09-17)
+Eliana prioriza miniaturas y descarga del original. Usar las imágenes generadas por Drive también para MOV/M4V mediante proxy privado con autorización y validación por archivo. No exponer thumbnailLink ni tokens, no publicar los archivos ni contratar servicios de video. Tarjetas lazy; MP4/WebM reproducen sólo tras pulsar. MOV/M4V permanecen descargables sin reproducción. Visor Google y duración quedan para evaluación posterior; ausencia de miniatura no bloquea material.
+
 ## D01 — Producto y V1
 WhatsApp es la entrada del cliente, envío humano con mensaje preparado. Calendario incluido V1: enlace secreto revocable read-only y acceso habitual autenticado. Aprobación/material por link restringido. No bot ni autopublicación ni métricas.
 

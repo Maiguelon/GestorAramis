@@ -82,6 +82,79 @@ function harness(rpc: (call: RpcCall) => unknown | Promise<unknown>, google?: Fe
 }
 afterEach(() => { vi.useRealTimers(); });
 
+describe('private Drive thumbnails', () => {
+  const thumbnailLink = 'https://lh3.googleusercontent.com/private-thumbnail';
+  const mov = { ...asset, name:'toma.mov', mimeType:'video/quicktime', folderId:'material-folder', external:true };
+  const metadata = { ...driveFile, mimeType:mov.mimeType, thumbnailLink };
+
+  it('serves a MOV image using the media cookie, without exposing provider credentials or loading video', async () => {
+    const conn = await connection();
+    const h = harness(call => call.action==='connection-get'?conn:mov, async (input, init) => {
+      const url = new URL(String(input));
+      expect(init?.redirect).toBe('manual');
+      expect(new Headers(init?.headers).get('Authorization')).toBe(`Bearer ${ACCESS}`);
+      if (url.hostname==='www.googleapis.com') {
+        expect(url.searchParams.get('fields')).toContain('thumbnailLink');
+        expect(url.searchParams.has('alt')).toBe(false);
+        return Response.json(metadata);
+      }
+      expect(String(input)).toBe(thumbnailLink);
+      return new Response(new Uint8Array([255,216,255]), {headers:{'Content-Type':'image/jpeg','Set-Cookie':'PRIVATE_COOKIE'}});
+    });
+    const issued = await handleRequest(post('/api/drive/media-session'),env,h.fetcher);
+    const cookie=issued.headers.get('Set-Cookie')!.split(';')[0];
+    const url=`/api/drive/assets/${A}/thumbnail`;
+    const response=await handleRequest(request(url,{headers:{Cookie:cookie}},null),env,h.fetcher);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('image/jpeg');
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(response.headers.get('Set-Cookie')).toBeNull();
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([255,216,255]));
+    const count=h.googleCalls.length;
+    h.revoke();
+    expect((await handleRequest(request(url,{headers:{Cookie:cookie}},null),env,h.fetcher)).status).toBe(401);
+    expect(h.googleCalls).toHaveLength(count);
+  });
+
+  it.each([
+    { thumbnailLink:undefined }, { thumbnailLink:'https://evil.test/thumb' },
+    { thumbnailLink:'https://lh3.googleusercontent.com.evil.test/thumb' },
+    { thumbnailLink:'http://lh3.googleusercontent.com/thumb' },
+    { thumbnailLink:'https://user@lh3.googleusercontent.com/thumb' },
+    { trashed:true }, { parents:['different-folder'] }, { md5Checksum:'c'.repeat(32) },
+  ])('rejects missing, untrusted or changed thumbnails before image retrieval: %j', async change => {
+    const conn=await connection();
+    const h=harness(call=>call.action==='connection-get'?conn:mov,async()=>Response.json({...metadata,...change}));
+    const response=await handleRequest(request(`/api/drive/assets/${A}/thumbnail`),env,h.fetcher);
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(h.googleCalls).toHaveLength(1);
+    expect(await response.text()).not.toContain(thumbnailLink);
+  });
+
+  it.each(['redirect','html','oversize','missing'])('rejects unsafe provider image response: %s', async kind => {
+    const conn=await connection();
+    const h=harness(call=>call.action==='connection-get'?conn:mov,async input=>{
+      if(String(input).startsWith('https://www.googleapis.com/'))return Response.json(metadata);
+      if(kind==='redirect')return new Response(null,{status:302,headers:{Location:'https://evil.test/'}});
+      if(kind==='missing')return new Response(null,{status:404});
+      return new Response(kind==='oversize'?new Uint8Array(2*1024*1024+1):'<html>private provider error</html>',{headers:{'Content-Type':kind==='html'?'text/html':'image/jpeg'}});
+    });
+    const response=await handleRequest(request(`/api/drive/assets/${A}/thumbnail`),env,h.fetcher);
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(h.googleCalls).toHaveLength(2);
+    expect(await response.text()).not.toContain('private provider error');
+  });
+
+  it('rejects unavailable assets and connection changes before Google access', async()=>{
+    const conn=await connection();
+    for(const value of [null,{...mov,generation:'old'}]){
+      const h=harness(call=>call.action==='connection-get'?conn:value);
+      expect((await handleRequest(request(`/api/drive/assets/${A}/thumbnail`),env,h.fetcher)).status).toBe(value?409:404);
+      expect(h.googleCalls).toHaveLength(0);
+    }
+  });
+});
+
 describe('Drive HTTP authorization and OAuth', () => {
   it('rejects missing authentication and another Origin before any privileged call', async () => {
     const h = harness(() => null);

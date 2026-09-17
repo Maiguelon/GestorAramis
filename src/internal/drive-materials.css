@@ -22,5 +22,11 @@
 .drive-upload .text-button{margin-top:8px;margin-right:16px;min-height:36px}
 .drive-asset video,.drive-asset img{max-height:330px;object-fit:contain;background:#edf0f4}
 .drive-asset .team-asset-info{min-width:0}
+.drive-thumbnail{position:relative;display:block;width:160px;height:120px;flex-shrink:0;overflow:hidden;border:1px solid #d7dde5;border-radius:6px;background:#edf0f4;padding:0;color:#43516a}
+button.drive-thumbnail{cursor:pointer}
+button.drive-thumbnail:focus-visible{outline:3px solid #5c9cd9;outline-offset:3px}
+.drive-thumbnail img{display:block;width:100%;height:100%;object-fit:contain}
+.drive-thumbnail-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px;font-size:11px;text-align:center}
+.drive-thumbnail-play{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:5px;padding:5px;background:#1b2a41e8;color:white;font-size:12px}
 .drive-asset .team-asset-info strong,.drive-asset .team-asset-info small{overflow-wrap:anywhere}
 @media(max-width:600px){.drive-actions{gap:8px}.drive-actions .button{flex:1;justify-content:center}.drive-file-picker{min-height:80px;text-align:center}.drive-upload-heading{font-size:13px}.drive-upload .text-button{min-height:44px}.drive-callback{margin:24px auto;padding:14px}.drive-asset .button{min-height:44px}.drive-upload-state{align-items:flex-start}}

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import type { WorkspaceState } from '../../contracts/domain';
 import type { DriveAsset } from '../../src/lib/drive-api';
 
-test('MOV y M4V ofrecen enlaces privados de descarga sin intentar un reproductor inline', async ({ page, context }) => {
+test('miniaturas MOV/M4V, recuperación y descarga original sin cargar videos al abrir', async ({ page, context }) => {
   // Auth and Drive are simulated: this checks rendering and protected links,
   // not native download completion, Google streaming, or real codec support.
   const userId = 'f0000000-0000-4000-8000-000000000001';
@@ -22,8 +22,11 @@ test('MOV y M4V ofrecen enlaces privados de descarga sin intentar un reproductor
   const assets: DriveAsset[] = [
     { id: 'asset-mov', name: 'toma.mov', mimeType: 'video/quicktime', size: bytes.length, source: 'drive' },
     { id: 'asset-m4v', name: 'toma.m4v', mimeType: 'video/x-m4v', size: bytes.length, source: 'drive' },
+    { id: 'asset-mp4', name: 'toma.mp4', mimeType: 'video/mp4', size: bytes.length, source: 'drive' },
   ];
   const contentRequests: string[] = [];
+  let thumbnailReady = false;
+  const thumbnail = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXioAAAAASUVORK5CYII=', 'base64');
   await context.route('https://shared-ui-test.supabase.co/auth/v1/**', route => route.fulfill({ json: route.request().url().includes('/token') ? session : user }));
   await context.route('**/api/workspace', route => route.fulfill({ json: { state, memberId, workspaceId: 'workspace-video', workspaceName: 'Aramis · prueba de formatos' } }));
   await context.route('**/api/drive/**', async route => {
@@ -31,6 +34,8 @@ test('MOV y M4V ofrecen enlaces privados de descarga sin intentar un reproductor
     if (url.pathname.endsWith('/status')) return route.fulfill({ json: { configured: true, connected: true } });
     if (url.pathname.endsWith('/media-session')) return route.fulfill({ json: { ok: true } });
     if (url.pathname.includes('/pieces/')) return route.fulfill({ json: { assets } });
+    if (url.pathname.endsWith('/thumbnail')) return !thumbnailReady && url.pathname.includes('/asset-m4v/')
+      ? route.fulfill({ status:404 }) : route.fulfill({ body:thumbnail,contentType:'image/png' });
     if (url.pathname.endsWith('/content')) {
       contentRequests.push(url.pathname + url.search);
       const asset = assets.find(item => url.pathname.includes(`/${item.id}/`));
@@ -48,6 +53,9 @@ test('MOV y M4V ofrecen enlaces privados de descarga sin intentar un reproductor
   await page.getByRole('tab', { name: 'Material', exact: true }).click();
   await expect(page.getByText('Este formato se consulta descargando el archivo.', { exact: true })).toHaveCount(2);
   await expect(page.locator('.drive-asset video')).toHaveCount(0);
+  await expect(page.getByRole('img', {name:'Miniatura de toma.mov'})).toBeVisible();
+  await expect.poll(()=>page.getByRole('img', {name:'Miniatura de toma.mov'}).evaluate((image:HTMLImageElement)=>image.naturalWidth)).toBe(1);
+  await expect(page.getByText('Miniatura no disponible', {exact:true})).toBeVisible();
   expect(contentRequests).toEqual([]);
 
   for (const asset of assets) {
@@ -55,4 +63,16 @@ test('MOV y M4V ofrecen enlaces privados de descarga sin intentar un reproductor
     await expect(card.getByRole('link', { name: 'Descargar', exact: true })).toHaveAttribute('href', `/api/drive/assets/${asset.id}/content?download=1`);
   }
   expect(contentRequests).toEqual([]);
+  thumbnailReady=true;
+  await page.getByRole('button',{name:'Actualizar material',exact:true}).click();
+  await expect.poll(()=>page.getByRole('img',{name:'Miniatura de toma.m4v'}).evaluate((image:HTMLImageElement)=>image.naturalWidth)).toBe(1);
+  await expect(page.getByText('Miniatura no disponible',{exact:true})).toHaveCount(0);
+  await page.setViewportSize({width:390,height:844});
+  await expect(page.getByRole('img',{name:'Miniatura de toma.mov'})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  const mov=page.locator('.drive-asset').filter({has:page.getByText('toma.mov',{exact:true})});
+  expect(contentRequests).toEqual([]);
+  await expect(mov.getByRole('button',{name:/Reproducir/})).toHaveCount(0);
+  await page.getByRole('button',{name:'Reproducir toma.mp4',exact:true}).click();
+  await expect.poll(()=>contentRequests.some(url=>url==='/api/drive/assets/asset-mp4/content')).toBe(true);
 });

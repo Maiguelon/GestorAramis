@@ -51,6 +51,7 @@ export async function driveRequest<T>(path: string, init: RequestInit = {}): Pro
 }
 export const drivePost = <T>(path: string, body: unknown = {}, signal?: AbortSignal) => driveRequest<T>(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal });
 export const driveAssetUrl = (id: string, download = false) => `/api/drive/assets/${encodeURIComponent(id)}/content${download ? '?download=1' : ''}`;
+export const driveThumbnailUrl = (id: string) => `/api/drive/assets/${encodeURIComponent(id)}/thumbnail`;
 export function fileSize(bytes: number): string {
   return bytes < 1024 ** 2 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : bytes < 1024 ** 3 ? `${(bytes / 1024 ** 2).toFixed(1)} MB` : `${(bytes / 1024 ** 3).toFixed(2)} GB`;
 }

@@ -254,6 +254,25 @@ export async function getDriveFile(token: string, fileId: string, fetcher: Fetch
   return file;
 }
 
+/** Reversible trash only, for a persisted team asset; never accepts a browser Drive ID. */
+export async function trashDriveAsset(token: string, asset: StoredAsset, fetcher: Fetcher = fetch): Promise<void> {
+  validateStoredAsset(asset);
+  const file = await getDriveFile(token, asset.driveFileId, fetcher);
+  if (!asset.folderId || !file.parents.includes(asset.folderId) ||
+      file.md5Checksum !== asset.checksum || Number(file.size) !== asset.size || file.mimeType !== asset.mimeType ||
+      (!asset.external && (file.appProperties.workspaceId !== asset.workspaceId || file.appProperties.clientId !== asset.clientId))) {
+    throw new ServiceError('asset_changed_or_inaccessible', 409);
+  }
+  if (file.trashed) return; // Retry after Google succeeded but the database response was lost.
+  const requestHeaders = headers(token); requestHeaders.set('Content-Type', 'application/json');
+  const response = await upstream(fetcher, `${API}/${safeId(asset.driveFileId)}?supportsAllDrives=true&fields=id,trashed`, {
+    method: 'PATCH', headers: requestHeaders, body: JSON.stringify({trashed:true}),
+  });
+  if (!response.ok) throw upstreamError(response.status);
+  const result = await response.json() as {id?:string;trashed?:boolean};
+  if (result.id !== asset.driveFileId || result.trashed !== true) throw new ServiceError('invalid_drive_response',502);
+}
+
 /** Copy into a new tagged file. Pin its revision before attaching it to an exact review snapshot. */
 export async function copyDriveSnapshot(
   token: string, sourceFileId: string, destination: SnapshotDestination, fetcher: Fetcher = fetch,

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {describe,it,expect,vi} from 'vitest';
 import {listImportFiles} from '../server/drive-import';
-import {streamDriveAsset} from '../server/drive';
+import {streamDriveAsset,trashDriveAsset} from '../server/drive';
 
 const file={id:'clip',name:'clip.mp4',mimeType:'video/mp4',size:'10',md5Checksum:'a'.repeat(32),parents:['folder'],trashed:false};
 describe('Drive external material, provider contracts (not live Google)',()=>{
@@ -46,4 +46,14 @@ describe('Drive external material, provider contracts (not live Google)',()=>{
   it('does not relax original app-owned media authorization',async()=>{
     await expect(streamDriveAsset('token',{...asset,external:false},null,async()=>Response.json(file))).rejects.toMatchObject({code:'asset_changed_or_inaccessible'});
   });
+  it('retries an already trashed file without another Google mutation',async()=>{
+    const fetcher=vi.fn(async()=>Response.json({...file,trashed:true}));
+    await trashDriveAsset('token',asset,fetcher);expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it.each([{parents:['outside']},{md5Checksum:'b'.repeat(32)}])('never trashes a moved or replaced file',async patch=>{
+    const fetcher=vi.fn(async()=>Response.json({...file,...patch}));
+    await expect(trashDriveAsset('token',asset,fetcher)).rejects.toMatchObject({code:'asset_changed_or_inaccessible'});
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
 });

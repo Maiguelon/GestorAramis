@@ -3,6 +3,7 @@ import { ServiceError, type Fetcher } from './errors';
 
 export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 export const DRIVE_READ_SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
+export const DRIVE_WRITE_SCOPE = 'https://www.googleapis.com/auth/drive';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 export interface GoogleConfig { clientId: string; clientSecret: string; redirectUri: string }
@@ -43,7 +44,7 @@ export async function prepareGoogleOAuth(
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   url.search = new URLSearchParams({
     client_id: config.clientId, redirect_uri: config.redirectUri, response_type: 'code',
-    scope: `${DRIVE_SCOPE} ${DRIVE_READ_SCOPE}`, access_type: 'offline', prompt: 'consent',
+    scope: `${DRIVE_SCOPE} ${DRIVE_WRITE_SCOPE}`, access_type: 'offline', prompt: 'consent',
     state: state.token, code_challenge: challenge, code_challenge_method: 'S256',
   }).toString();
   return { url: url.toString(), record: { stateHash: state.tokenHash, verifier, ...staff, expiresAt: now + 10 * 60_000 } };

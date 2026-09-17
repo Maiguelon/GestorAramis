@@ -1,7 +1,7 @@
 import { sharedWorkspace } from './shared-api';
 import type { BrowserUploadSession } from './resumable-upload';
 
-export interface DriveStatus { configured: boolean; connected: boolean; canImport?: boolean; accountEmail?: string; rootFolderId?: string }
+export interface DriveStatus { configured: boolean; connected: boolean; canImport?: boolean; canTrashExternal?:boolean; accountEmail?: string; rootFolderId?: string }
 export interface DriveAsset { version?: string; id: string; name: string; mimeType: string; size: number; source: 'drive' }
 export interface DriveUploadReply { session?: BrowserUploadSession; asset?: DriveAsset }
 export const DRIVE_FILE_LIMIT = 2 * 1024 ** 3;
@@ -9,6 +9,8 @@ export const DRIVE_ZIP_LIMIT = 256 * 1024 ** 2;
 export const DRIVE_FILE_ACCEPT = 'video/mp4,video/webm,video/quicktime,video/x-m4v,image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,application/pdf,.mp4,.mov,.m4v,.webm,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.pdf';
 const allowedMime = new Set(['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v', 'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif', 'application/pdf', 'application/octet-stream']);
 const messages: Record<string, string> = {
+  google_trash_scope_missing: 'Renová la conexión desde Configuración para enviar a la papelera lo subido directamente a Drive.',
+  drive_trash_pending: 'Drive recibió la operación, pero falta confirmarla en el gestor. Reintentá para completar el registro.',
   google_import_scope_missing: 'Renová la conexión desde Configuración para incorporar archivos subidos directamente a Drive.',
   drive_sync_incomplete: 'No se pudo revisar toda la carpeta. Se conservó la lista anterior; volvé a actualizar.',
   configuration_missing: 'La conexión con Drive todavía no está configurada.',

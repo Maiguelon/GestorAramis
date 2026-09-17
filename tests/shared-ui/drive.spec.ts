@@ -297,3 +297,17 @@ test('imports Drive material in the piece, retains it on sync failure and hides 
   fail=false;removed=true;await refresh.click();await expect(page.getByText('prueba_drive.mp4',{exact:true})).toHaveCount(0);
   expect(calls).toBeGreaterThanOrEqual(3);
 });
+
+test('trash asks for confirmation, keeps failed material and removes it only after success', async ({page,context})=>{
+  const mock=await mockDrive(context);
+  mock.assets.push({id:'trash-test',name:'descartable.pdf',size:6,mimeType:'application/pdf',source:'drive'});
+  let calls=0,fail=true;
+  await context.route('**/api/drive/assets/trash-test/trash',route=>{calls++;if(fail)return route.fulfill({status:502,json:{code:'drive_access_denied'}});mock.assets.splice(0,mock.assets.length);return route.fulfill({json:{changed:true}});});
+  await login(page);await material(page);
+  const button=page.getByRole('button',{name:'Mover descartable.pdf a la papelera'});
+  await button.click();await page.getByRole('button',{name:'Cancelar',exact:true}).click();expect(calls).toBe(0);
+  await button.click();await page.getByRole('button',{name:'Enviar a la papelera',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Drive no permite');await expect(button).toBeEnabled();
+  fail=false;await button.click();await page.getByRole('button',{name:'Enviar a la papelera',exact:true}).click();await expect(button).toHaveCount(0);
+  await expect(page.getByText('Archivo enviado a la papelera de Drive.')).toBeVisible();
+  await page.reload();await material(page);await expect(button).toHaveCount(0);
+});

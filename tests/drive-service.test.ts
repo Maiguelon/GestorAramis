@@ -57,6 +57,9 @@ function harness(rpc: (call: RpcCall) => unknown | Promise<unknown>, google?: Fe
       }
       if (url.pathname === '/rest/v1/rpc/aramis_workspace') { otherCalls.push({ url: url.toString(), init }); return Response.json(workspace); }
       if (url.pathname === '/rest/v1/rpc/aramis_command') return Response.json({...workspace,entityId:P});
+      if (url.pathname === '/rest/v1/rpc/aramis_drive_trash') {
+        const payload=JSON.parse(String(init.body));const call={action:'trash',payload,userId:payload.p_user_id,init};rpcCalls.push(call);return Response.json(await rpc(call));
+      }
       if (url.pathname === '/rest/v1/rpc/aramis_drive_import') {
         const payload=JSON.parse(String(init.body));
         const call={action:'import',payload,userId:payload.p_user_id,init};rpcCalls.push(call);
@@ -127,7 +130,7 @@ describe('Drive HTTP authorization and OAuth', () => {
     const { url: authorizationUrl } = await started.json() as { url: string };
     const oauth = new URL(authorizationUrl), state = oauth.searchParams.get('state')!;
     expect(oauth.origin).toBe('https://accounts.google.com');
-    expect(oauth.searchParams.get('scope')).toBe(DRIVE_SCOPE + ' https://www.googleapis.com/auth/drive.readonly');
+    expect(oauth.searchParams.get('scope')).toBe(DRIVE_SCOPE + ' https://www.googleapis.com/auth/drive');
     expect(oauth.searchParams.get('code_challenge_method')).toBe('S256');
     const stored = h.rpcCalls.find(call => call.action === 'state-put')!.payload;
     expect(JSON.stringify(stored)).not.toContain(state);
@@ -389,5 +392,29 @@ describe('eager folders after saving a piece',()=>{
     const h=harness(()=>null);const pending:Promise<unknown>[]=[];
     const saved=await handleRequest(post('/api/commands',{requestId:A,command:{type:'create-piece',input:{clientId:C,ownerId:U}}}),env,h.fetcher,{waitUntil:p=>pending.push(p)});
     expect(saved.status).toBe(200);await Promise.all(pending);expect(h.googleCalls).toHaveLength(0);
+  });
+});
+
+describe('team trash HTTP',()=>{
+  async function setup(external=false,full=true,denied=false){
+    const conn=await connection();conn.encryptedTokens=await sealed({accessToken:ACCESS,refreshToken:REFRESH,expiresAt:Date.now()+3600000,scopes:full?[DRIVE_SCOPE,'https://www.googleapis.com/auth/drive']:[DRIVE_SCOPE,DRIVE_READ_SCOPE]},'tokens');
+    return harness(call=>call.action==='connection-get'?conn:call.action==='get-asset'?{...asset,folderId:'material-folder',external}:call.action==='trash'?{changed:true}:null,
+      async(_input,init)=>init?.method==='PATCH'?(denied?new Response('',{status:403}):Response.json({id:asset.driveFileId,trashed:true})):Response.json({...driveFile,appProperties:external?{}:driveFile.appProperties}));
+  }
+  it.each([false,true])('moves owned/external material to trash and only then hides the record (%s)',async external=>{
+    const h=await setup(external);const response=await handleRequest(post(`/api/drive/assets/${A}/trash`),env,h.fetcher);
+    expect(response.status).toBe(200);expect(h.googleCalls.map(c=>c.init.method??'GET')).toEqual(['GET','PATCH']);
+    expect(JSON.parse(String(h.googleCalls[1].init.body))).toEqual({trashed:true});
+    expect(h.rpcCalls.find(c=>c.action==='trash')?.payload).toMatchObject({p_asset_id:A,p_workspace_id:W,p_user_id:U});
+  });
+  it('denies anonymous calls, browser file overrides and missing external write permission',async()=>{
+    const h=await setup(true,false);
+    expect((await handleRequest(post(`/api/drive/assets/${A}/trash`,{},null),env,h.fetcher)).status).toBe(401);
+    expect((await handleRequest(post(`/api/drive/assets/${A}/trash`,{driveFileId:'other'}),env,h.fetcher)).status).toBe(400);
+    expect((await handleRequest(post(`/api/drive/assets/${A}/trash`),env,h.fetcher)).status).toBe(409);expect(h.googleCalls).toHaveLength(0);
+  });
+  it('keeps the record when Google rejects trash',async()=>{
+    const h=await setup(false,true,true);expect((await handleRequest(post(`/api/drive/assets/${A}/trash`),env,h.fetcher)).status).toBe(502);
+    expect(h.rpcCalls.some(c=>c.action==='trash')).toBe(false);
   });
 });

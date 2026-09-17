@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Download, ExternalLink, FileText, Pause, Play, RefreshCw, Upload, X } from 'lucide-react';
+import { Check, Download, ExternalLink, FileText, Pause, Play, RefreshCw, Trash2, Upload, X } from 'lucide-react';
 import { createZip, safeFileName, type ZipEntry } from '../lib/download-zip';
 import { sharedWorkspace } from '../lib/shared-api';
 import { uploadResumableFile, ResumableUploadError, type BrowserUploadSession } from '../lib/resumable-upload';
 import { DRIVE_FILE_ACCEPT, DRIVE_ZIP_LIMIT, DriveApiError, driveAssetUrl, drivePost, driveRequest, fileSize, fingerprintDriveFile, validateDriveFile, type DriveAsset, type DriveStatus, type DriveUploadReply } from '../lib/drive-api';
 import './drive-materials.css';
+import { Modal } from '../components/ui';
 
 type Phase = 'queued' | 'uploading' | 'verifying' | 'paused' | 'error' | 'needs_file' | 'done';
 interface PendingFile {
@@ -68,7 +69,10 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
   const refreshing = useRef(false);
   const [syncing,setSyncing] = useState(false);
   const [syncNote,setSyncNote] = useState('');
-  const busy = working || selecting || zipping;
+  const [trashing,setTrashing] = useState<string|null>(null);
+  const [pendingTrash,setPendingTrash] = useState<DriveAsset|null>(null);
+  const trashingRef=useRef(false);
+  const busy = working || selecting || zipping || trashing !== null;
   const readSerial = useRef(0);
   const callbacks = useRef({ onChanged, onBusy });
   callbacks.current = { onChanged, onBusy };
@@ -99,6 +103,17 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
   function updateFile(uploadId: string, patch: Partial<PendingFile>) {
     replaceQueue(queueRef.current.map(item => item.uploadId === uploadId ? { ...item, ...patch } : item));
   }
+  async function trashAsset(asset:DriveAsset) {
+    if(busy || trashingRef.current)return;
+    setPendingTrash(null);
+    trashingRef.current=true; setTrashing(asset.id); setError('');
+    ++readSerial.current; refreshing.current=false; setSyncing(false);
+    try {
+      await drivePost(`/api/drive/assets/${encodeURIComponent(asset.id)}/trash`);
+      if(mounted.current){setAssets(current=>current.filter(item=>item.id!==asset.id));setSyncNote('Archivo enviado a la papelera de Drive.');callbacks.current.onChanged?.();}
+    } catch(reason){if(mounted.current)setError(uploadMessage(reason));}
+    finally {trashingRef.current=false;if(mounted.current)setTrashing(null);}
+  }
   async function renewMedia(reloadPreviews = false) {
     try {
       await drivePost('/api/drive/media-session');
@@ -108,7 +123,7 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
     }
   }
   async function refresh() {
-    if(refreshing.current)return;
+    if(refreshing.current || trashingRef.current)return;
     refreshing.current=true; setSyncing(true);
     const serial = ++readSerial.current;
     try {
@@ -292,7 +307,7 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
     {selectionErrors.length > 0 && <div className="error-banner" role="alert">{selectionErrors.map((message, index) => <p key={index}>{message}</p>)}</div>}
     <div className="drive-actions"><button type="button" className="button secondary" disabled={busy || !assets.length || !status?.connected} onClick={() => void downloadAll()}><Download size={15}/>{zipping ? 'Preparando ZIP…' : 'Descargar todo (ZIP)'}</button><button type="button" className="text-button" disabled={busy || syncing} onClick={() => { void refresh(); if (status?.connected) void renewMedia(true); }}><RefreshCw size={15}/>{syncing ? 'Revisando Drive…' : 'Actualizar material'}</button>{folderUrl && <a className="text-button" href={folderUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/>Abrir carpeta</a>}</div>
     {assets.reduce((sum, asset) => sum + asset.size, 0) > DRIVE_ZIP_LIMIT && <p className="form-hint">El ZIP admite hasta 256 MB para cuidar la memoria del celular. Este conjunto debe descargarse por archivo.</p>}
-    {status?.connected && <label className="team-file-picker drive-file-picker"><Upload size={17}/>{selecting ? 'Preparando archivos…' : 'Agregar material del equipo'}<input aria-label="Agregar material del equipo" type="file" accept={DRIVE_FILE_ACCEPT} multiple disabled={selecting || zipping} onChange={event => { const files = Array.from(event.currentTarget.files ?? []); event.currentTarget.value = ''; void selectFiles(files); }}/></label>}
+    {status?.connected && <label className="team-file-picker drive-file-picker"><Upload size={17}/>{selecting ? 'Preparando archivos…' : 'Agregar material del equipo'}<input aria-label="Agregar material del equipo" type="file" accept={DRIVE_FILE_ACCEPT} multiple disabled={selecting || zipping || trashing !== null} onChange={event => { const files = Array.from(event.currentTarget.files ?? []); event.currentTarget.value = ''; void selectFiles(files); }}/></label>}
     {queue.some(item => item.phase !== 'done') && <p className="form-hint">Mantené esta pestaña abierta durante la carga. Si recargás esta misma pestaña, volvé a seleccionar los archivos originales para continuar.</p>}
     {working && <button type="button" className="button secondary" onClick={pauseAll}><Pause size={15}/>Pausar cargas</button>}
     <div className="drive-upload-list" aria-live="polite">{queue.map(item => <article className={`drive-upload ${item.phase}`} key={item.uploadId} aria-label={`Carga de ${item.name}`}>
@@ -303,12 +318,16 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
       {['error', 'paused', 'needs_file'].includes(item.phase) && <button type="button" className="text-button muted" onClick={() => remove(item)}><X size={15}/>Quitar de la lista</button>}
     </article>)}</div>
     {downloadProgress && <p className="form-hint" role="status">{downloadProgress}</p>}
-    <div className="team-asset-list">{assets.map(asset => <DriveAssetPreview key={asset.id+':'+(asset.version??'')} asset={asset} ready={mediaReady} version={mediaVersion}/>)}</div>
+    <div className="team-asset-list">{assets.map(asset => <DriveAssetPreview key={asset.id+':'+(asset.version??'')} asset={asset} ready={mediaReady} version={mediaVersion} onTrash={()=>setPendingTrash(asset)} disabled={busy} trashing={trashing===asset.id}/>)}</div>
+    <Modal open={pendingTrash!==null} onClose={()=>setPendingTrash(null)} title="Mover material a la papelera" description="Se quitará de esta pieza para todo el equipo. Podés recuperarlo desde la papelera de Drive.">
+      <p style={{overflowWrap:'anywhere'}}><strong>{pendingTrash?.name}</strong></p>
+      <div className="drive-actions"><button type="button" className="button secondary" onClick={()=>setPendingTrash(null)}>Cancelar</button><button type="button" className="button primary" disabled={busy} onClick={()=>{if(pendingTrash)void trashAsset(pendingTrash);}}>Enviar a la papelera</button></div>
+    </Modal>
     {!loading && status?.connected && !assets.length && !working && <p className="form-hint">Todavía no hay material adjunto a esta pieza.</p>}
   </section>;
 }
 
-function DriveAssetPreview({ asset, ready, version }: { asset: DriveAsset; ready: boolean; version: number }) {
+function DriveAssetPreview({ asset, ready, version, onTrash, disabled, trashing }: { asset: DriveAsset; ready: boolean; version: number; onTrash:()=>void; disabled:boolean; trashing:boolean }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => { setFailed(false); }, [version]);
   const image = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(asset.mimeType);
@@ -318,5 +337,6 @@ function DriveAssetPreview({ asset, ready, version }: { asset: DriveAsset; ready
     {ready && !failed && video ? <video key={version} controls playsInline preload="none" src={driveAssetUrl(asset.id)} aria-label={asset.name} onError={() => setFailed(true)}/> : ready && !failed && image ? <img key={version} src={driveAssetUrl(asset.id)} alt={asset.name} loading="lazy" onError={() => setFailed(true)}/> : <FileText size={28}/>}
     <div className="team-asset-info"><strong>{asset.name}</strong><small>{fileSize(asset.size)} · Guardado en Drive</small>{!ready ? <small>Esperando acceso al archivo…</small> : failed ? <small>No se pudo mostrar la vista previa. Podés descargar el archivo o actualizar el material.</small> : !image && !video && <small>Este formato se consulta descargando el archivo.</small>}</div>
     {ready && <a className="button secondary" href={driveAssetUrl(asset.id, true)} download={safeFileName(asset.name)}><Download size={15}/>Descargar</a>}
+    <button type="button" className="text-button" disabled={disabled} aria-label={`Mover ${asset.name} a la papelera`} onClick={onTrash}><Trash2 size={15}/>{trashing?'Moviendo…':'Mover a la papelera'}</button>
   </article>;
 }

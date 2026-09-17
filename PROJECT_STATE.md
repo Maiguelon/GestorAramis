@@ -183,3 +183,10 @@ Por pedido de Miguel, Prueba de conexión quedó archivado junto con Posteo 01, 
 - Planificación aplicado también a la etiqueta compartida de estado (filas y detalle). Suite completa 428 tests pasa y build Pages pasa. Evidencia y límites en handoffs/C04-drive-import.md.
 - No repetir migraciones ni consentimiento. Próximo: prueba del equipo usando carga nativa de Drive; resolver modo Google Testing (sigue activo), sin prometer vigilancia con app cerrada ni carga web en segundo plano.
 - Publicación final 663ef731.gestor-aramis.pages.dev; alias habitual actualizado. Smoke público pasa; pieza real abierta para Miguel en el navegador.
+
+### 2026-09-17 — Papelera de material publicada y verificada
+- Botón por archivo en Material, con confirmación integrada y nombre del archivo. Envía a papelera de Drive, oculta el registro y conserva historial/estado de la pieza. Errores permiten reintentar; sin borrado definitivo.
+- Miguel autorizó alcance drive para incluir archivos externos. Consentimiento completado; migración 202609160001_drive_trash.sql instalada una vez. No repetir ni volver a pedir permiso por esta entrega.
+- Archivo sintético prueba_papelera_20260916.png: Google trashed:true; ausente del listado privado; cinco originales conservados y una entrada de historial comprobada en Hugo / Reel 02. Videos del equipo intactos.
+- 436 pruebas de suite pasan; 14 recorridos compartidos pasan y el recorrido de papelera vuelve a pasar tras integrar modal de confirmación. Build final y smoke público pasan. Despliegue ab348cf1.gestor-aramis.pages.dev, alias habitual actualizado.
+- Alcance, recuperación y límites en handoffs/C04-drive-trash.md. Pendiente separado: Google Testing; restaurar originales subidos desde app no vuelve a mostrarlos automáticamente en el gestor.

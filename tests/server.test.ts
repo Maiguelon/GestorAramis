@@ -78,7 +78,7 @@ describe('Google OAuth server primitives', () => {
   it('requests file creation plus read-only import offline with PKCE and server-bound state', async () => {
     const result = await prepareGoogleOAuth(config, { userId: 'u', workspaceId: 'w' }, 0);
     const url = new URL(result.url);
-    expect(url.searchParams.get('scope')).toBe(DRIVE_SCOPE + ' https://www.googleapis.com/auth/drive.readonly');
+    expect(url.searchParams.get('scope')).toBe(DRIVE_SCOPE + ' https://www.googleapis.com/auth/drive');
     expect(url.searchParams.get('access_type')).toBe('offline');
     expect(url.searchParams.get('code_challenge_method')).toBe('S256');
     expect(result.record.stateHash).toBe(await hashShareToken(url.searchParams.get('state')!));

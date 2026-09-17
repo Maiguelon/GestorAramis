@@ -2,15 +2,15 @@ import type { WorkerEnv } from './index';
 import { hashShareToken, verifySupabaseUser } from './authz';
 import { ServiceError, type Fetcher } from './errors';
 import { callWorkspaceRpc } from './workspace-repository';
-import { decryptRefreshToken, encryptRefreshToken, exchangeGoogleCode, prepareGoogleOAuth, refreshGoogleTokens, DRIVE_READ_SCOPE, type GoogleTokens, type OAuthState } from './google-oauth';
+import { decryptRefreshToken, encryptRefreshToken, exchangeGoogleCode, prepareGoogleOAuth, refreshGoogleTokens, DRIVE_READ_SCOPE, DRIVE_WRITE_SCOPE, type GoogleTokens, type OAuthState } from './google-oauth';
 import { listImportFiles } from './drive-import';
-import { checkDriveUpload, ensureDriveFolder, generateDriveId, getDriveAccount, initiateDriveUpload, streamDriveAsset, streamTeamDriveAsset, type UploadExpectation } from './drive';
+import { trashDriveAsset, checkDriveUpload, ensureDriveFolder, generateDriveId, getDriveAccount, initiateDriveUpload, streamDriveAsset, streamTeamDriveAsset, type UploadExpectation } from './drive';
 import type { Piece } from '../contracts/domain';
 
 type Envelope = { iv: number[]; ciphertext: number[] };
 interface Connection { generation: string; encryptedTokens: Envelope; accountEmail: string; accountPermissionId: string; rootFolderId: string | null }
 interface Upload { uploadId: string; pieceId: string; clientId: string; name: string; mimeType: string; size: number; fingerprint: string; driveFileId: string; folderId: string; generation: string; encryptedSession: Envelope | null; status: string }
-interface TeamAsset { external?:boolean; id: string; pieceId: string; clientId: string; workspaceId: string; name: string; mimeType: string; size: number; driveFileId: string; checksum: string; generation: string }
+interface TeamAsset { folderId?:string; external?:boolean; id: string; pieceId: string; clientId: string; workspaceId: string; name: string; mimeType: string; size: number; driveFileId: string; checksum: string; generation: string }
 type CoreConfig = { url: string; publishableKey: string; workspaceId: string };
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const HEADERS = { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex, nofollow' };
@@ -91,7 +91,7 @@ async function connected(rpc:Rpc,key:CryptoKey,env:WorkerEnv,workspace:string,fe
     const encryptedTokens=await seal(tokens,key,workspace+':tokens');
     await rpc('connection-save',{generation:connection.generation,accountEmail:connection.accountEmail,accountPermissionId:connection.accountPermissionId,rootFolderId:connection.rootFolderId,encryptedTokens,expectedGeneration:connection.generation});
   }
-  return {connection,token:tokens.accessToken,canImport:tokens.scopes?.includes(DRIVE_READ_SCOPE)===true};
+  return {connection,token:tokens.accessToken,canImport:(tokens.scopes?.includes(DRIVE_READ_SCOPE)===true || tokens.scopes?.includes(DRIVE_WRITE_SCOPE)===true)};
 }
 async function ensureFolder(rpc:Rpc,token:string,workspaceId:string,logicalKey:string,name:string,parentId:string|undefined,fetcher:Fetcher):Promise<string> {
   let mapping=await rpc<{folderId:string;name?:string|null;parentId?:string|null}|null>('folder-get',{logicalKey});
@@ -157,7 +157,7 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
     const conn=await statusRpc<Connection|null>('connection-get');
     const root=conn?await statusRpc<{folderId:string}|null>('folder-get',{logicalKey:'root'}):null;
     const tokens=conn?await open<GoogleTokens>(conn.encryptedTokens,await keyFor(env),config.workspaceId+':tokens'):null;
-    return json({configured:true,connected:!!conn,canImport:tokens?.scopes?.includes(DRIVE_READ_SCOPE)===true,...(conn?{accountEmail:conn.accountEmail,rootFolderId:root?.folderId??conn.rootFolderId}:{})});
+    return json({configured:true,connected:!!conn,canTrashExternal:tokens?.scopes?.includes(DRIVE_WRITE_SCOPE)===true,canImport:(tokens?.scopes?.includes(DRIVE_READ_SCOPE)===true || tokens?.scopes?.includes(DRIVE_WRITE_SCOPE)===true),...(conn?{accountEmail:conn.accountEmail,rootFolderId:root?.folderId??conn.rootFolderId}:{})});
   }
   const google=googleConfig(env),key=await keyFor(env),rpc=driveRpc(env,config,user.id,bounded);
   if(path==='/api/drive/media-session'&&method==='POST'){
@@ -255,6 +255,24 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
       const asset=await rpc<TeamAsset>('upload-complete',{uploadId,asset:{driveFileId:result.file.id,checksum:result.file.md5Checksum,mimeType:result.file.mimeType,size:Number(result.file.size)}});
       return json({asset:publicAsset(asset)});
     }
+  }
+  const trashMatch=/^\/api\/drive\/assets\/([a-f0-9-]+)\/trash$/i.exec(path);
+  if(trashMatch&&method==='POST'){
+    only(await readBody(request),[]);
+    const assetId=id(trashMatch[1]);
+    const asset=await rpc<TeamAsset|null>('get-asset',{assetId});
+    if(!asset)return json({changed:false});
+    const {connection,token}=await connected(rpc,key,env,config.workspaceId,bounded);
+    if(asset.generation!==connection.generation)throw new ServiceError('CONFLICT',409);
+    const tokens=await open<GoogleTokens>(connection.encryptedTokens,key,config.workspaceId+':tokens');
+    if(asset.external&&!tokens.scopes?.includes(DRIVE_WRITE_SCOPE))throw new ServiceError('google_trash_scope_missing',409);
+    await trashDriveAsset(token,asset,bounded);
+    const secret=env.SUPABASE_SERVICE_ROLE_KEY!;
+    const response=await bounded(`${config.url}/rest/v1/rpc/aramis_drive_trash`,{method:'POST',redirect:'manual',
+      headers:{apikey:secret,'Content-Type':'application/json',...(secret.startsWith('eyJ')?{Authorization:`Bearer ${secret}`}:{})},
+      body:JSON.stringify({p_workspace_id:config.workspaceId,p_user_id:user.id,p_asset_id:assetId,p_generation:connection.generation})});
+    if(!response.ok)throw new ServiceError('drive_trash_pending',502);
+    return json(await response.json());
   }
   if(mediaMatch&&method==='GET'){
     const asset=await rpc<TeamAsset|null>('get-asset',{assetId:id(mediaMatch[1])});if(!asset)throw new ServiceError('NOT_FOUND',404);

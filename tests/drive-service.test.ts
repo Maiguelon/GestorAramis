@@ -82,6 +82,47 @@ function harness(rpc: (call: RpcCall) => unknown | Promise<unknown>, google?: Fe
 }
 afterEach(() => { vi.useRealTimers(); });
 
+describe('Google viewer authorization', () => {
+  const mov = {...asset, mimeType:'video/quicktime', folderId:'material-folder', external:true};
+  it('returns only a bound Google viewer URL after staff and file verification, without sharing or video retrieval', async()=>{
+    const conn=await connection();
+    const h=harness(call=>call.action==='connection-get'?conn:mov, async(input,init)=>{
+      expect(init?.method??'GET').toBe('GET');
+      const url=new URL(String(input));
+      expect(url.pathname).toBe('/drive/v3/files/reserved-file');
+      expect(url.searchParams.get('fields')).toContain('resourceKey');
+      expect(url.searchParams.has('alt')).toBe(false);
+      return Response.json({...driveFile,mimeType:mov.mimeType,resourceKey:'0-private_key'});
+    });
+    const response=await handleRequest(request(`/api/drive/assets/${A}/viewer`),env,h.fetcher);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({url:'https://drive.google.com/file/d/reserved-file/preview?resourcekey=0-private_key'});
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(h.googleCalls).toHaveLength(1);
+    h.revoke();
+    expect((await handleRequest(request(`/api/drive/assets/${A}/viewer`),env,h.fetcher)).status).toBe(401);
+    expect(h.googleCalls).toHaveLength(1);
+  });
+  it.each([{trashed:true},{parents:['other']},{md5Checksum:'0'.repeat(32)},{resourceKey:'key&access_token=secret'}])('rejects changed files and malformed resource keys: %j',async change=>{
+    const conn=await connection();
+    const h=harness(call=>call.action==='connection-get'?conn:mov,async()=>Response.json({...driveFile,mimeType:mov.mimeType,...change}));
+    const response=await handleRequest(request(`/api/drive/assets/${A}/viewer`),env,h.fetcher);
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(await response.text()).not.toContain('https://drive.google.com');
+  });
+  it('rejects absent assets, mismatched connection, non-video and anonymous access before Google',async()=>{
+    const conn=await connection();
+    for(const data of [null,{...mov,generation:'old'},{...mov,mimeType:'application/pdf'}]){
+      const h=harness(call=>call.action==='connection-get'?conn:data);
+      expect((await handleRequest(request(`/api/drive/assets/${A}/viewer`),env,h.fetcher)).status).toBeGreaterThanOrEqual(400);
+      expect(h.googleCalls).toHaveLength(0);
+    }
+    const h=harness(()=>null);
+    expect((await handleRequest(request(`/api/drive/assets/${A}/viewer`,{},null),env,h.fetcher)).status).toBe(401);
+    expect(h.fetcher).not.toHaveBeenCalled();
+  });
+});
+
 describe('private Drive thumbnails', () => {
   const thumbnailLink = 'https://lh3.googleusercontent.com/private-thumbnail';
   const mov = { ...asset, name:'toma.mov', mimeType:'video/quicktime', folderId:'material-folder', external:true };

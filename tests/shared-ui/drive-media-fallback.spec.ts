@@ -26,6 +26,8 @@ test('miniaturas MOV/M4V, recuperación y descarga original sin cargar videos al
   ];
   const contentRequests: string[] = [];
   let thumbnailReady = false;
+  let viewerMode = 'error';
+  let viewerRequests = 0;
   const thumbnail = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXioAAAAASUVORK5CYII=', 'base64');
   await context.route('https://shared-ui-test.supabase.co/auth/v1/**', route => route.fulfill({ json: route.request().url().includes('/token') ? session : user }));
   await context.route('**/api/workspace', route => route.fulfill({ json: { state, memberId, workspaceId: 'workspace-video', workspaceName: 'Aramis · prueba de formatos' } }));
@@ -34,6 +36,11 @@ test('miniaturas MOV/M4V, recuperación y descarga original sin cargar videos al
     if (url.pathname.endsWith('/status')) return route.fulfill({ json: { configured: true, connected: true } });
     if (url.pathname.endsWith('/media-session')) return route.fulfill({ json: { ok: true } });
     if (url.pathname.includes('/pieces/')) return route.fulfill({ json: { assets } });
+    if (url.pathname.endsWith('/viewer')) {
+      viewerRequests++;
+      return viewerMode==='error' ? route.fulfill({status:503,json:{code:'service_unavailable'}})
+        : route.fulfill({json:{url:viewerMode==='unsafe'?'https://evil.test/preview':'https://drive.google.com/file/d/fixture-file/preview'}});
+    }
     if (url.pathname.endsWith('/thumbnail')) return !thumbnailReady && url.pathname.includes('/asset-m4v/')
       ? route.fulfill({ status:404 }) : route.fulfill({ body:thumbnail,contentType:'image/png' });
     if (url.pathname.endsWith('/content')) {
@@ -51,7 +58,9 @@ test('miniaturas MOV/M4V, recuperación y descarga original sin cargar videos al
   await page.getByRole('button', { name: 'Producción', exact: true }).click();
   await page.getByRole('button', { name: 'Abrir Tomas de celular', exact: true }).click();
   await page.getByRole('tab', { name: 'Material', exact: true }).click();
-  await expect(page.getByText('Este formato se consulta descargando el archivo.', { exact: true })).toHaveCount(2);
+  await expect(page.getByRole('button',{name:'Ver con Google',exact:true})).toHaveCount(2);
+  await expect(page.locator('iframe')).toHaveCount(0);
+  expect(viewerRequests).toBe(0);
   await expect(page.locator('.drive-asset video')).toHaveCount(0);
   await expect(page.getByRole('img', {name:'Miniatura de toma.mov'})).toBeVisible();
   await expect.poll(()=>page.getByRole('img', {name:'Miniatura de toma.mov'}).evaluate((image:HTMLImageElement)=>image.naturalWidth)).toBe(1);
@@ -72,6 +81,24 @@ test('miniaturas MOV/M4V, recuperación y descarga original sin cargar videos al
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
   const mov=page.locator('.drive-asset').filter({has:page.getByText('toma.mov',{exact:true})});
   expect(contentRequests).toEqual([]);
+  await context.route('https://drive.google.com/file/d/fixture-file/preview',route=>route.fulfill({contentType:'text/html',body:'<p>Visor Google simulado</p>'}));
+  await mov.getByRole('button',{name:'Ver con Google',exact:true}).click();
+  const viewer=page.getByRole('dialog',{name:'Visor de Google',exact:true});
+  await expect(viewer.getByRole('alert')).toBeVisible();
+  await expect(viewer.getByRole('link',{name:'Descargar original',exact:true})).toHaveAttribute('href','/api/drive/assets/asset-mov/content?download=1');
+  viewerMode='unsafe';
+  await viewer.getByRole('button',{name:'Reintentar visor',exact:true}).click();
+  await expect(viewer.getByRole('alert')).toHaveText('El visor no está disponible. Volvé a intentar.');
+  await expect(page.locator('iframe')).toHaveCount(0);
+  viewerMode='ready';
+  await viewer.getByRole('button',{name:'Reintentar visor',exact:true}).click();
+  await expect(page.locator('iframe')).toHaveAttribute('src','https://drive.google.com/file/d/fixture-file/preview');
+  await expect(page.frameLocator('iframe').getByText('Visor Google simulado')).toBeVisible();
+  await expect(viewer.getByRole('link',{name:'Abrir en Google',exact:true})).toHaveAttribute('rel','noopener noreferrer');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await viewer.getByRole('button',{name:'Cerrar',exact:true}).click();
+  await expect(page.locator('iframe')).toHaveCount(0);
+  await expect(mov.getByRole('button',{name:'Ver con Google',exact:true})).toBeFocused();
   await expect(mov.getByRole('button',{name:/Reproducir/})).toHaveCount(0);
   await page.getByRole('button',{name:'Reproducir toma.mp4',exact:true}).click();
   await expect.poll(()=>contentRequests.some(url=>url==='/api/drive/assets/asset-mp4/content')).toBe(true);

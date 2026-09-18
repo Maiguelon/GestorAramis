@@ -4,7 +4,7 @@ import { ServiceError, type Fetcher } from './errors';
 import { callWorkspaceRpc } from './workspace-repository';
 import { decryptRefreshToken, encryptRefreshToken, exchangeGoogleCode, prepareGoogleOAuth, refreshGoogleTokens, DRIVE_READ_SCOPE, DRIVE_WRITE_SCOPE, type GoogleTokens, type OAuthState } from './google-oauth';
 import { listImportFiles } from './drive-import';
-import { driveAssetThumbnail, trashDriveAsset, checkDriveUpload, ensureDriveFolder, generateDriveId, getDriveAccount, initiateDriveUpload, streamDriveAsset, streamTeamDriveAsset, type UploadExpectation } from './drive';
+import { driveAssetViewer, driveAssetThumbnail, trashDriveAsset, checkDriveUpload, ensureDriveFolder, generateDriveId, getDriveAccount, initiateDriveUpload, streamDriveAsset, streamTeamDriveAsset, type UploadExpectation } from './drive';
 import type { Piece } from '../contracts/domain';
 
 type Envelope = { iv: number[]; ciphertext: number[] };
@@ -131,7 +131,7 @@ export function googleCallbackRedirect(request:Request):Response {
 export async function handleDriveRequest(request:Request,env:WorkerEnv,config:CoreConfig,fetcher:Fetcher):Promise<Response> {
   const url=new URL(request.url),path=url.pathname,method=request.method;
   const bounded=headerTimeout(fetcher);
-  const mediaMatch=/^\/api\/drive\/assets\/([a-f0-9-]+)\/(content|thumbnail)$/i.exec(path);
+  const mediaMatch=/^\/api\/drive\/assets\/([a-f0-9-]+)\/(content|thumbnail|viewer)$/i.exec(path);
   const cookieName=url.protocol==='https:'?'__Host-aramis-media':'aramis-media';
   const cookieFlags=`Path=/; HttpOnly; SameSite=Strict${url.protocol==='https:'?'; Secure':''}`;
   if(path==='/api/drive/media-session'&&method==='DELETE')return json({cleared:true},{'Set-Cookie':`${cookieName}=; ${cookieFlags}; Max-Age=0`});
@@ -277,6 +277,7 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
   if(mediaMatch&&method==='GET'){
     const asset=await rpc<TeamAsset|null>('get-asset',{assetId:id(mediaMatch[1])});if(!asset)throw new ServiceError('NOT_FOUND',404);
     const {connection,token}=await connected(rpc,key,env,config.workspaceId,bounded);if(asset.generation!==connection.generation)throw new ServiceError('CONFLICT',409);
+    if(mediaMatch[2]==='viewer')return json(await driveAssetViewer(token,asset,bounded));
     const response=mediaMatch[2]==='thumbnail'
       ? await driveAssetThumbnail(token,asset,bounded)
       : await (url.searchParams.get('download')==='1'?streamTeamDriveAsset:streamDriveAsset)(token,asset,request.headers.get('Range'),bounded);

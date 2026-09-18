@@ -36,6 +36,7 @@ export interface DriveFile {
   /** Present only for binary files; optional for upload/legacy metadata compatibility. */
   headRevisionId?: string;
   thumbnailLink?: string;
+  resourceKey?: string;
 }
 export interface StoredAsset {
   external?: boolean;
@@ -246,8 +247,8 @@ async function parseFile(response: Response): Promise<DriveFile> {
   return data as DriveFile;
 }
 
-export async function getDriveFile(token: string, fileId: string, fetcher: Fetcher = fetch, thumbnail = false): Promise<DriveFile> {
-  const query = new URLSearchParams({ fields: FILE_FIELDS + (thumbnail ? ',thumbnailLink' : ''), supportsAllDrives: 'true' });
+export async function getDriveFile(token: string, fileId: string, fetcher: Fetcher = fetch, details: boolean | 'viewer' = false): Promise<DriveFile> {
+  const query = new URLSearchParams({ fields: FILE_FIELDS + (details === 'viewer' ? ',resourceKey' : details ? ',thumbnailLink' : ''), supportsAllDrives: 'true' });
   const response = await upstream(fetcher, `${API}/${safeId(fileId)}?${query}`, { headers: headers(token) });
   if (!response.ok) throw upstreamError(response.status);
   const file = await parseFile(response);
@@ -255,15 +256,33 @@ export async function getDriveFile(token: string, fileId: string, fetcher: Fetch
   return file;
 }
 
-/** Private team thumbnail. Provider URLs/tokens never leave the server. */
-export async function driveAssetThumbnail(token: string, asset: StoredAsset, fetcher: Fetcher = fetch): Promise<Response> {
-  validateStoredAsset(asset);
-  const file = await getDriveFile(token, asset.driveFileId, fetcher, true);
+function assertTeamFile(file: DriveFile, asset: StoredAsset): void {
   if (file.trashed || !asset.folderId || !file.parents.includes(asset.folderId) ||
       file.md5Checksum !== asset.checksum || file.size !== String(asset.size) || file.mimeType !== asset.mimeType ||
       (!asset.external && (file.appProperties.workspaceId !== asset.workspaceId || file.appProperties.clientId !== asset.clientId))) {
     throw new ServiceError('asset_changed_or_inaccessible', 409);
   }
+}
+
+/** Google authenticates the viewer separately. This never shares a file or passes an OAuth token. */
+export async function driveAssetViewer(token: string, asset: StoredAsset, fetcher: Fetcher = fetch): Promise<{ url: string }> {
+  validateStoredAsset(asset);
+  if (!asset.mimeType.startsWith('video/')) throw new ServiceError('invalid_file', 400);
+  const file = await getDriveFile(token, asset.driveFileId, fetcher, 'viewer');
+  assertTeamFile(file, asset);
+  const url = new URL(`https://drive.google.com/file/d/${safeId(asset.driveFileId)}/preview`);
+  if (file.resourceKey !== undefined) {
+    if (typeof file.resourceKey !== 'string' || !/^[A-Za-z0-9_-]{1,200}$/.test(file.resourceKey)) throw new ServiceError('invalid_drive_response', 502);
+    url.searchParams.set('resourcekey', file.resourceKey);
+  }
+  return { url: url.toString() };
+}
+
+/** Private team thumbnail. Provider URLs/tokens never leave the server. */
+export async function driveAssetThumbnail(token: string, asset: StoredAsset, fetcher: Fetcher = fetch): Promise<Response> {
+  validateStoredAsset(asset);
+  const file = await getDriveFile(token, asset.driveFileId, fetcher, true);
+  assertTeamFile(file, asset);
   if (!file.thumbnailLink) throw new ServiceError('thumbnail_unavailable', 404);
   let url: URL;
   try { url = new URL(file.thumbnailLink); } catch { throw new ServiceError('invalid_drive_response', 502); }

@@ -7,7 +7,7 @@ const base = new URL(process.argv[2] ?? 'http://127.0.0.1:8788').origin;
 const health = await fetch(`${base}/api/health`);
 assert.equal(health.status, 200);
 assert.equal((await health.json()).configured, true);
-for (const path of ['/api/workspace', '/api/commands', '/api/drive/status', '/api/drive/assets/00000000-0000-4000-8000-000000000001/content', '/api/drive/assets/00000000-0000-4000-8000-000000000001/thumbnail']) {
+for (const path of ['/api/workspace', '/api/commands', '/api/drive/status', '/api/drive/assets/00000000-0000-4000-8000-000000000001/content', '/api/drive/assets/00000000-0000-4000-8000-000000000001/thumbnail', '/api/drive/assets/00000000-0000-4000-8000-000000000001/viewer']) {
   const response = await fetch(base + path, path.endsWith('commands')
     ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' } : {});
   assert.equal(response.status, 401, `${path} must require a session`);

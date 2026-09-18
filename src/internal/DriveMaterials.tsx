@@ -6,6 +6,7 @@ import { uploadResumableFile, ResumableUploadError, type BrowserUploadSession } 
 import { DRIVE_FILE_ACCEPT, DRIVE_ZIP_LIMIT, DriveApiError, driveAssetUrl, driveThumbnailUrl, drivePost, driveRequest, fileSize, fingerprintDriveFile, validateDriveFile, type DriveAsset, type DriveStatus, type DriveUploadReply } from '../lib/drive-api';
 import './drive-materials.css';
 import { Modal } from '../components/ui';
+import { DriveGoogleViewer } from './DriveGoogleViewer';
 
 type Phase = 'queued' | 'uploading' | 'verifying' | 'paused' | 'error' | 'needs_file' | 'done';
 interface PendingFile {
@@ -63,6 +64,7 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
   const [error, setError] = useState('');
   const [mediaReady, setMediaReady] = useState(false);
   const [mediaVersion, setMediaVersion] = useState(0);
+  const [googleViewer, setGoogleViewer] = useState<DriveAsset | null>(null);
   const [zipping, setZipping] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState('');
   const [selectionErrors, setSelectionErrors] = useState<string[]>([]);
@@ -318,7 +320,8 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
       {['error', 'paused', 'needs_file'].includes(item.phase) && <button type="button" className="text-button muted" onClick={() => remove(item)}><X size={15}/>Quitar de la lista</button>}
     </article>)}</div>
     {downloadProgress && <p className="form-hint" role="status">{downloadProgress}</p>}
-    <div className="team-asset-list">{assets.map(asset => <DriveAssetPreview key={asset.id+':'+(asset.version??'')} asset={asset} ready={mediaReady} version={mediaVersion} onTrash={()=>setPendingTrash(asset)} disabled={busy} trashing={trashing===asset.id}/>)}</div>
+    <div className="team-asset-list">{assets.map(asset => <DriveAssetPreview key={asset.id+':'+(asset.version??'')} asset={asset} ready={mediaReady} version={mediaVersion} onTrash={()=>setPendingTrash(asset)} onGoogleView={()=>setGoogleViewer(asset)} disabled={busy} trashing={trashing===asset.id}/>)}</div>
+    {googleViewer && mediaReady && assets.some(asset=>asset.id===googleViewer.id) && <DriveGoogleViewer key={googleViewer.id} asset={googleViewer} onClose={()=>setGoogleViewer(null)}/>}
     <Modal open={pendingTrash!==null} onClose={()=>setPendingTrash(null)} title="Mover material a la papelera" description="Se quitará de esta pieza para todo el equipo. Podés recuperarlo desde la papelera de Drive.">
       <p style={{overflowWrap:'anywhere'}}><strong>{pendingTrash?.name}</strong></p>
       <div className="drive-actions"><button type="button" className="button secondary" onClick={()=>setPendingTrash(null)}>Cancelar</button><button type="button" className="button primary" disabled={busy} onClick={()=>{if(pendingTrash)void trashAsset(pendingTrash);}}>Enviar a la papelera</button></div>
@@ -327,7 +330,7 @@ export default function DriveMaterials({ pieceId, pieceTitle, onBusy, onChanged 
   </section>;
 }
 
-function DriveAssetPreview({ asset, ready, version, onTrash, disabled, trashing }: { asset: DriveAsset; ready: boolean; version: number; onTrash:()=>void; disabled:boolean; trashing:boolean }) {
+function DriveAssetPreview({ asset, ready, version, onTrash, onGoogleView, disabled, trashing }: { asset: DriveAsset; ready: boolean; version: number; onTrash:()=>void; onGoogleView:()=>void; disabled:boolean; trashing:boolean }) {
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
   useEffect(() => { setFailed(false); setPlaying(false); }, [version]);
@@ -337,7 +340,8 @@ function DriveAssetPreview({ asset, ready, version, onTrash, disabled, trashing 
   const videoThumbnail = asset.mimeType.startsWith('video/');
   return <article className="team-asset drive-asset">
     {ready && !failed && video && playing ? <video key={version} controls autoPlay playsInline preload="none" src={driveAssetUrl(asset.id)} aria-label={asset.name} onError={() => setFailed(true)}/> : ready && videoThumbnail ? <DriveVideoThumbnail key={version} asset={asset} onPlay={video ? () => { setFailed(false); setPlaying(true); } : undefined}/> : ready && !failed && image ? <img key={version} src={driveAssetUrl(asset.id)} alt={asset.name} loading="lazy" onError={() => setFailed(true)}/> : <FileText size={28}/>}
-    <div className="team-asset-info"><strong>{asset.name}</strong><small>{fileSize(asset.size)} · Guardado en Drive</small>{!ready ? <small>Esperando acceso al archivo…</small> : failed ? <small>No se pudo mostrar la vista previa. Podés descargar el archivo o actualizar el material.</small> : !image && !video && <small>Este formato se consulta descargando el archivo.</small>}</div>
+    <div className="team-asset-info"><strong>{asset.name}</strong><small>{fileSize(asset.size)} · Guardado en Drive</small>{!ready ? <small>Esperando acceso al archivo…</small> : failed ? <small>No se pudo mostrar la vista previa. Podés descargar el archivo o actualizar el material.</small> : !image && !video && !videoThumbnail && <small>Este formato se consulta descargando el archivo.</small>}</div>
+    {ready && videoThumbnail && (!video || failed) && <button type="button" className="text-button" onClick={onGoogleView}><Play size={15}/>Ver con Google</button>}
     {ready && <a className="button secondary" href={driveAssetUrl(asset.id, true)} download={safeFileName(asset.name)}><Download size={15}/>Descargar</a>}
     <button type="button" className="text-button" disabled={disabled} aria-label={`Mover ${asset.name} a la papelera`} onClick={onTrash}><Trash2 size={15}/>{trashing?'Moviendo…':'Mover a la papelera'}</button>
   </article>;

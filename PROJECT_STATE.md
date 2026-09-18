@@ -1,5 +1,13 @@
 # Estado del proyecto
 
+## Visor de Google integrado — 2026-09-17
+
+Publicado en 8b93da56.gestor-aramis.pages.dev y alias habitual. Ver con Google en MOV/M4V y fallback de video nativo abre un modal único; conserva miniaturas/descargas, reintento y enlace directo a Google. GET /assets/:id/viewer verifica usuario, membresía, asset y proveedor; devuelve sólo enlace de visor sin OAuth ni modificar compartición. Sin servicios pagos, conversión ni migración.
+
+456 tests pasan, 14 recorridos Drive + recorrido focalizado de miniatura/visor pasan, compilación Pages y smoke remoto pasan. En producción, con sesión de Miguel, MOV IMG_2796.mov de Luján se reprodujo dentro del modal hasta 0:09/0:09. Archivo también mostró imagen en el visor directo Google. Evidencia y límites en handoffs/C04-google-viewer.md.
+
+Pendiente concreto: el correo Google de Eliana no tiene acceso en la lista de permisos del archivo probado. Su usuario del gestor sigue viendo miniaturas y descargando; para el iframe necesitará permiso Google sobre el material y sesión de esa cuenta. No se compartieron carpetas ni archivos, no se enviaron mensajes. No prometer reproducción para Eliana todavía. No repetir despliegue/configuración/OAuth por esta entrega; siguiente paso es definir/autorizar el acceso de lectura adecuado y probar con ella.
+
 ## Miniaturas de video — 2026-09-17
 
 Publicado en 38e9bc92.gestor-aramis.pages.dev, alias habitual actualizado. Videos muestran miniaturas privadas generadas por Drive, incluidos MOV/M4V; éstos conservan descarga del original sin reproducción. MP4/WebM crean reproductor sólo al pulsar Reproducir. Imágenes lazy, estados de carga/no disponible y reintento con Actualizar material. Sin conversión, servicios pagos, migración ni ampliación OAuth.

@@ -1,5 +1,8 @@
 # Decisiones
 
+## D21 — Visor Google opcional (2026-09-17)
+El usuario autoriza implementar/probar el visor sin servicios pagos. MOV/M4V y fallos de reproductor nativo ofrecen Ver con Google, con un solo iframe a demanda. Mantener miniatura y descarga privada existentes. El visor usa sesión/permisos Google propios del usuario, no la credencial OAuth del servidor; abrirlo no comparte el material ni modifica permisos. Link validado tras autorizar el asset; reintento y salida directa disponibles porque la app no puede inspeccionar fallos internos cross-origin. Uso interno mutable, excluido de aprobaciones exactas. Acceso de Eliana en Drive pendiente; no se infiere autorización para hacer públicos los archivos.
+
 ## D20 — Miniaturas de video sin conversión (2026-09-17)
 Eliana prioriza miniaturas y descarga del original. Usar las imágenes generadas por Drive también para MOV/M4V mediante proxy privado con autorización y validación por archivo. No exponer thumbnailLink ni tokens, no publicar los archivos ni contratar servicios de video. Tarjetas lazy; MP4/WebM reproducen sólo tras pulsar. MOV/M4V permanecen descargables sin reproducción. Visor Google y duración quedan para evaluación posterior; ausencia de miniatura no bloquea material.
 

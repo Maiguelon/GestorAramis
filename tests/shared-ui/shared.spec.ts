@@ -137,7 +137,7 @@ test('acceso real requerido; cliente, base mensual, guion privado y capacidades 
   await expect(text.getByText('Guion privado compartido para Eliana.', { exact: true })).toBeVisible();
   await detail.getByRole('tab', { name: 'Material', exact: true }).click();
   await expect(detail.getByText(/estarán disponibles al conectar Google Drive/)).toBeVisible(); expect(await detail.locator('input[type=file]').count()).toBe(0);
-  await detail.getByRole('tab', { name: 'Revisión', exact: true }).click(); await expect(detail.getByText(/cuando conectemos los archivos y el acceso de clientes/)).toBeVisible();
+  await detail.getByRole('tab', { name: 'Entrega', exact: true }).click(); await expect(detail.getByText('La entrega se prepara cuando la pieza está en Producción.', { exact: true })).toBeVisible();
   expect(await detail.getByRole('button', { name: /Generar enlace|Preparar revisión/ }).count()).toBe(0);
   expect(await page.evaluate(() => localStorage.getItem('aramis.workspace.demo.v1'))).toBeNull();
   await text.close(); await detail.getByRole('button', { name: 'Cerrar', exact: true }).click();

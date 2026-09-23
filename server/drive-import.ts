@@ -26,6 +26,8 @@ export async function listImportFiles(token: string, folderId: string, fetcher: 
       if (typeof f.id !== 'string' || !ID.test(f.id) || !Array.isArray(f.parents) || !f.parents.includes(folderId) || f.trashed === true) throw new ServiceError('invalid_drive_response',502);
       if (seen.has(f.id)) continue;
       seen.add(f.id);
+      // Subfolders (including Entregas) are intentionally outside this flat material listing.
+      if (f.mimeType === 'application/vnd.google-apps.folder') continue;
       if (typeof f.name !== 'string' || !f.name.trim() || f.name.length > 240 || /[\u0000-\u001f]/.test(f.name) ||
           typeof f.mimeType !== 'string' || !TYPES.has(f.mimeType) || typeof f.size !== 'string' || !/^\d+$/.test(f.size) ||
           !Number.isSafeInteger(Number(f.size)) || Number(f.size) <= 0 || Number(f.size) > 2 * 1024 ** 3 ||

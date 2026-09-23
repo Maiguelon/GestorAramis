@@ -18,7 +18,7 @@ function errorFrom(body: unknown, status: number) {
     ARCHIVED: 'La pieza fue archivada. No se guardaron los cambios.', MONTH_EXISTS: 'La base de ese mes ya está generada.',
     EMPTY_PLAN: 'Configurá las cantidades del plan antes de generar el mes.', INVALID_TRANSITION: 'La pieza no puede pasar a ese estado desde su estado actual.',
     APPROVAL_REQUIRED: 'La pieza requiere aprobación antes de programarla o publicarla.', PUBLISHED_IMMUTABLE: 'El texto de una pieza publicada no puede reemplazarse.',
-    IDEMPOTENCY_CONFLICT: 'La solicitud de guardado ya se usó con otros datos. Recargá la vista.', FEATURE_UNAVAILABLE: 'Esta función todavía no está conectada.',
+    DELIVERY_LOCKED: 'Pedí cambios desde Entrega antes de modificar una versión enviada.', DELIVERY_FILES_REQUIRED: 'Elegí al menos un archivo de entrega guardado de esta pieza.', CHANGE_REASON_REQUIRED: 'Escribí el motivo de los cambios (hasta 10.000 caracteres).', IDEMPOTENCY_CONFLICT: 'La solicitud de guardado ya se usó con otros datos. Recargá la vista.', FEATURE_UNAVAILABLE: 'Esta función todavía no está conectada.',
   };
   return new SharedApiError(code, status === 401 ? 'La sesión venció. Volvé a ingresar.' : status === 403 ? 'Tu cuenta no tiene acceso al equipo de Aramis.' : messages[code] ?? 'No pudimos completar la operación.');
 }
@@ -104,7 +104,7 @@ export class SharedWorkspaceStore {
     }
   }
   async execute(command: Command): Promise<CommandResult> {
-    if (!['create-client', 'update-client', 'generate-month', 'create-piece', 'update-piece'].includes(command.type) || (command.type === 'update-piece' && command.patch.teamAssets !== undefined)) throw new SharedApiError('NOT_CONNECTED', 'Esta función requiere la próxima integración de archivos y clientes.');
+    if (!['create-client', 'update-client', 'generate-month', 'create-piece', 'update-piece', 'submit-delivery', 'review-delivery'].includes(command.type) || (command.type === 'update-piece' && command.patch.teamAssets !== undefined)) throw new SharedApiError('NOT_CONNECTED', 'Esta función requiere la próxima integración de archivos y clientes.');
     if (!this.snapshot.workspace) throw new SharedApiError('SESSION_REQUIRED', 'Esperá a que cargue el espacio del equipo.');
     if (this.snapshot.busy) throw new SharedApiError('WRITE_IN_PROGRESS', 'Esperá a que termine de guardarse el cambio.');
     if (this.pending) {

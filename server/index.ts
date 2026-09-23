@@ -18,7 +18,7 @@ export interface WorkerEnv {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_COMMAND_BYTES = 256 * 1024;
 const HEADERS = { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' };
-const COMMANDS = new Set(['create-client', 'update-client', 'generate-month', 'create-piece', 'update-piece']);
+const COMMANDS = new Set(['create-client', 'update-client', 'generate-month', 'create-piece', 'update-piece', 'submit-delivery', 'review-delivery']);
 
 function configuration(env: WorkerEnv) {
   let url: URL;

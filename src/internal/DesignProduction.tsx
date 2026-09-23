@@ -1,3 +1,5 @@
+import { APP_MODE } from '../lib/api';
+import { ChangeReason } from './PieceDelivery';
 import { useState } from 'react';
 import { ArrowRight, FileText, Paperclip, Search } from 'lucide-react';
 import type { Command, CommandResult, Piece, WorkspaceState } from '../../contracts/domain';
@@ -19,7 +21,7 @@ function dateText(value: string | null) {
 }
 
 export default function DesignProduction({ state, today, open, execute, disabled }: {
-  state: WorkspaceState; today: string; open: (id: string, tab?: 'details' | 'material') => void;
+  state: WorkspaceState; today: string; open: (id: string, tab?: 'details' | 'material' | 'delivery') => void;
   execute: (command: Command) => Promise<CommandResult>; disabled: boolean;
 }) {
   const [stage, setStage] = useState('all');
@@ -62,10 +64,10 @@ export default function DesignProduction({ state, today, open, execute, disabled
         const overdue = !!piece.plannedDate && piece.plannedDate < today;
         return <article className="design-task" key={piece.id} aria-label={piece.title}>
           <div className="design-task-identity"><ClientAvatar client={client}/><div><span>{client.name} · {FORMAT_LABELS[piece.format]}</span><h2><button onClick={() => open(piece.id)}>{piece.title}</button></h2></div></div>
-          <div className={`design-date ${overdue ? 'overdue' : ''}`}><span>Publicación prevista</span><strong>{dateText(piece.plannedDate)}</strong>{overdue ? <small>Fecha vencida</small> : piece.plannedDate === today ? <small>Hoy</small> : null}</div>
+          <ChangeReason piece={piece} compact/><div className={`design-date ${overdue ? 'overdue' : ''}`}><span>Publicación prevista</span><strong>{dateText(piece.plannedDate)}</strong>{overdue ? <small>Fecha vencida</small> : piece.plannedDate === today ? <small>Hoy</small> : null}</div>
           <div className="design-task-actions"><span className={`design-stage ${ready ? 'ready' : ''}`}>{ready ? 'Lista para producir' : 'En edición / diseño'}</span>
             <div><a className="button secondary" href={`/text/${encodeURIComponent(piece.id)}`} target="_blank" rel="noopener noreferrer"><FileText size={16}/>Guion y texto</a><button className="button secondary" onClick={() => open(piece.id, 'material')}><Paperclip size={16}/>Material</button>
-            {ready ? <button className="button primary" disabled={disabled || !!saving} onClick={() => void start(piece)}>{saving === piece.id ? 'Guardando…' : 'Empezar a producir'}<ArrowRight size={16}/></button> : <button className="button primary" onClick={() => open(piece.id)}>Abrir pieza<ArrowRight size={16}/></button>}</div>
+            {APP_MODE!=='demo'&&<button className="button secondary" onClick={()=>open(piece.id,'delivery')}>Entrega</button>}{ready ? <button className="button primary" disabled={disabled || !!saving} onClick={() => void start(piece)}>{saving === piece.id ? 'Guardando…' : 'Empezar a producir'}<ArrowRight size={16}/></button> : <button className="button primary" onClick={() => open(piece.id)}>Abrir pieza<ArrowRight size={16}/></button>}</div>
           </div>
         </article>;
       })}

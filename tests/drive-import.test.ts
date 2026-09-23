@@ -33,6 +33,12 @@ describe('Drive external material, provider contracts (not live Google)',()=>{
     const result=await listImportFiles('token','folder',async()=>Response.json({files:[file,{...file,id:'shortcut',mimeType:'application/vnd.google-apps.shortcut'},{...file,id:'pending',md5Checksum:undefined},{...file,id:'large',size:String(3*1024**3)}]}));
     expect(result.files).toHaveLength(1);expect(result.skipped).toBe(3);
   });
+  it('ignores delivery subfolders without warning about missing material or traversing them',async()=>{
+    const fetcher=vi.fn(async()=>Response.json({files:[file,{id:'deliveries',name:'Entregas',mimeType:'application/vnd.google-apps.folder',parents:['folder']}]}));
+    const result=await listImportFiles('token','folder',fetcher);
+    expect(result.files.map(item=>item.id)).toEqual(['clip']);expect(result.skipped).toBe(0);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
   const asset={driveFileId:'clip',name:'clip.mp4',mimeType:'video/mp4',size:10,workspaceId:'w',clientId:'c',checksum:'a'.repeat(32),folderId:'folder',external:true};
   it('streams an external file without app tags only inside its persisted folder',async()=>{
     const fetcher=vi.fn(async(input:RequestInfo|URL)=>String(input).includes('alt=media')?new Response('0123456789',{headers:{'Content-Type':'video/mp4','Content-Length':'10'}}):Response.json(file));

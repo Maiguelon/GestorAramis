@@ -392,10 +392,10 @@ async function verifiedRevision(response: Response, revisionId: string, asset: S
  * the PATCH and every future download address the original revision ID, never current content.
  */
 export async function pinDriveAssetRevision(
-  token: string, asset: StoredAsset, fetcher: Fetcher = fetch,
+  token: string, asset: StoredAsset, fetcher: Fetcher = fetch, allowDownloadOnly = false,
 ): Promise<PinnedDriveAsset> {
   validateStoredAsset(asset);
-  if (!INLINE_MIMES.has(asset.mimeType)) throw new ServiceError('snapshot_verification_failed', 409);
+  if (!allowDownloadOnly && !INLINE_MIMES.has(asset.mimeType)) throw new ServiceError('snapshot_verification_failed', 409);
   const file = await getDriveFile(token, asset.driveFileId, fetcher);
   assertAssetOwnership(file, asset);
   if (!file.headRevisionId || file.md5Checksum !== asset.checksum || file.size !== String(asset.size) || file.mimeType !== asset.mimeType) {
@@ -552,12 +552,12 @@ export async function streamTeamDriveAsset(
 
 /** Caller must authorize the persisted review/asset relationship and current share before invoking. */
 export async function streamPinnedDriveAsset(
-  token: string, asset: PinnedDriveAsset, range: string | null, fetcher: Fetcher = fetch,
+  token: string, asset: PinnedDriveAsset, range: string | null, fetcher: Fetcher = fetch, allowDownloadOnly = false,
 ): Promise<Response> {
   if (range !== null && !validRange(range)) throw new ServiceError('invalid_range', 416);
   validateStoredAsset(asset);
   safeId(asset.driveRevisionId);
-  if (!INLINE_MIMES.has(asset.mimeType)) throw new ServiceError('snapshot_verification_failed', 409);
+  if (!allowDownloadOnly && !INLINE_MIMES.has(asset.mimeType)) throw new ServiceError('snapshot_verification_failed', 409);
   const file = await getDriveFile(token, asset.driveFileId, fetcher);
   // The current head may differ. Ownership and trash are file properties; bytes belong to the revision.
   assertAssetOwnership(file, asset);

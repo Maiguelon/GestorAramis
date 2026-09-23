@@ -28,6 +28,54 @@ const asset = { id: A, pieceId: P, clientId: C, workspaceId: W, name: 'toma.mp4'
 const driveFile = { id: asset.driveFileId, name: asset.name, mimeType: asset.mimeType, size: '6', md5Checksum: asset.checksum, trashed: false, parents: ['material-folder'], appProperties: { workspaceId: W, clientId: C, requestId: P, uploadId: A } };
 const sessionUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=PRIVATE_UPLOAD_CAPABILITY';
 type Payload = Record<string, unknown>;
+
+describe('delivery file separation at HTTP boundary',()=>{
+  it('pins a completed delivery before persisting it',async()=>{
+    const conn=await connection();
+    const pending={...upload,purpose:'delivery',encryptedSession:await sealed({sessionUrl},'upload:'+A)};
+    const h=harness(call=>call.action==='connection-get'?conn:call.action==='upload-complete'?{...asset,purpose:'delivery',driveRevisionId:'revision-one'}:pending,
+      async(input,init)=>{
+        const url=new URL(String(input));
+        if(url.pathname.startsWith('/upload/'))return Response.json({id:asset.driveFileId});
+        if(url.pathname.endsWith('/revisions/revision-one')){
+          expect(init?.method).toBe('PATCH');expect(JSON.parse(String(init?.body))).toEqual({keepForever:true});
+          return Response.json({id:'revision-one',mimeType:asset.mimeType,size:'6',md5Checksum:asset.checksum,keepForever:true});
+        }
+        return Response.json({...driveFile,headRevisionId:'revision-one'});
+      });
+    expect((await handleRequest(post(`/api/drive/uploads/${A}/complete`),env,h.fetcher)).status).toBe(200);
+    expect(h.rpcCalls.find(c=>c.action==='upload-complete')?.payload).toMatchObject({asset:{driveRevisionId:'revision-one'}});
+  });
+  it.each(['video/mp4','video/quicktime'])('streams the pinned %s revision after Drive head changes',async(mimeType)=>{
+    const conn=await connection();
+    const h=harness(call=>call.action==='connection-get'?conn:{...asset,mimeType,purpose:'delivery',driveRevisionId:'revision-one'},async(input)=>{
+      const url=new URL(String(input));
+      if(url.pathname.endsWith('/revisions/revision-one'))return url.searchParams.get('alt')==='media'?new Response(new Uint8Array(6),{headers:{'Content-Length':'6'}}):Response.json({id:'revision-one',mimeType,size:'6',md5Checksum:asset.checksum,keepForever:true});
+      return Response.json({...driveFile,mimeType,md5Checksum:'c'.repeat(32),headRevisionId:'changed-head'});
+    });
+    const response=await handleRequest(request(`/api/drive/assets/${A}/content?download=1`),env,h.fetcher);
+    expect(response.status).toBe(200);expect(response.headers.get('Content-Disposition')).toBe('attachment');expect((await response.arrayBuffer()).byteLength).toBe(6);
+    expect(h.googleCalls.filter(c=>c.url.includes('alt=media')).every(c=>c.url.includes('/revisions/revision-one'))).toBe(true);
+  });
+  it('separates delivery files from original material in both listings',async()=>{
+    const h=harness(({action})=>action==='list-assets'?[asset,{...asset,id:U2,purpose:'delivery'}]:action==='folder-get'?null:null);
+    const original=await handleRequest(request(`/api/drive/pieces/${P}/assets`),env,h.fetcher);
+    expect((await original.json() as {assets:{id:string}[]}).assets.map(a=>a.id)).toEqual([A]);
+    const delivery=await handleRequest(request(`/api/drive/pieces/${P}/delivery-assets`),env,h.fetcher);
+    expect((await delivery.json() as {assets:{id:string}[]}).assets.map(a=>a.id)).toEqual([U2]);
+  });
+  it('never trashes a delivery via the material endpoint',async()=>{
+    const h=harness(({action})=>action==='get-asset'?{...asset,purpose:'delivery'}:null);
+    expect((await handleRequest(post(`/api/drive/assets/${A}/trash`),env,h.fetcher)).status).toBe(409);
+    expect(h.googleCalls).toHaveLength(0);
+    expect(h.rpcCalls.some(c=>c.action==='trash')).toBe(false);
+  });
+  it('does not resume a material reservation as a delivery',async()=>{
+    const h=harness(({action})=>action==='upload-get'?upload:null);
+    expect((await handleRequest(post('/api/drive/uploads',{...uploadInput,purpose:'delivery'}),env,h.fetcher)).status).toBe(409);
+    expect(h.googleCalls).toHaveLength(0);
+  });
+});
 type RpcCall = { action: string; payload: Payload; userId: string; init: RequestInit };
 type Envelope = { iv: number[]; ciphertext: number[] };
 async function encryptionKey() { return crypto.subtle.importKey('raw', new TextEncoder().encode('k'.repeat(32)), 'AES-GCM', false, ['encrypt', 'decrypt']); }

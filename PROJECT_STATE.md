@@ -1,5 +1,17 @@
 # Estado del proyecto
 
+## Entrega y devolución a Producción — cierre 2026-09-23
+
+Publicado en **bc8f6c24.gestor-aramis.pages.dev** y https://gestor-aramis.pages.dev. En el espacio compartido, **Entrega** permite subir archivos terminados, elegirlos y ordenarlos, y enviar explícitamente a **Revisión**. Material conserva las tomas originales. Aprobar habilita programar/publicar; pedir cambios exige motivo y devuelve la pieza a Diseño / Lista para producir, con devolución destacada en tarjeta y detalle. El origen Equipo/Cliente se registra manualmente por un integrante; no envía mensajes ni habilita el portal cliente.
+
+Cada versión conserva texto, orden y referencias a revisiones binarias fijadas en Drive. La descarga y reproducción nativa de entregas usan la revisión exacta. Google Viewer se mantiene para Material; en Entrega los MOV se descargan para revisar esa versión. Los archivos terminados se guardan en la subcarpeta Entregas; no se importan automáticamente archivos añadidos directamente a esa subcarpeta. No hay papelera de entregas en este bloque, ni siquiera para borradores, para preservar referencias.
+
+Migración **202609220001_deliveries.sql aplicada una vez** en Supabase alojado, éxito confirmado. No repetirla ni renovar OAuth/configuración por este cambio. Tabla privada sin acceso directo de clientes; comandos conservan membresía, bloqueo de workspace, revisión esperada e idempotencia. El snapshot público excluye entregas/notas internas.
+
+Validación: suite de 466 unitarias aprobada; después se añadió una prueba de carpetas y pasaron 72 pruebas focalizadas Drive. Los 24 recorridos compartidos quedaron cubiertos entre ejecución general y repetición de los 8 afectados (una expectativa antigua de Revisión se actualizó a Entrega); recorrido de entrega repetido en código final aprobado. 22 recorridos demo, build TypeScript/Vite/Pages y smoke remoto final pasan. Prueba real con Miguel: v1, devolución de cliente, texto corregido v2, aprobación y Programado; ambas versiones conservadas, imágenes cargadas y Material separado. Revisión Google keepForever y descarga de 67 bytes idéntica al archivo sintético confirmadas. Pieza técnica archivada al finalizar; los cinco pendientes reales de Diseño permanecen.
+
+Handoff reproducible: **handoffs/C05-delivery-review.md**. Próximo: feedback de Miguel/Eliana con una entrega real representativa. No afirmar prueba con identidad de Eliana, videos finales grandes ni móvil físico por esta entrega. OAuth External/Testing y portal cliente siguen como pendientes separados.
+
 ## Visor de Google integrado — 2026-09-17
 
 Publicado en 8b93da56.gestor-aramis.pages.dev y alias habitual. Ver con Google en MOV/M4V y fallback de video nativo abre un modal único; conserva miniaturas/descargas, reintento y enlace directo a Google. GET /assets/:id/viewer verifica usuario, membresía, asset y proveedor; devuelve sólo enlace de visor sin OAuth ni modificar compartición. Sin servicios pagos, conversión ni migración.

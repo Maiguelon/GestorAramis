@@ -4,13 +4,13 @@ import { ServiceError, type Fetcher } from './errors';
 import { callWorkspaceRpc } from './workspace-repository';
 import { decryptRefreshToken, encryptRefreshToken, exchangeGoogleCode, prepareGoogleOAuth, refreshGoogleTokens, DRIVE_READ_SCOPE, DRIVE_WRITE_SCOPE, type GoogleTokens, type OAuthState } from './google-oauth';
 import { listImportFiles } from './drive-import';
-import { driveAssetViewer, driveAssetThumbnail, trashDriveAsset, checkDriveUpload, ensureDriveFolder, generateDriveId, getDriveAccount, initiateDriveUpload, streamDriveAsset, streamTeamDriveAsset, type UploadExpectation } from './drive';
+import { pinDriveAssetRevision, streamPinnedDriveAsset, driveAssetViewer, driveAssetThumbnail, trashDriveAsset, checkDriveUpload, ensureDriveFolder, generateDriveId, getDriveAccount, initiateDriveUpload, streamDriveAsset, streamTeamDriveAsset, type UploadExpectation } from './drive';
 import type { Piece } from '../contracts/domain';
 
 type Envelope = { iv: number[]; ciphertext: number[] };
 interface Connection { generation: string; encryptedTokens: Envelope; accountEmail: string; accountPermissionId: string; rootFolderId: string | null }
-interface Upload { uploadId: string; pieceId: string; clientId: string; name: string; mimeType: string; size: number; fingerprint: string; driveFileId: string; folderId: string; generation: string; encryptedSession: Envelope | null; status: string }
-interface TeamAsset { folderId?:string; external?:boolean; id: string; pieceId: string; clientId: string; workspaceId: string; name: string; mimeType: string; size: number; driveFileId: string; checksum: string; generation: string }
+interface Upload { purpose?: string; uploadId: string; pieceId: string; clientId: string; name: string; mimeType: string; size: number; fingerprint: string; driveFileId: string; folderId: string; generation: string; encryptedSession: Envelope | null; status: string }
+interface TeamAsset { driveRevisionId?: string; purpose?: string; folderId?:string; external?:boolean; id: string; pieceId: string; clientId: string; workspaceId: string; name: string; mimeType: string; size: number; driveFileId: string; checksum: string; generation: string }
 type CoreConfig = { url: string; publishableKey: string; workspaceId: string };
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const HEADERS = { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex, nofollow' };
@@ -109,7 +109,7 @@ async function pieceFolder(rpc:Rpc,token:string,workspaceId:string,piece:Piece,c
   const legacy=await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${piece.id}:material`});
   return legacy?.folderId??folder;
 }
-const publicAsset=(a:TeamAsset)=>({id:a.id,name:a.name,mimeType:a.mimeType,size:a.size,source:'drive',...(a.external?{version:a.checksum}:{})});
+const publicAsset=(a:TeamAsset)=>({...(a.purpose==='delivery'?{purpose:'delivery'}:{}),id:a.id,name:a.name,mimeType:a.mimeType,size:a.size,source:'drive',...(a.external?{version:a.checksum}:{})});
 function expected(upload:Upload,workspaceId:string):UploadExpectation {
   return {uploadId:upload.uploadId,workspaceId,clientId:upload.clientId,requestId:upload.pieceId,parentFolderId:upload.folderId,name:upload.name,mimeType:upload.mimeType,size:upload.size,driveFileId:upload.driveFileId};
 }
@@ -190,11 +190,13 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
     // Folder creation is lazy on the first upload: accepting OAuth never reorganizes Drive.
     return json({connected:true,accountEmail:account.email});
   }
-  const assetsMatch=/^\/api\/drive\/pieces\/([a-f0-9-]+)\/assets$/i.exec(path);
+  const assetsMatch=/^\/api\/drive\/pieces\/([a-f0-9-]+)\/(assets|delivery-assets)$/i.exec(path);
   if(assetsMatch&&method==='GET'){
+    const purpose=assetsMatch[2]==='delivery-assets'?'delivery':'material';
+    if(!['material','delivery'].includes(purpose))throw new ServiceError('VALIDATION',400);
     const pieceId=id(assetsMatch[1]);const assets=await rpc<TeamAsset[]>('list-assets',{pieceId});
-    const folder=await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${pieceId}:material`})??await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${pieceId}`});
-    return json({assets:assets.map(publicAsset),...(folder?{folderUrl:`https://drive.google.com/drive/folders/${encodeURIComponent(folder.folderId)}`}:{})});
+    const folder=purpose==='delivery'?await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${pieceId}:delivery`}):await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${pieceId}:material`})??await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${pieceId}`});
+    return json({assets:assets.filter(a=>(a.purpose??'material')===purpose).map(publicAsset),...(folder?{folderUrl:`https://drive.google.com/drive/folders/${encodeURIComponent(folder.folderId)}`}:{})});
   }
   const syncMatch=/^\/api\/drive\/pieces\/([a-f0-9-]+)\/(sync|folder)$/i.exec(path);
   if(syncMatch&&method==='POST'){
@@ -216,22 +218,28 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
     if(!response.ok)throw new ServiceError('service_unavailable',502);
     const result=await response.json() as {changed:boolean};
     const assets=await rpc<TeamAsset[]>('list-assets',{pieceId});
-    return json({assets:assets.map(publicAsset),folderUrl,changed:result.changed,skipped,syncedAt:new Date().toISOString()});
+    return json({assets:assets.filter(a=>(a.purpose??'material')==='material').map(publicAsset),folderUrl,changed:result.changed,skipped,syncedAt:new Date().toISOString()});
   }
   if(path==='/api/drive/uploads'&&method==='POST'){
-    const data=await readBody(request);only(data,['uploadId','pieceId','name','mimeType','size','fingerprint']);
+    const data=await readBody(request);only(data,['uploadId','pieceId','name','mimeType','size','fingerprint','purpose']);
+    const purpose=data.purpose??'material'; if(!['material','delivery'].includes(String(purpose)))throw new ServiceError('VALIDATION',400);
     const uploadId=id(data.uploadId),pieceId=id(data.pieceId);
     if(typeof data.name!=='string'||!data.name.trim()||data.name.length>240||/[\u0000-\u001f]/.test(data.name)||typeof data.mimeType!=='string'||!TYPES.has(data.mimeType)||!Number.isSafeInteger(data.size)||Number(data.size)<=0||Number(data.size)>MAX_FILE||typeof data.fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(data.fingerprint))throw new ServiceError('invalid_upload',400);
     const piece=workspace.state.pieces.find(p=>p.id===pieceId);if(!piece)throw new ServiceError('NOT_FOUND',404);if(piece.archived)throw new ServiceError('ARCHIVED',409);
     let upload=await rpc<Upload|null>('upload-get',{uploadId});
+    if(upload&&(upload.purpose??'material')!==purpose)throw new ServiceError('IDEMPOTENCY_CONFLICT',409);
     if(upload&&['pieceId','name','mimeType','size','fingerprint'].some(k=>upload![k as keyof Upload]!==data[k]))throw new ServiceError('IDEMPOTENCY_CONFLICT',409);
     if(upload?.status==='complete')return uploadReply(upload,rpc,key,config.workspaceId);
     const {connection,token}=await connected(rpc,key,env,config.workspaceId,bounded);
     if(upload&&upload.generation!==connection.generation)throw new ServiceError('CONFLICT',409);
     if(!upload){
-      const folderId=await pieceFolder(rpc,token,config.workspaceId,piece,workspace.state.clients.find(c=>c.id===piece.clientId)?.name??'Cliente',bounded);
+      let folderId=await pieceFolder(rpc,token,config.workspaceId,piece,workspace.state.clients.find(c=>c.id===piece.clientId)?.name??'Cliente',bounded);
+      if(purpose==='delivery'){
+        const parent=await rpc<{folderId:string}>('folder-get',{logicalKey:`piece:${pieceId}`});
+        folderId=await ensureFolder(rpc,token,config.workspaceId,`piece:${pieceId}:delivery`,'Entregas',parent.folderId,bounded);
+      }
       const driveFileId=await generateDriveId(token,bounded);
-      upload=await rpc<Upload>('upload-put',{...data,driveFileId,folderId,generation:connection.generation,encryptedSession:null});
+      upload=await rpc<Upload>('upload-put',{uploadId,pieceId,name:data.name,mimeType:data.mimeType,size:data.size,fingerprint:data.fingerprint,driveFileId,folderId,generation:connection.generation,encryptedSession:null});
     }
     if(!upload.encryptedSession){
       const started=await initiateDriveUpload(token,expected(upload,config.workspaceId),bounded,url.origin);
@@ -252,7 +260,8 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
       const {sessionUrl}=await open<{sessionUrl:string}>(upload.encryptedSession,key,config.workspaceId+':upload:'+uploadId);
       const result=await checkDriveUpload(token,{sessionUrl,expected:expected(upload,config.workspaceId)},bounded);
       if(result.status!=='complete')throw new ServiceError('upload_incomplete',409);
-      const asset=await rpc<TeamAsset>('upload-complete',{uploadId,asset:{driveFileId:result.file.id,checksum:result.file.md5Checksum,mimeType:result.file.mimeType,size:Number(result.file.size)}});
+        const pinned=upload.purpose==='delivery'?await pinDriveAssetRevision(token,{driveFileId:result.file.id,checksum:result.file.md5Checksum!,mimeType:upload.mimeType,size:upload.size,name:upload.name,workspaceId:config.workspaceId,clientId:upload.clientId,folderId:upload.folderId},bounded,true):null;
+      const asset=await rpc<TeamAsset>('upload-complete',{uploadId,asset:{driveFileId:result.file.id,checksum:result.file.md5Checksum,mimeType:result.file.mimeType,size:Number(result.file.size),...(pinned?{driveRevisionId:pinned.driveRevisionId}:{})}});
       return json({asset:publicAsset(asset)});
     }
   }
@@ -262,6 +271,7 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
     const assetId=id(trashMatch[1]);
     const asset=await rpc<TeamAsset|null>('get-asset',{assetId});
     if(!asset)return json({changed:false});
+    if(asset.purpose==='delivery')throw new ServiceError('DELIVERY_LOCKED',409);
     const {connection,token}=await connected(rpc,key,env,config.workspaceId,bounded);
     if(asset.generation!==connection.generation)throw new ServiceError('CONFLICT',409);
     const tokens=await open<GoogleTokens>(connection.encryptedTokens,key,config.workspaceId+':tokens');
@@ -277,6 +287,13 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
   if(mediaMatch&&method==='GET'){
     const asset=await rpc<TeamAsset|null>('get-asset',{assetId:id(mediaMatch[1])});if(!asset)throw new ServiceError('NOT_FOUND',404);
     const {connection,token}=await connected(rpc,key,env,config.workspaceId,bounded);if(asset.generation!==connection.generation)throw new ServiceError('CONFLICT',409);
+    if(asset.purpose==='delivery'&&mediaMatch[2]==='viewer')throw new ServiceError('DELIVERY_LOCKED',409);
+    if(asset.purpose==='delivery'&&mediaMatch[2]==='content'){
+      if(!asset.driveRevisionId)throw new ServiceError('snapshot_verification_failed',409);
+      const pinned=await streamPinnedDriveAsset(token,{...asset,driveRevisionId:asset.driveRevisionId},request.headers.get('Range'),bounded,true);
+      const headers=new Headers(pinned.headers); if(url.searchParams.get('download')==='1')headers.set('Content-Disposition','attachment');
+      headers.set('X-Robots-Tag','noindex, nofollow');return new Response(pinned.body,{status:pinned.status,headers});
+    }
     if(mediaMatch[2]==='viewer')return json(await driveAssetViewer(token,asset,bounded));
     const response=mediaMatch[2]==='thumbnail'
       ? await driveAssetThumbnail(token,asset,bounded)

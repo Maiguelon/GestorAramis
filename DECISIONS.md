@@ -1,5 +1,10 @@
 # Decisiones
 
+## D22 — Entregas internas versionadas y revisión única (2026-09-22)
+Separar Material (tomas) de Entrega (trabajo terminado). Subir no cambia de estado: Diseño selecciona y ordena archivos y envía explícitamente a Revisión. Equipo y cliente comparten el mismo retorno a Producción, con origen registrado por el integrante; motivo requerido y destacado para Diseño. Mantener versiones anteriores con su texto y orden. Aprobar permite programar/publicar; una corrección requiere nueva entrega y aprobación. Sin comunicaciones externas ni portal cliente en este bloque.
+
+Archivos terminados cargados desde el gestor a Entregas dentro de la pieza; revisión binaria fijada con keepForever antes de registrar la carga. Reproducir/descargar siempre esa revisión. Excluir Google Viewer mutable de las entregas exactas; MOV descargable, visor existente conservado para Material. Impedir papelera de entregas desde el gestor. Tabla privada y comandos bajo el bloqueo/revisión esperada/idempotencia existentes; ninguna entrega en snapshots públicos. Demo conserva su flujo previo. Límites: 100 archivos por versión, 2 GiB por archivo y ZIP existente de 256 MiB.
+
 ## D21 — Visor Google opcional (2026-09-17)
 El usuario autoriza implementar/probar el visor sin servicios pagos. MOV/M4V y fallos de reproductor nativo ofrecen Ver con Google, con un solo iframe a demanda. Mantener miniatura y descarga privada existentes. El visor usa sesión/permisos Google propios del usuario, no la credencial OAuth del servidor; abrirlo no comparte el material ni modifica permisos. Link validado tras autorizar el asset; reintento y salida directa disponibles porque la app no puede inspeccionar fallos internos cross-origin. Uso interno mutable, excluido de aprobaciones exactas. Acceso de Eliana en Drive pendiente; no se infiere autorización para hacer públicos los archivos.
 

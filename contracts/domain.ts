@@ -10,18 +10,21 @@ export interface MonthlyPlan { posts: number; reels: number }
 export interface Client { logo?: string | null; id: string; name: string; initials: string; color: string; contactName: string; phone: string; monthlyPlan?: MonthlyPlan; revision?: number; generatedMonths?: string[] }
 export interface Member { id: string; name: string; initials: string }
 export interface Asset { id: string; name: string; mimeType: string; size: number; url?: string; driveFileId?: string; checksum?: string; source: 'demo' | 'drive' }
-export interface Piece { planMonth?: string; workArea?: WorkArea; productionStage?: ProductionStage; script?: string; teamAssets?: Asset[]; id: string; clientId: string; title: string; format: ContentFormat; status: PieceStatus; ownerId: string; plannedDate: string | null; visibleToClient: boolean; caption: string; internalNote: string; archived: boolean; revision: number; createdAt: string; updatedAt: string }
+export interface Delivery { id: string; version: number; caption: string; assets: Asset[]; status: 'pending' | 'approved' | 'changes'; createdAt: string; createdBy: string; comment: string; source: 'team' | 'client' | null; decidedBy: string | null; decidedAt: string | null }
+export interface Piece { deliveries?: Delivery[]; planMonth?: string; workArea?: WorkArea; productionStage?: ProductionStage; script?: string; teamAssets?: Asset[]; id: string; clientId: string; title: string; format: ContentFormat; status: PieceStatus; ownerId: string; plannedDate: string | null; visibleToClient: boolean; caption: string; internalNote: string; archived: boolean; revision: number; createdAt: string; updatedAt: string }
 export interface Review { id: string; pieceId: string; version: number; caption: string; assets: Asset[]; status: 'pending' | 'approved' | 'changes' | 'superseded'; createdAt: string; sentAt: string | null }
 export interface MaterialRequest { id: string; pieceId: string; instructions: string; dueDate: string | null; status: RequestStatus; assets: Asset[]; createdAt: string; sentAt: string | null }
 export interface ResponseRecord { id: string; reviewId: string; kind: DecisionKind; comment: string; authorName: string; source: 'link' | 'whatsapp'; recordedBy: string | null; createdAt: string }
 export interface Share { id: string; token: string; scope: ShareScope; targetId: string; clientId: string; revokedAt: string | null; createdAt: string }
 export interface Activity { id: string; pieceId: string; text: string; actor: string; createdAt: string; visibility: 'internal' | 'client' }
 export interface WorkspaceState { schemaVersion: 1; clients: Client[]; members: Member[]; pieces: Piece[]; reviews: Review[]; materials: MaterialRequest[]; responses: ResponseRecord[]; shares: Share[]; activities: Activity[] }
-export type PublicPiece = Omit<Piece, 'internalNote' | 'ownerId' | 'planMonth' | 'workArea' | 'productionStage' | 'script' | 'teamAssets'>;
+export type PublicPiece = Omit<Piece, 'internalNote' | 'ownerId' | 'planMonth' | 'workArea' | 'productionStage' | 'script' | 'teamAssets' | 'deliveries'>;
 export interface ClientView { client: Pick<Client, 'id' | 'name' | 'initials' | 'color'>; pieces: PublicPiece[]; reviews: Review[]; materials: MaterialRequest[]; responses: ResponseRecord[]; activities: Activity[]; scope: ShareScope; targetId: string }
 
 export type ClientInput = Pick<Client, 'name' | 'contactName' | 'phone'> & { monthlyPlan: MonthlyPlan; logo?: string | null };
 export type Command =
+ | { type: 'submit-delivery'; pieceId: string; expectedRevision: number; assetIds: string[] }
+ | { type: 'review-delivery'; pieceId: string; expectedRevision: number; deliveryId: string; decision: 'approved' | 'changes'; comment: string; source: 'team' | 'client' }
  | { type: 'create-client'; input: ClientInput }
  | { type: 'update-client'; clientId: string; expectedRevision: number; patch: Partial<ClientInput> }
  | { type: 'generate-month'; clientId: string; month: string; ownerId: string }
@@ -38,5 +41,5 @@ export type Command =
  | { type: 'mark-sent'; scope: 'review' | 'material'; targetId: string };
 export interface CommandContext { actor: string; now: string; newId: () => string; token: () => string }
 export interface CommandResult { state: WorkspaceState; entityId: string }
-export const STATUS_LABELS: Record<PieceStatus, string> = { planned: 'Planificación', production: 'En producción', review: 'Para aprobar', approved: 'Aprobado', scheduled: 'Programado', published: 'Publicado' };
+export const STATUS_LABELS: Record<PieceStatus, string> = { planned: 'Planificación', production: 'En producción', review: 'Revisión', approved: 'Aprobado', scheduled: 'Programado', published: 'Publicado' };
 export const FORMAT_LABELS: Record<ContentFormat, string> = { reel: 'Reel', carousel: 'Carrusel', post: 'Post', story: 'Historia' };

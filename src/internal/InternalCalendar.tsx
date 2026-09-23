@@ -1,7 +1,7 @@
+import FormatBadge from '../components/FormatBadge';
 import { useMemo, useState } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Piece, WorkspaceState } from '../../contracts/domain';
-import { FORMAT_LABELS } from '../../contracts/domain';
 import { localDate, pieceMonth } from '../domain/selectors';
 import ClientAvatar from '../components/ClientAvatar';
 import { Modal, Status } from '../components/ui';
@@ -85,7 +85,7 @@ export default function InternalCalendar({ pieces, state, month, setMonth, selec
         const client = state.clients.find(client => client.id === piece.clientId);
         return <button className="calendar-day-row" key={piece.id} onClick={() => openPiece(piece.id)} aria-label={`Abrir ${piece.title}`}>
           {client&&<ClientAvatar client={client}/>}
-          <span className="calendar-day-content"><small>{client?.name} · {FORMAT_LABELS[piece.format]}</small><strong>{piece.title}</strong></span>
+          <span className="calendar-day-content"><small>{client?.name} · <FormatBadge format={piece.format}/></small><strong>{piece.title}</strong></span>
           <Status status={piece.status} /><ChevronRight size={16} />
         </button>;
       })}</div>

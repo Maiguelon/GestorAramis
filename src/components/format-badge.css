@@ -1,0 +1,18 @@
+.format-reel { --format-ink: #24587d; --format-bg: #edf5fc; --format-border: #89b5d6; }
+.format-post, .format-carousel { --format-ink: #853044; --format-bg: #fcf0f3; --format-border: #d6a0ad; }
+.format-story { --format-ink: #79520d; --format-bg: #fff6df; --format-border: #dcb45e; }
+span.format-badge {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  width: fit-content;
+  padding: 2px 7px;
+  border: 1px solid var(--format-border);
+  border-radius: 5px;
+  background: var(--format-bg);
+  color: var(--format-ink);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+}

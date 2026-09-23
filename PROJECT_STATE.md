@@ -1,5 +1,9 @@
 # Estado del proyecto
 
+## Identificación visual del formato — 2026-09-23
+
+Etiquetas con fondo suave y borde: Reel azul, Post/Carrusel bordó e Historia amarillo. Aplicadas en Producción, listado de Gestión, encabezado del detalle y listado ampliado del día del calendario. Sólo presentación, sin cambiar estados, formularios ni datos. Los otros comentarios de UX siguen pendientes. Evidencia y cierre en handoffs/C05-format-badges.md.
+
 ## Entrega y devolución a Producción — cierre 2026-09-23
 
 Publicado en **bc8f6c24.gestor-aramis.pages.dev** y https://gestor-aramis.pages.dev. En el espacio compartido, **Entrega** permite subir archivos terminados, elegirlos y ordenarlos, y enviar explícitamente a **Revisión**. Material conserva las tomas originales. Aprobar habilita programar/publicar; pedir cambios exige motivo y devuelve la pieza a Diseño / Lista para producir, con devolución destacada en tarjeta y detalle. El origen Equipo/Cliente se registra manualmente por un integrante; no envía mensajes ni habilita el portal cliente.

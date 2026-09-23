@@ -1,5 +1,8 @@
 # Decisiones
 
+## D23 — Color por formato (2026-09-23)
+El usuario prioriza únicamente etiquetas de formato con color/borde: Reel azul, Post/Carrusel bordó e Historia amarillo, siempre conservando el nombre. Los demás ajustes de UX conversados no están autorizados en este bloque.
+
 ## D22 — Entregas internas versionadas y revisión única (2026-09-22)
 Separar Material (tomas) de Entrega (trabajo terminado). Subir no cambia de estado: Diseño selecciona y ordena archivos y envía explícitamente a Revisión. Equipo y cliente comparten el mismo retorno a Producción, con origen registrado por el integrante; motivo requerido y destacado para Diseño. Mantener versiones anteriores con su texto y orden. Aprobar permite programar/publicar; una corrección requiere nueva entrega y aprobación. Sin comunicaciones externas ni portal cliente en este bloque.
 

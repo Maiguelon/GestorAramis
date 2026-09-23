@@ -90,12 +90,13 @@ test('logo del cliente se guarda, se ve en otra pestaña y puede quitarse', asyn
   expect(service.state.clients[0].logo).toBeNull(); await other.close();
 });
 
-test('la vista Diseño es una preferencia local; empezar producción espera confirmación y conserva conflictos', async ({ page, context }) => {
+test('la vista Diseño reúne piezas listas y en edición sin generar cambios al abrirlas', async ({ page, context }) => {
   const service = await mockServices(context);
   const clientId = '20000000-0000-4000-8000-000000000001';
   const pieceId = '30000000-0000-4000-8000-000000000001';
   service.state.clients.push({ id: clientId, name: 'Cliente de Diseño', initials: 'CD', color: '#8b2634', contactName: '', phone: '' });
   service.state.pieces.push({ id: pieceId, clientId, title: 'Pieza lista de prueba', format: 'post', status: 'production', productionStage: 'ready', workArea: 'design', ownerId: memberId, plannedDate: null, visibleToClient: false, caption: '', internalNote: '', archived: false, revision: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  service.state.pieces.push({ ...service.state.pieces[0], id: '30000000-0000-4000-8000-000000000002', title: 'Pieza en edición previa', productionStage: 'editing' });
   await login(page);
   await page.getByLabel('Vista de trabajo', { exact: true }).selectOption('design');
   await expect(page.getByRole('heading', { name: 'Producción', exact: true })).toBeVisible();
@@ -103,18 +104,18 @@ test('la vista Diseño es una preferencia local; empezar producción espera conf
   await page.reload();
   const task = page.getByRole('article', { name: 'Pieza lista de prueba', exact: true });
   await expect(task).toBeVisible();
-  service.state.pieces[0].revision++;
-  await task.getByRole('button', { name: 'Empezar a producir' }).click();
-  await expect(page.locator('.design-production').getByRole('alert')).toBeVisible();
-  await expect(task).toContainText('Lista para producir');
+  await expect(task).toContainText('Para producción');
+  await expect(page.getByRole('article', { name: 'Pieza en edición previa', exact: true })).toContainText('Para producción');
+  await expect(task.getByRole('button', { name: 'Empezar a producir' })).toHaveCount(0);
+  await task.getByRole('button', { name: 'Abrir pieza' }).click();
+  await expect(page.getByRole('dialog').getByText('Producción: Para producción')).toBeVisible();
+  await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
+  expect(service.operations).toHaveLength(0);
   expect(service.state.pieces[0].productionStage).toBe('ready');
   await page.reload();
-  await task.getByRole('button', { name: 'Empezar a producir' }).click();
-  await expect(task).toContainText('En edición / diseño');
-  expect(service.state.pieces[0].productionStage).toBe('editing');
-  await page.reload();
   await expect(page.getByRole('heading', { name: 'Producción', exact: true })).toBeVisible();
-  await expect(task).toContainText('En edición / diseño');
+  await expect(task).toContainText('Para producción');
+  await expect(page.getByRole('article', { name: 'Pieza en edición previa', exact: true })).toBeVisible();
 });
 
 test('acceso real requerido; cliente, base mensual, guion privado y capacidades pendientes', async ({ page, context }) => {

@@ -38,14 +38,14 @@ test('Diseño recuerda la entrada, separa esperas y permite trabajar sin pasar p
   await task.getByRole('button', { name: 'Material', exact: true }).click();
   await expect(page.getByRole('tab', { name: 'Material', exact: true })).toHaveAttribute('aria-selected', 'true');
   await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
-  await page.getByRole('button', { name: 'Por empezar', exact: false }).click();
-  await task.getByRole('button', { name: 'Empezar a producir' }).click();
-  await expect(task).toHaveCount(0);
-  await page.getByRole('button', { name: 'En curso', exact: false }).click();
-  await expect(task).toContainText('En edición / diseño');
+  await expect(page.getByRole('button', { name: 'Por empezar' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'En curso' })).toHaveCount(0);
+  await expect(task).toContainText('Para producción');
+  await expect(page.getByRole('article', { name: 'Diseño sin fecha', exact: true })).toContainText('Para producción');
+  await expect(task.getByRole('button', { name: 'Empezar a producir' })).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Producción', exact: true })).toBeVisible();
-  await expect(task).toContainText('En edición / diseño');
+  await expect(task).toContainText('Para producción');
   await page.screenshot({ path: 'work/design-desktop.png', fullPage: true });
 
   await page.setViewportSize({ width: 390, height: 844 });

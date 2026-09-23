@@ -1,5 +1,8 @@
 # Decisiones
 
+## D24 — Producción sin subetapa de inicio (2026-09-23)
+“Lista para producir” y “En edición/diseño” representan el mismo pendiente para Eliana. Mostrarlas y filtrarlas juntas como “Para producción”; abrir una pieza no muta su etapa. Mantener “Esperando grabación” separado porque depende de Marketing. Persistir `ready` o `editing` antiguos sin migración: ambos se interpretan como “Para producción” y los comandos nuevos del detalle escriben `ready`. Conservar `ownerId` para integridad/historial, asignado automáticamente al integrante que crea la pieza; quitar sólo el selector del alta. El área sigue visible y editable.
+
 ## D23 — Color por formato (2026-09-23)
 El usuario prioriza únicamente etiquetas de formato con color/borde: Reel azul, Post/Carrusel bordó e Historia amarillo, siempre conservando el nombre. Los demás ajustes de UX conversados no están autorizados en este bloque.
 

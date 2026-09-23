@@ -16,13 +16,13 @@ test('recorrido del equipo: crear, recibir material, pedir cambios, aprobar y pu
   await page.getByRole('button',{name:'Nuevo contenido'}).click();
   let dialog=page.getByRole('dialog');
   await dialog.getByLabel('Título del contenido').fill('Campaña de prueba completa');
-  await dialog.getByLabel('Responsable').selectOption({label:'Eliana · demo'});
+  await expect(dialog.getByLabel('Responsable')).toHaveCount(0);
   await dialog.getByRole('button',{name:'Crear contenido'}).click();
   dialog=page.getByRole('dialog');
   await expect(dialog.getByRole('heading',{name:'Campaña de prueba completa'})).toBeVisible();
   await expect(dialog.getByText('No figura en el calendario del cliente')).toBeVisible();
   const pieceId=(await state(page)).pieces.find(piece=>piece.title==='Campaña de prueba completa')!.id;
-  await dialog.getByRole('button',{name:'Listo para producción'}).click();
+  await dialog.getByRole('button',{name:'Pasar a producción'}).click();
   await expect(dialog.locator('.status-pill')).toHaveText('En producción');
   await dialog.getByRole('tab',{name:'Material',exact:true}).click();
   await dialog.locator('summary').filter({hasText:'Pedidos al cliente'}).click();
@@ -34,7 +34,7 @@ test('recorrido del equipo: crear, recibir material, pedir cambios, aprobar y pu
   await material.getByRole('button',{name:'Registrar archivo de prueba'}).click();
   await expect(dialog.getByText('Revisar lo recibido')).toBeVisible();
   await material.close();
-  expect((await state(page)).pieces.find(piece=>piece.id===pieceId)?.ownerId).toBe('member-mateo');
+  expect((await state(page)).pieces.find(piece=>piece.id===pieceId)?.ownerId).toBe('member-lucia');
   await dialog.getByRole('button',{name:'Confirmar material completo'}).click();
   await expect(dialog.getByText('Completado',{exact:true})).toBeVisible();
   await dialog.getByRole('tab',{name:'Revisión',exact:true}).click();
@@ -72,7 +72,7 @@ test('recorrido del equipo: crear, recibir material, pedir cambios, aprobar y pu
   await dialog.getByRole('tab',{name:'Revisión',exact:true}).click();
   await expect(dialog.getByRole('button',{name:'Preparar nueva versión'})).toHaveCount(0);
   const saved=await state(page);
-  expect(saved.pieces.find(piece=>piece.id===pieceId)).toMatchObject({status:'published',ownerId:'member-mateo'});
+  expect(saved.pieces.find(piece=>piece.id===pieceId)).toMatchObject({status:'published',ownerId:'member-lucia'});
   expect(saved.reviews.filter(review=>review.pieceId===pieceId).map(review=>[review.version,review.status])).toEqual([[1,'changes'],[2,'approved']]);
   expect(saved.materials.find(request=>request.pieceId===pieceId)?.status).toBe('complete');
   expect(errors).toEqual([]);

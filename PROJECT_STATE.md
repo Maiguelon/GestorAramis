@@ -1,5 +1,9 @@
 # Estado del proyecto
 
+## Producción simplificada y alta sin responsable visible — 2026-09-23
+
+Publicado en **f360d5f1.gestor-aramis.pages.dev** y alias habitual. Diseño muestra una sola lista “Para producción” para piezas antiguas `ready` y `editing`, sin “Por empezar”, “En curso” ni “Empezar a producir”. Gestión usa el mismo grupo y conserva “Esperando grabación”. El detalle permite pasar entre “Para producción” y “Esperando grabación”; las devoluciones de Entrega siguen regresando a la primera. Nuevo contenido asigna internamente el creador como responsable sin pedirlo en el formulario. No se migran ni borran datos de piezas existentes. Smoke remoto pasó; en la sesión real de Miguel se comprobaron los cinco pendientes de Diseño con la misma etiqueta, el formulario sin Responsable y la preferencia de Diseño restaurada. Ver handoffs/C05-production-simplified.md.
+
 ## Identificación visual del formato — 2026-09-23
 
 Etiquetas con fondo suave y borde: Reel azul, Post/Carrusel bordó e Historia amarillo. Aplicadas en Producción, listado de Gestión, encabezado del detalle y listado ampliado del día del calendario. Sólo presentación, sin cambiar estados, formularios ni datos. Los otros comentarios de UX siguen pendientes. Evidencia y cierre en handoffs/C05-format-badges.md.

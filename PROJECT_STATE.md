@@ -1,5 +1,9 @@
 # Estado del proyecto
 
+## Acceso al texto más visible — 2026-09-23
+
+Publicado en **7823478e.gestor-aramis.pages.dev** y alias habitual. “Abrir texto completo” ahora está arriba de las pestañas del detalle, visible desde Detalles, Material y Entrega. Tiene un botón bordó de alto contraste; en móvil ocupa el ancho de la tarjeta. Mantiene el bloqueo ante cambios de texto sin guardar. Verificado visualmente en 1280 y 390 px, con 3 recorridos demo, 7 compartidos, build compartido y smoke remoto. No se modificaron piezas ni datos de Drive. Ver `handoffs/C05-story-content.md`.
+
 ## Texto de Historias y acceso de lectura — 2026-09-23
 
 Publicado en **dcccc00c.gestor-aramis.pages.dev** y alias habitual. El detalle de una Historia ofrece un solo campo “Contenido de la historia” para escribir los slides; se guarda en el texto que usa Entrega/Revisión. Las indicaciones privadas de Historias anteriores se conservan y se muestran separadas, sólo al equipo, sin copiarlas automáticamente al texto revisable. Reel, Post y Carrusel mantienen sus campos anteriores. El acceso “Abrir texto completo” ahora está en una tarjeta visible junto al editor y conserva la protección contra cambios sin guardar. No hubo migración ni modificación de piezas reales.

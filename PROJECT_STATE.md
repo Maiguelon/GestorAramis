@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Texto de Historias y acceso de lectura — 2026-09-23
+
+Publicado en **dcccc00c.gestor-aramis.pages.dev** y alias habitual. El detalle de una Historia ofrece un solo campo “Contenido de la historia” para escribir los slides; se guarda en el texto que usa Entrega/Revisión. Las indicaciones privadas de Historias anteriores se conservan y se muestran separadas, sólo al equipo, sin copiarlas automáticamente al texto revisable. Reel, Post y Carrusel mantienen sus campos anteriores. El acceso “Abrir texto completo” ahora está en una tarjeta visible junto al editor y conserva la protección contra cambios sin guardar. No hubo migración ni modificación de piezas reales.
+
+Validación: 467 pruebas unitarias, 3 recorridos demo de lectura (incluido uno nuevo de Historia), 7 recorridos de interfaz compartida, build compartido y smoke del alias publicado. El smoke remoto cubre login/ruta de texto y rechazos anónimos; no se realizaron operaciones autenticadas en el sitio real. Ver `handoffs/C05-story-content.md`.
+
 ## Producción simplificada y alta sin responsable visible — 2026-09-23
 
 Publicado en **f360d5f1.gestor-aramis.pages.dev** y alias habitual. Diseño muestra una sola lista “Para producción” para piezas antiguas `ready` y `editing`, sin “Por empezar”, “En curso” ni “Empezar a producir”. Gestión usa el mismo grupo y conserva “Esperando grabación”. El detalle permite pasar entre “Para producción” y “Esperando grabación”; las devoluciones de Entrega siguen regresando a la primera. Nuevo contenido asigna internamente el creador como responsable sin pedirlo en el formulario. No se migran ni borran datos de piezas existentes. Smoke remoto pasó; en la sesión real de Miguel se comprobaron los cinco pendientes de Diseño con la misma etiqueta, el formulario sin Responsable y la preferencia de Diseño restaurada. Ver handoffs/C05-production-simplified.md.

@@ -1,0 +1,9 @@
+# Historias y lectura ampliada — 2026-09-23
+
+Alcance: Historia tiene un solo editor de texto, “Contenido de la historia”, para escribir slide por slide. Usa `caption`, el texto que se incorpora a las entregas y revisiones. Para historias existentes con `script`, se conserva el valor privado y se muestra al equipo en “Indicaciones anteriores · sólo equipo”, sin incluirlo automáticamente en el contenido revisable. La página de lectura ampliada muestra primero el contenido y después esas indicaciones, si existen. Los demás formatos mantienen guion/instrucciones y texto de publicación separados. No hay migración SQL ni cambios en registros existentes.
+
+El botón “Abrir texto completo” aparece en una tarjeta destacada dentro de Detalles, junto al editor. Abre la página de lectura en otra pestaña; si el formulario tiene cambios sin guardar, pide guardarlos antes y no ofrece el enlace.
+
+Validación local: `npm.cmd test` — 467/467; `npm.cmd run test:e2e -- tests/e2e/text-view.spec.ts --workers=1` — 3/3, incluido guardar/reabrir Historia y preservar `script`; `npm.cmd run test:e2e:shared -- tests/shared-ui/shared.spec.ts --workers=1` — 7/7; `npm.cmd run build:shared` y `git diff --check` — correctos. El build advierte que el bundle principal supera 500 kB; no impide la publicación. Despliegue: https://dcccc00c.gestor-aramis.pages.dev y alias https://gestor-aramis.pages.dev. `npm.cmd run pages:smoke -- https://gestor-aramis.pages.dev` aprobó login/ruta de texto y rechazos anónimos, incluida la API de Drive. No se hicieron cambios ni pruebas de edición autenticada sobre piezas reales.
+
+Próxima validación de producto: Miguel/Eliana pueden probar una Historia real con slides y comprobar si el único campo y el acceso de lectura son suficientes durante producción. La futura experiencia de cliente continúa pendiente; las notas internas siguen excluidas de sus vistas.

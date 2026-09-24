@@ -134,7 +134,7 @@ test('acceso real requerido; cliente, base mensual, guion privado y capacidades 
   await detail.getByLabel('Guion e instrucciones de producción').fill('Guion privado compartido para Eliana.');
   await detail.getByRole('button', { name: 'Guardar cambios', exact: true }).click();
   await expect(detail.getByText('Cambios guardados en el espacio compartido.', { exact: true })).toBeVisible();
-  const textPromise = page.waitForEvent('popup'); await detail.getByRole('link', { name: 'Expandir guion y texto' }).click(); const text = await textPromise;
+  const textPromise = page.waitForEvent('popup'); await detail.getByRole('link', { name: 'Abrir texto completo' }).click(); const text = await textPromise;
   await expect(text.getByText('Guion privado compartido para Eliana.', { exact: true })).toBeVisible();
   await detail.getByRole('tab', { name: 'Material', exact: true }).click();
   await expect(detail.getByText(/estarán disponibles al conectar Google Drive/)).toBeVisible(); expect(await detail.locator('input[type=file]').count()).toBe(0);
@@ -165,7 +165,7 @@ test('recarga conserva guardado incierto y cierre de sesión cierra también el 
   expect(service.state.clients).toHaveLength(1); expect(service.operations[0].requestId).toBe(service.operations[1].requestId);
   await page.getByRole('button', { name: 'Clientes', exact: true }).click(); await page.getByRole('button', { name: 'Trabajar mes', exact: true }).click();
   await page.getByRole('button', { name: 'Generar base del mes', exact: true }).click(); await page.getByRole('button', { name: 'Abrir', exact: true }).first().click();
-  const dialog = page.getByRole('dialog'); const popupPromise = page.waitForEvent('popup'); await dialog.getByRole('link', { name: 'Expandir guion y texto' }).click(); const popup = await popupPromise;
+  const dialog = page.getByRole('dialog'); const popupPromise = page.waitForEvent('popup'); await dialog.getByRole('link', { name: 'Abrir texto completo' }).click(); const popup = await popupPromise;
   await expect(popup.getByText('Sólo equipo · Espacio compartido')).toBeVisible();
   await dialog.getByRole('button', { name: 'Cerrar', exact: true }).click(); await page.getByRole('button', { name: 'Configuración', exact: true }).click(); await page.getByRole('button', { name: 'Cerrar sesión', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Ingresar al equipo' })).toBeVisible(); await expect(popup.getByRole('heading', { name: 'Ingresar al equipo' })).toBeVisible();

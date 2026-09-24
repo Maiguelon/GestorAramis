@@ -17,4 +17,15 @@
 .client-material-exception { border-top: 1px solid #dce1e7; padding-top: 17px; }
 .client-material-exception > summary { cursor: pointer; font-size: 14px; font-weight: 700; color: #53657d; margin-bottom: 15px; }
 
+.expand-text-actions { justify-content: space-between; padding: 14px 16px; border: 1px solid #a8c6dc; border-left: 4px solid #5c9cd9; border-radius: 7px; background: #f2f8fc; }
+.expand-text-actions > div { display: grid; gap: 3px; min-width: 0; }
+.expand-text-actions strong { font-size: 14px; color: #1b2a41; }
+.expand-text-actions small { font-size: 12px; line-height: 1.4; color: #4c627b; }
+.expand-text-actions .button { min-height: 42px; font-weight: 800; white-space: nowrap; background: white; border-color: #8baecb; }
+.expand-text-actions .form-hint { flex-basis: 100%; }
+.story-legacy-notes { padding: 13px 15px; border: 1px solid #dce1e7; border-radius: 7px; background: #f8f9fb; font-size: 12px; color: #506177; }
+.story-legacy-notes summary { cursor: pointer; font-weight: 700; color: #1b2a41; }
+.story-legacy-notes p { margin: 9px 0 0; line-height: 1.5; }
+@media (max-width: 600px) { .expand-text-actions .button { width: 100%; justify-content: center; } }
+
 .team-materials > .team-file-picker{margin-top:12px}

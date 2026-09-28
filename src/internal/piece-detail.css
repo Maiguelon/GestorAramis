@@ -16,6 +16,12 @@
 .team-asset-info small { font-size: 11px; color: #67778b; }
 .client-material-exception { border-top: 1px solid #dce1e7; padding-top: 17px; }
 .client-material-exception > summary { cursor: pointer; font-size: 14px; font-weight: 700; color: #53657d; margin-bottom: 15px; }
+.format-picker { display: inline-flex; align-items: center; position: relative; width: fit-content; margin-top: 5px; border: 1px solid var(--format-border); border-radius: 5px; background: var(--format-bg); color: var(--format-ink); }
+.format-picker:focus-within { outline: 2px solid #5c9cd9; outline-offset: 2px; }
+.format-picker select { appearance: none; width: 100%; min-height: 30px; padding: 4px 25px 4px 8px; border: 0; background: transparent; color: inherit; font: 700 12px/1.3 'Lato', sans-serif; cursor: pointer; }
+.format-picker select:focus { outline: none; }
+.format-picker select:disabled { cursor: not-allowed; opacity: .6; }
+.format-picker svg { position: absolute; right: 7px; pointer-events: none; }
 
 .expand-text-actions { justify-content: space-between; margin: 4px 0 18px; padding: 15px 16px; border: 1px solid #e5c9ce; border-left: 4px solid #8b2634; border-radius: 7px; background: #fbf6f7; }
 .expand-text-actions > div { display: grid; gap: 3px; min-width: 0; }

@@ -54,7 +54,7 @@ describe('monthly base and production',()=>{
  });
  it('reads old snapshots without replacing them and persists new fields',async()=>{
   vi.resetModules();vi.stubEnv('VITE_APP_MODE','demo');const data=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(k:string)=>data.get(k)??null,setItem:(k:string,v:string)=>data.set(k,v)});
-  const old=createSeed();for(const client of old.clients){delete client.monthlyPlan;delete client.revision;delete client.generatedMonths;}for(const piece of old.pieces){delete piece.planMonth;delete piece.workArea;delete piece.productionStage;delete piece.script;delete piece.teamAssets;}
+  const old=createSeed('2026-09-07');for(const client of old.clients){delete client.monthlyPlan;delete client.revision;delete client.generatedMonths;}for(const piece of old.pieces){delete piece.planMonth;delete piece.workArea;delete piece.productionStage;delete piece.script;delete piece.teamAssets;}
   const raw=JSON.stringify(old);data.set('aramis.workspace.demo.v1',raw);const api=await import('../src/lib/api');expect(api.readWorkspace()).toEqual(old);expect(data.get(api.DEMO_STORAGE_KEY)).toBe(raw);
   api.runCommand({type:'update-client',clientId:old.clients[0].id,expectedRevision:0,patch:{monthlyPlan:{posts:2,reels:1}}});api.runCommand(generate);expect(api.readWorkspace().pieces.filter(p=>p.planMonth==='2026-10')).toHaveLength(3);
  });

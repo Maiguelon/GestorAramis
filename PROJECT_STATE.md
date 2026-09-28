@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Cambio rápido de formato — 2026-09-28
+
+Publicado en **2a82abc2.gestor-aramis.pages.dev** y alias habitual. Al abrir una pieza, la etiqueta de formato junto al cliente es ahora un selector de Reel, Post, Carrusel o Historia. Guardar otra opción actualiza la pieza con la revisión vigente, sin cambiar título, material, textos ni etapa. Si hay cambios sin guardar en Detalles, el selector espera a que se guarden; el selector anterior dentro de Detalles sigue disponible. No hubo migración ni cambios en piezas reales durante la prueba. Ver `handoffs/C05-format-quick-edit.md`.
+
+Validación: cambio Reel → Post → Historia persistido tras recargar en demo, con editor de Historia correcto; comprobación visual de escritorio y móvil; 467 unitarias, 24 recorridos compartidos, recorrido principal demo, build compartido y smoke remoto aprobados. El bundle publicado contiene el selector; no se hizo un guardado autenticado de formato sobre una pieza real.
+
 ## Acceso al texto más visible — 2026-09-23
 
 Publicado en **7823478e.gestor-aramis.pages.dev** y alias habitual. “Abrir texto completo” ahora está arriba de las pestañas del detalle, visible desde Detalles, Material y Entrega. Tiene un botón bordó de alto contraste; en móvil ocupa el ancho de la tarjeta. Mantiene el bloqueo ante cambios de texto sin guardar. Verificado visualmente en 1280 y 390 px, con 3 recorridos demo, 7 compartidos, build compartido y smoke remoto. No se modificaron piezas ni datos de Drive. Ver `handoffs/C05-story-content.md`.

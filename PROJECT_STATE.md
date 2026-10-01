@@ -1,5 +1,9 @@
 # Estado del proyecto
 
+## README de portfolio — 2026-10-01
+
+README reescrito en inglés para describir la V1 interna que usa el equipo: problema operativo, flujo, funciones reales, decisiones, arquitectura, demo sin cuentas, configuración compartida, verificación y próximos bloques. Dos capturas nuevas en `docs/images/` tomadas de una demo local aislada con fixtures ficticias, no de clientes o material de producción. Se distingue la aplicación alojada con login de las vistas de cliente aún locales y la evidencia histórica de pruebas de una ejecución nueva. Links, comandos, archivos de imágenes y estructura Markdown comprobados; sin cambios de código, dependencias ni despliegue, por lo que no se repitieron suites funcionales. Handoff: `handoffs/C00-portfolio-readme.md`. Desarrollo de producto detenido por pedido de Miguel; siguiente fase sigue pendiente de su arranque.
+
 ## Avisos internos por correo activos — 2026-10-01
 
 N1–N5 cerrados y publicados en **bb87f26d.gestor-aramis.pages.dev** y **https://gestor-aramis.pages.dev/**. Migración `202609300002_notifications.sql` aplicada una vez; no repetir. Worker `gestor-aramis-notifications` activo cada minuto, versión **350529dd-8dbd-4bac-8ed1-1136e46caead**, sin endpoint público. Pages y Worker tienen el envío habilitado y claves privadas sólo como secretos/configuración ignorada.

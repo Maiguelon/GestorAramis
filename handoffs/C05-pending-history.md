@@ -8,9 +8,9 @@ Integrados `src/domain/work-lists.ts`, `src/internal/use-aramis-date.ts` y 11 pr
 
 Verificado: 11 pruebas específicas; la suite de integración en curso alcanzó 487 unitarias. Sin servicios reales por P1.
 
-## Siguiente checkpoint
+## Estado de cierre
 
-P2–P5 integrados y verificados; migración aplicada. Falta publicación y smoke remoto. No volver a crear selectores ni renovar OAuth por este cambio. Los agentes no hicieron commits ni tocaron servicios alojados.
+P1–P5 integrados, verificados y publicados; migración aplicada. No volver a crear selectores ni renovar OAuth por este cambio. Los agentes no hicieron commits ni tocaron servicios alojados. Checkpoints: `2bb10ee` (reglas), `87474c8` (recuperación y lecturas) y `ece7e6c` (interfaz integrada).
 
 ## P5 — Recuperación y lecturas del servidor
 
@@ -34,4 +34,8 @@ Verificación: 487 unitarias; 28 recorridos demo cubiertos con repeticiones de e
 
 2026-09-30: SQL Editor de Supabase confirmó `Success. No rows returned` al aplicar la migración. Luego la prueba bajo rol authenticated y claim de la membresía de Miguel retornó `hosted_restore_verified_with_rollback = true`. Creó cliente/pieza temporales, archivó/recuperó y reintentó el mismo requestId; preservó textos y creó una sola actividad. Revisión antigua rechazó CONFLICT. Rollback eliminó todos los efectos de prueba; no hubo piezas reales restauradas, provider files ni OAuth modificados. Esta prueba de RPC no sustituye prueba personal de Eric/Eliana ni un restore desde navegador de producción.
 
-Próximo y único paso técnico de este bloque: publicar paquete Pages y smoke remoto; después feedback del equipo. No ejecutar correos ni portal cliente en esta entrega.
+Publicación completada en `https://3d859d4a.gestor-aramis.pages.dev` y alias `https://gestor-aramis.pages.dev/`. Smoke remoto del alias pasó: login, rutas de texto completo, API configurada y rechazo de solicitudes anónimas/origen ajeno, incluidos endpoints de Drive. Ese smoke no prueba mutaciones autenticadas.
+
+Consulta en navegador con la sesión real existente: Gestión mostró los 13 contenidos de todos los meses en orden de fecha, futuros y sin fecha incluidos; Atención primero, luego las etapas; Historial en el menú, sin destino Producción duplicado. Diseño mostró dos piezas listas y tres en espera, Calendario directo y selector de consulta Para producción/En espera/Revisión/Aprobados. No hubo comandos sobre piezas reales ni cambios de archivos por esa revisión. No afirmar un restore desde navegador de producción ni pruebas personales de Eric/Eliana.
+
+Bloque cerrado. Próxima acción: feedback de Miguel/Eliana sobre la lista cotidiana y consulta de etapas. No ejecutar correos ni portal cliente en esta entrega.

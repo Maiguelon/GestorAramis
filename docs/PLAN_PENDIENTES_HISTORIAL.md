@@ -1,6 +1,6 @@
 # Plan de Pendientes, Aprobados e Historial
 
-Fecha: 2026-09-30. Estado: P1–P5 implementados y probados. Migración aplicada y recuperación verificada en Supabase con rollback. Publicación en preparación. Base local: `a7d1920`.
+Fecha: 2026-09-30. Estado: P1–P5 implementados, probados y publicados en `3d859d4a.gestor-aramis.pages.dev` y alias habitual. Migración aplicada y recuperación verificada en Supabase con rollback; smoke remoto y consulta de ambas vistas en sesión real aprobados. Base local: `a7d1920`. Cierre y evidencia: `handoffs/C05-pending-history.md`.
 
 ## Resultado de producto
 

@@ -92,3 +92,10 @@ El equipo puede cargar y seleccionar tomas desde Drive; Diseño permanece en el 
 
 ## D19 — Papelera desde el gestor (2026-09-16)
 Miguel solicita botón para eliminar material y elige habilitarlo también para archivos externos. Operación reversible tras confirmación, sin borrado definitivo. Google requiere drive para modificar archivos externos; el consentimiento debe explicar que abarca todo el Drive aunque el servidor sólo acepte assets persistidos del workspace. Conserva historial y estado de producción. Se exige confirmar Google antes de ocultar el registro; reintentos idempotentes. No se amplían permisos de compartición ni se cambian propietarios de archivos.
+
+## D20 — Pendientes, aprobación e historial (2026-09-30)
+Gestión abre todo el trabajo pendiente de todos los meses, por fecha ascendente; aprobados al fondo. Esta semana es una consulta opcional de lunes a domingo que conserva vencidos y sin fecha. Atención es un filtro transversal separado del proceso. Aprobar cierra el flujo interno habitual: se retiran las acciones de programar/publicar de la interfaz, conservando datos y lectura de estados antiguos.
+
+Una aprobada queda visible durante su fecha prevista inclusive y luego se consulta en Historial, usando el día de Argentina y sin mutación programada. Aprobadas sin fecha siguen visibles; vencidas sin aprobar no desaparecen. Calendario y mes del cliente conservan las completadas. Diseño tiene Producción y Calendario directos y consulta de otras etapas; al volver a ese modo abre Para producción. La preferencia de vista sigue sin ser un rol.
+
+Archivar es explícito y no elimina archivos. Las archivadas se consultan sólo por el equipo, con textos, material y entregas exactas, sin operaciones de escritura. Recuperar a planificación conserva información e historial, exige confirmación, membresía, revisión esperada e idempotencia, invalida aprobaciones anteriores y mantiene cerrados los enlaces revocados. Plan y evidencia de implementación: `docs/PLAN_PENDIENTES_HISTORIAL.md` y `handoffs/C05-pending-history.md`.

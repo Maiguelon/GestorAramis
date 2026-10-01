@@ -11,3 +11,9 @@ Verificado: 11 pruebas específicas; la suite de integración en curso alcanzó 
 ## Siguiente checkpoint
 
 P2–P5 escritos en el árbol de trabajo; falta cerrar recorridos completos de UI, revisar integración, aplicar nueva migración y publicar. No volver a crear selectores ni renovar OAuth por este cambio. Los agentes no hicieron commits ni tocaron servicios alojados.
+
+## P5 — Recuperación y lecturas del servidor
+
+Backend integrado con contrato `restore-piece`: recuperación explícita a Planificación/Marketing, revisión esperada, membresía, bloqueo e idempotencia en RPC. Se conservan textos, fechas, material, versiones y decisiones anteriores; `invalidatedAt` evita reutilizar una aprobación vieja. No se reactivan enlaces revocados y la pieza recuperada queda interna. Lectura de assets archivados permite consultas staff por pieza y descarga de versión exacta; escrituras, sincronización, carga y papelera siguen bloqueadas. Cliente API y Worker aceptan el comando.
+
+Verificado: 102 pruebas focalizadas de backend/SQL/Drive, suite de 487 unitarias y prueba de interfaz compartida de recuperación con respuesta perdida/reintento UUID único. Nueva migración `202609300001_history_restore.sql` pendiente de aplicación real en este checkpoint. No restaurar piezas reales por inferencia.

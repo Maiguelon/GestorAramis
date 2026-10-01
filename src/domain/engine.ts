@@ -165,6 +165,25 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
       activity(piece, 'Contenido creado.');
       break;
     }
+    case 'restore-piece': {
+      if (!state.members.some(member => member.id === context.actor)) fail('FORBIDDEN', 'Sólo el equipo puede recuperar contenido.');
+      if (Object.keys(command).some(key => !['type', 'pieceId', 'expectedRevision'].includes(key)) || !Number.isSafeInteger(command.expectedRevision) || command.expectedRevision < 0) fail('VALIDATION', 'La recuperación no es válida.');
+      const piece = state.pieces.find(item => item.id === command.pieceId);
+      if (!piece || !state.clients.some(client => client.id === piece.clientId)) return fail('NOT_FOUND', 'No encontramos ese contenido.');
+      if (piece.revision !== command.expectedRevision) fail('CONFLICT', 'El contenido cambió. Actualizá la vista antes de recuperarlo.');
+      if (!piece.archived) fail('INVALID_TRANSITION', 'El contenido ya está activo.');
+      invalidateReviews(state, piece);
+      for (const delivery of piece.deliveries ?? []) {
+        if (delivery.status === 'pending' || delivery.status === 'approved') delivery.invalidatedAt ??= context.now;
+      }
+      // Restoring private work never reopens the old review/material links.
+      const targets = new Set([...state.reviews.filter(item => item.pieceId === piece.id), ...state.materials.filter(item => item.pieceId === piece.id)].map(item => item.id));
+      for (const share of state.shares) if (share.scope !== 'calendar' && targets.has(share.targetId)) share.revokedAt ??= context.now;
+      Object.assign(piece, { archived: false, status: 'planned', workArea: 'marketing', productionStage: 'ready', visibleToClient: false });
+      activity(piece, 'Contenido recuperado a planificación.');
+      entityId = piece.id;
+      break;
+    }
     case 'update-piece': {
       const piece = findPiece(state, command.pieceId);
       if (piece.revision !== command.expectedRevision) fail('CONFLICT', 'El contenido cambió. Actualizá la vista antes de guardar.');

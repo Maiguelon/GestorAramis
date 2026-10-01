@@ -57,6 +57,24 @@ describe('delivery file separation at HTTP boundary',()=>{
     expect(response.status).toBe(200);expect(response.headers.get('Content-Disposition')).toBe('attachment');expect((await response.arrayBuffer()).byteLength).toBe(6);
     expect(h.googleCalls.filter(c=>c.url.includes('alt=media')).every(c=>c.url.includes('/revisions/revision-one'))).toBe(true);
   });
+  it('streams an archived delivery through the same pinned revision without synchronizing or writing',async()=>{
+    const conn=await connection();
+    const h=harness(({action})=>action==='connection-get'?conn:{...asset,purpose:'delivery',driveRevisionId:'revision-one'},async(input)=>{
+      const url=new URL(String(input));
+      if(url.pathname.endsWith('/revisions/revision-one'))return url.searchParams.get('alt')==='media'
+        ? new Response(new Uint8Array(6),{headers:{'Content-Length':'6'}})
+        : Response.json({id:'revision-one',mimeType:asset.mimeType,size:'6',md5Checksum:asset.checksum,keepForever:true});
+      return Response.json({...driveFile,md5Checksum:'c'.repeat(32),headRevisionId:'changed-head'});
+    });
+    const archived:Fetcher=async(input,init)=>new URL(String(input)).pathname==='/rest/v1/rpc/aramis_workspace'
+      ? Response.json({...workspace,state:{...workspace.state,pieces:[{...piece,archived:true}]}})
+      : h.fetcher(input,init);
+    const response=await handleRequest(request(`/api/drive/assets/${A}/content?download=1`),env,archived);
+    expect(response.status).toBe(200);expect((await response.arrayBuffer()).byteLength).toBe(6);
+    expect(h.googleCalls.filter(c=>c.url.includes('alt=media')).every(c=>c.url.includes('/revisions/revision-one'))).toBe(true);
+    expect(h.rpcCalls.every(c=>['get-asset','connection-get'].includes(c.action))).toBe(true);
+    expect(h.googleCalls.every(c=>!c.init.method||c.init.method==='GET')).toBe(true);
+  });
   it('separates delivery files from original material in both listings',async()=>{
     const h=harness(({action})=>action==='list-assets'?[asset,{...asset,id:U2,purpose:'delivery'}]:action==='folder-get'?null:null);
     const original=await handleRequest(request(`/api/drive/pieces/${P}/assets`),env,h.fetcher);
@@ -67,6 +85,16 @@ describe('delivery file separation at HTTP boundary',()=>{
   it('never trashes a delivery via the material endpoint',async()=>{
     const h=harness(({action})=>action==='get-asset'?{...asset,purpose:'delivery'}:null);
     expect((await handleRequest(post(`/api/drive/assets/${A}/trash`),env,h.fetcher)).status).toBe(409);
+    expect(h.googleCalls).toHaveLength(0);
+    expect(h.rpcCalls.some(c=>c.action==='trash')).toBe(false);
+  });
+  it('denies trash of archived material before contacting Google',async()=>{
+    const h=harness(({action})=>action==='get-asset'?asset:null);
+    const archived:Fetcher=async(input,init)=>new URL(String(input)).pathname==='/rest/v1/rpc/aramis_workspace'
+      ? Response.json({...workspace,state:{...workspace.state,pieces:[{...piece,archived:true}]}})
+      : h.fetcher(input,init);
+    const response=await handleRequest(post(`/api/drive/assets/${A}/trash`),env,archived);
+    expect(response.status).toBe(409);expect(await response.json()).toMatchObject({code:'ARCHIVED'});
     expect(h.googleCalls).toHaveLength(0);
     expect(h.rpcCalls.some(c=>c.action==='trash')).toBe(false);
   });

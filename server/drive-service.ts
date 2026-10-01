@@ -271,6 +271,9 @@ export async function handleDriveRequest(request:Request,env:WorkerEnv,config:Co
     const assetId=id(trashMatch[1]);
     const asset=await rpc<TeamAsset|null>('get-asset',{assetId});
     if(!asset)return json({changed:false});
+    const piece=workspace.state.pieces.find(p=>p.id===asset.pieceId);
+    if(!piece)throw new ServiceError('NOT_FOUND',404);
+    if(piece.archived)throw new ServiceError('ARCHIVED',409);
     if(asset.purpose==='delivery')throw new ServiceError('DELIVERY_LOCKED',409);
     const {connection,token}=await connected(rpc,key,env,config.workspaceId,bounded);
     if(asset.generation!==connection.generation)throw new ServiceError('CONFLICT',409);

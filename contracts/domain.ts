@@ -10,7 +10,7 @@ export interface MonthlyPlan { posts: number; reels: number }
 export interface Client { logo?: string | null; id: string; name: string; initials: string; color: string; contactName: string; phone: string; monthlyPlan?: MonthlyPlan; revision?: number; generatedMonths?: string[] }
 export interface Member { id: string; name: string; initials: string }
 export interface Asset { id: string; name: string; mimeType: string; size: number; url?: string; driveFileId?: string; checksum?: string; source: 'demo' | 'drive' }
-export interface Delivery { id: string; version: number; caption: string; assets: Asset[]; status: 'pending' | 'approved' | 'changes'; createdAt: string; createdBy: string; comment: string; source: 'team' | 'client' | null; decidedBy: string | null; decidedAt: string | null }
+export interface Delivery { invalidatedAt?: string | null; id: string; version: number; caption: string; assets: Asset[]; status: 'pending' | 'approved' | 'changes'; createdAt: string; createdBy: string; comment: string; source: 'team' | 'client' | null; decidedBy: string | null; decidedAt: string | null }
 export interface Piece { deliveries?: Delivery[]; planMonth?: string; workArea?: WorkArea; productionStage?: ProductionStage; script?: string; teamAssets?: Asset[]; id: string; clientId: string; title: string; format: ContentFormat; status: PieceStatus; ownerId: string; plannedDate: string | null; visibleToClient: boolean; caption: string; internalNote: string; archived: boolean; revision: number; createdAt: string; updatedAt: string }
 export interface Review { id: string; pieceId: string; version: number; caption: string; assets: Asset[]; status: 'pending' | 'approved' | 'changes' | 'superseded'; createdAt: string; sentAt: string | null }
 export interface MaterialRequest { id: string; pieceId: string; instructions: string; dueDate: string | null; status: RequestStatus; assets: Asset[]; createdAt: string; sentAt: string | null }
@@ -23,6 +23,7 @@ export interface ClientView { client: Pick<Client, 'id' | 'name' | 'initials' | 
 
 export type ClientInput = Pick<Client, 'name' | 'contactName' | 'phone'> & { monthlyPlan: MonthlyPlan; logo?: string | null };
 export type Command =
+ | { type: 'restore-piece'; pieceId: string; expectedRevision: number }
  | { type: 'submit-delivery'; pieceId: string; expectedRevision: number; assetIds: string[] }
  | { type: 'review-delivery'; pieceId: string; expectedRevision: number; deliveryId: string; decision: 'approved' | 'changes'; comment: string; source: 'team' | 'client' }
  | { type: 'create-client'; input: ClientInput }

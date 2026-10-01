@@ -1,5 +1,9 @@
 # Estado del proyecto
 
+## Conexión de Drive comprobada — 2026-09-30
+
+Miguel informó haber pulsado la renovación. Comprobación real de la credencial persistida: intercambio de refresh token exitoso y lectura de metadatos de la carpeta raíz con HTTP 200; permiso `drive` conservado. Token de acceso obtenido sólo en memoria, sin modificar la conexión persistida ni archivos. Esto confirma conexión operativa; no acredita por sí solo la hora del último consentimiento ni reinicia el plazo de Testing. Evidencia y procedimiento en `handoffs/C04-drive-renewal-check.md`.
+
 ## Encabezado compacto de Pendientes — 2026-09-30
 
 Publicado en **8098703c.gestor-aramis.pages.dev** y alias habitual. Título, selector Mostrar y Nuevo contenido comparten fila en escritorio; en anchos reducidos, los controles quedan juntos debajo del título. Se elimina la fila separada del selector y se reduce el espacio hasta las categorías. Otros encabezados conservan su estructura. Compilación compartida/Pages y smoke remoto aprobados; comprobación local en 1440/1024/390/320 px sin desborde, cambio de alcance y apertura del formulario funcionando. Sólo interfaz, sin migraciones ni modificaciones de datos reales. Ver `handoffs/C05-pending-header.md`.

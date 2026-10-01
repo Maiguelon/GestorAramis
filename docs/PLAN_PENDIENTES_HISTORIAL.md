@@ -1,6 +1,6 @@
 # Plan de Pendientes, Aprobados e Historial
 
-Fecha: 2026-09-30. Estado: plan preparado; interfaz y datos alojados todavía sin modificar por este bloque. Base local: `a7d1920`.
+Fecha: 2026-09-30. Estado: ejecución autorizada e iniciada; P1 implementado y probado. P2–P5 en integración, sin publicación todavía. Base local: `a7d1920`.
 
 ## Resultado de producto
 

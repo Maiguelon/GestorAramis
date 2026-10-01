@@ -1,8 +1,8 @@
 # Estado del proyecto
 
-## Plan de Pendientes, Aprobados e Historial — 2026-09-30
+## Pendientes, Aprobados e Historial — 2026-09-30
 
-Plan preparado en `docs/PLAN_PENDIENTES_HISTORIAL.md`; todavía sin implementar. Gestión abrirá todo el trabajo pendiente, con fechas ascendente y alcance Esta semana opcional; Atención separado del proceso, Aprobados al fondo hasta su fecha inclusive y luego consulta en Historial. Diseño conservará su entrada enfocada en producción, con Calendario directo y selector de consulta En espera/Revisión/Aprobados; Gestión seguirá disponible desde Vista de trabajo. Retirar Producción del menú de Gestión. Recuperación de archivadas es un bloque independiente porque el comando actual rechaza editar archivadas y algunas lecturas Drive exigen pieza activa. Bloques P1–P5 con criterios reproducibles y compatibilidad de estados existentes. No hubo cambios de UI, datos alojados ni despliegue en esta preparación.
+Ejecución autorizada del plan `docs/PLAN_PENDIENTES_HISTORIAL.md`. P1 integrado: selectores compartidos de pendientes, aprobados, históricos y Atención, fecha de Argentina y actualización al cruce de medianoche. 11 pruebas de reglas y límites de fecha pasan. P2–P5 en integración y verificación; todavía no publicados. Ver `handoffs/C05-pending-history.md` para continuar sin repetir trabajo.
 
 ## Cambio rápido de formato — 2026-09-28
 

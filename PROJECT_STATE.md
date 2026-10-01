@@ -1,5 +1,9 @@
 # Estado del proyecto
 
+## Encabezado compacto de Pendientes — 2026-09-30
+
+Publicado en **8098703c.gestor-aramis.pages.dev** y alias habitual. Título, selector Mostrar y Nuevo contenido comparten fila en escritorio; en anchos reducidos, los controles quedan juntos debajo del título. Se elimina la fila separada del selector y se reduce el espacio hasta las categorías. Otros encabezados conservan su estructura. Compilación compartida/Pages y smoke remoto aprobados; comprobación local en 1440/1024/390/320 px sin desborde, cambio de alcance y apertura del formulario funcionando. Sólo interfaz, sin migraciones ni modificaciones de datos reales. Ver `handoffs/C05-pending-header.md`.
+
 ## Pendientes, Aprobados e Historial — 2026-09-30
 
 P1–P5 implementados, verificados y publicados en **3d859d4a.gestor-aramis.pages.dev** y alias **https://gestor-aramis.pages.dev/**. Gestión abre **Pendientes**, con todos los meses, fecha ascendente y alcance Esta semana opcional (lunes–domingo, conserva vencidos y sin fecha). Atención separado primero, luego Planificación/Para producción/Revisión/Aprobados. Conteos respetan cliente, área y búsqueda. Aprobados al fondo hasta su fecha inclusive; después se consultan en Historial sin modificar datos. Aprobadas sin fecha siguen visibles, trabajo vencido sin aprobar no desaparece. Día de Argentina actualizado al cruzar medianoche o recuperar foco.

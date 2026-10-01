@@ -14,7 +14,7 @@ export function ChangeReason({piece, compact=false}:{piece:Piece;compact?:boolea
   return <aside className={`delivery-changes ${compact?'compact':''}`}><strong>Cambios solicitados · v{delivery.version}</strong><p>{delivery.comment}</p>{!compact&&<small>{delivery.source==='client'?'Devolución del cliente':'Devolución del equipo'} · Registró {delivery.decidedBy}{delivery.decidedAt?` · ${new Date(delivery.decidedAt).toLocaleString('es-AR')}`:''}</small>}</aside>;
 }
 
-function DeliveryPreview({delivery}:{delivery:Delivery}) {
+export function DeliveryPreview({delivery}:{delivery:Delivery}) {
   const [ready,setReady]=useState(false);
   const [error,setError]=useState('');
 
@@ -24,7 +24,7 @@ function DeliveryPreview({delivery}:{delivery:Delivery}) {
     renew(); const timer=setInterval(renew,5*60_000);
     return()=>{active=false;clearInterval(timer);};
   },[]);
-  return <section className="delivery-version"><h3>Entrega v{delivery.version} · {({pending:'En revisión',approved:'Aprobada',changes:'Cambios solicitados'})[delivery.status]}</h3><p className="form-hint">{delivery.createdBy} · {new Date(delivery.createdAt).toLocaleString('es-AR')}</p>
+  return <section className="delivery-version"><h3>Entrega v{delivery.version} · {delivery.invalidatedAt ? 'Versión anterior · aprobación invalidada' : ({pending:'En revisión',approved:'Aprobada',changes:'Cambios solicitados'})[delivery.status]}</h3><p className="form-hint">{delivery.createdBy} · {new Date(delivery.createdAt).toLocaleString('es-AR')}</p>
     {error&&<p role="alert" className="error-banner">{error}</p>}
     <div className="team-asset-list">{delivery.assets.map(asset=><DriveAssetPreview key={asset.id} asset={{...asset,source:'drive'}} ready={ready} version={0} disabled={false} trashing={false}/>)}</div>
     <h4>Texto de esta versión</h4><p className="preserve-lines">{delivery.caption||'Sin texto de publicación.'}</p>

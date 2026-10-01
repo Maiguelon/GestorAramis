@@ -2,7 +2,15 @@
 
 ## Pendientes, Aprobados e Historial — 2026-09-30
 
-Ejecución autorizada del plan `docs/PLAN_PENDIENTES_HISTORIAL.md`. P1 integrado: selectores compartidos de pendientes, aprobados, históricos y Atención, fecha de Argentina y actualización al cruce de medianoche. 11 pruebas de reglas y límites de fecha pasan. P2–P5 en integración y verificación; todavía no publicados. Ver `handoffs/C05-pending-history.md` para continuar sin repetir trabajo.
+P1–P5 implementados y verificados; publicación en preparación. Gestión abre **Pendientes**, con todos los meses, fecha ascendente y alcance Esta semana opcional (lunes–domingo, conserva vencidos y sin fecha). Atención separado primero, luego Planificación/Para producción/Revisión/Aprobados. Conteos respetan cliente, área y búsqueda. Aprobados al fondo hasta su fecha inclusive; después se consultan en Historial sin modificar datos. Aprobadas sin fecha siguen visibles, trabajo vencido sin aprobar no desaparece. Día de Argentina actualizado al cruzar medianoche o recuperar foco.
+
+Diseño: Producción y Calendario directos; selector Para producción/En espera/Revisión/Aprobados, con Para producción como entrada al regresar. Se conservan tarjetas, devolución destacada y accesos. Gestión no tiene otro destino Producción. Aprobar es el cierre normal; se retiraron botones programar/publicar, manteniendo legibilidad de estados antiguos.
+
+Historial interno: Completados/Archivados, cliente, mes del plan y búsqueda. Las completadas siguen en calendario/cliente y pueden reprogramarse. Archivadas ofrecen textos, decisiones, material, entregas exactas y originales de archivos finales sólo en consulta. Recuperar a planificación requiere confirmación; conserva información, invalida aprobaciones antiguas y no reabre enlaces revocados. Archivar no elimina archivos de Drive.
+
+Migración `202609300001_history_restore.sql` aplicada una vez en Supabase, éxito confirmado. Prueba real de RPC bajo rol authenticated y membresía de Miguel, con cliente/pieza sintéticos dentro de transacción: recuperación, conservación de textos, revisión esperada e idempotencia aprobadas; rollback completo, sin registros de prueba persistidos ni modificaciones de piezas reales. No se tocaron permisos Google ni archivos del proveedor.
+
+Validación local: 487 unitarias, 28 recorridos demo y 25 compartidos cubiertos entre suites y repeticiones focalizadas luego de actualizar expectativas antiguas de navegación/publicación. Nuevo recorrido cubre medianoche Argentina, archivos archivados sin writes y reintento de recuperación sin duplicar. Revisión visual de escritorio/390 px y compilación Pages/Worker aprobadas. Ver `handoffs/C05-pending-history.md` para evidencia y límites. Falta en este checkpoint únicamente publicación y smoke remoto.
 
 ## Cambio rápido de formato — 2026-09-28
 

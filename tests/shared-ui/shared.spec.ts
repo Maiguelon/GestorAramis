@@ -3,6 +3,56 @@ import type { Command, CommandResult, WorkspaceState } from '../../contracts/dom
 import { applyCommand, DomainError } from '../../src/domain/engine';
 import { writeFile } from 'node:fs/promises';
 
+test('archivada consulta archivos sin sincronizar y recupera un guardado incierto sin duplicarlo', async ({page,context}) => {
+  const service = await mockServices(context);
+  const pieceId = '30000000-0000-4000-8000-000000000009';
+  const original = { id: '40000000-0000-4000-8000-000000000001', name: 'original.mov', mimeType: 'video/quicktime', size: 3, source: 'drive' as const };
+  const final = { ...original, id: '40000000-0000-4000-8000-000000000002', name: 'final.mp4', mimeType: 'video/mp4' };
+  service.state.clients.push({id:'cliente-historia',name:'Cliente Historia',initials:'CH',color:'#8b2634',contactName:'',phone:''});
+  service.state.pieces.push({id:pieceId,clientId:'cliente-historia',title:'Pieza archivada compartida',format:'reel',status:'approved',ownerId:memberId,plannedDate:null,caption:'Texto final',script:'Guion conservado',internalNote:'Sólo equipo',archived:true,revision:2,visibleToClient:false,createdAt:'2026-09-01T12:00:00Z',updatedAt:'2026-09-01T12:00:00Z',deliveries:[{id:'entrega-archivada',version:1,status:'approved',caption:'Texto de la entrega',assets:[final],createdAt:'2026-09-02T12:00:00Z',createdBy:'Miguel',comment:'Aprobada',source:'team',decidedBy:'Miguel',decidedAt:'2026-09-02T12:00:00Z'}]});
+  const calls: Array<{path:string;method:string}> = [];
+  await context.route('**/api/drive/**', route => {
+    const request = route.request(); const path = new URL(request.url()).pathname;
+    calls.push({path,method:request.method()});
+    if(path.endsWith('/status'))return route.fulfill({json:{connected:true,configured:true,canImport:true}});
+    if(path.endsWith('/media-session'))return route.fulfill({json:{ok:true}});
+    if(path.endsWith('/delivery-assets'))return route.fulfill({json:{assets:[{...final,id:'40000000-0000-4000-8000-000000000003',name:'borrador-final.mp4'}]}});
+    if(path.endsWith('/assets'))return route.fulfill({json:{assets:[original],folderUrl:'https://drive.google.com/drive/folders/history_fixture'}});
+    if(path.endsWith('/thumbnail'))return route.fulfill({status:404});
+    if(path.endsWith('/content'))return route.fulfill({body:Buffer.from('abc'),contentType:'application/octet-stream'});
+    return route.fulfill({status:400,json:{code:'unexpected_write'}});
+  });
+  await login(page); await page.getByRole('button',{name:'Historial',exact:true}).click();
+  await page.getByRole('button',{name:'Archivados',exact:true}).click();
+  await page.getByRole('button',{name:'Abrir Pieza archivada compartida',exact:true}).click();
+  const detail = page.getByRole('dialog');
+  await expect(detail.getByText('Guion conservado',{exact:true})).toBeVisible();
+  await detail.getByRole('tab',{name:'Material',exact:true}).click();
+  await expect(detail.getByText('original.mov',{exact:true})).toBeVisible();
+  await expect(detail.locator('input[type=file]')).toHaveCount(0);
+  await expect(detail.getByRole('button',{name:/papelera/})).toHaveCount(0);
+  await detail.getByRole('button',{name:'Actualizar material',exact:true}).click();
+  expect(calls.filter(call => call.method !== 'GET' && !call.path.endsWith('/media-session'))).toEqual([]);
+  await detail.getByRole('tab',{name:'Entrega',exact:true}).click();
+  await expect(detail.getByText('Texto de la entrega',{exact:true})).toBeVisible();
+  await expect(detail.getByRole('link',{name:'Descargar',exact:true})).toHaveAttribute('href',new RegExp(final.id));
+  await detail.getByText('Archivos finales originales',{exact:true}).click();
+  await expect(detail.getByText('borrador-final.mp4',{exact:true})).toBeVisible();
+  await expect(detail.locator('input[type=file]')).toHaveCount(0);
+  expect(calls.filter(call => call.method !== 'GET' && !call.path.endsWith('/media-session'))).toEqual([]);
+  expect(service.operations).toHaveLength(0);
+  service.loseWrite(); page.once('dialog',dialog => dialog.accept());
+  await detail.getByRole('button',{name:'Recuperar a planificación',exact:true}).click();
+  await expect(detail.getByText('El cambio sigue pendiente de confirmación.',{exact:false})).toBeVisible();
+  await detail.getByRole('button',{name:'Reintentar guardado',exact:true}).click();
+  await expect(detail).toHaveCount(0);
+  expect(service.operations).toHaveLength(2);
+  expect(service.operations[0].requestId).toBe(service.operations[1].requestId);
+  expect(service.state.pieces[0]).toMatchObject({archived:false,status:'planned',script:'Guion conservado'});
+  expect(service.state.pieces[0].deliveries![0].invalidatedAt).toBeTruthy();
+  expect(service.state.activities.filter(item => item.pieceId === pieceId)).toHaveLength(1);
+});
+
 const userId = 'f0000000-0000-4000-8000-000000000001';
 const memberId = '10000000-0000-4000-8000-000000000001';
 const authOrigin = 'https://shared-ui-test.supabase.co';
@@ -53,7 +103,7 @@ async function login(page: Page) {
   await page.getByLabel('Correo', { exact: true }).fill('miguel@example.test');
   await page.getByLabel('Contraseña', { exact: true }).fill('FAKE_TEST_PASSWORD');
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Esta semana', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Pendientes', exact: true })).toBeVisible();
 }
 async function createClient(page: Page, name = 'Cliente compartido') {
   await page.getByRole('button', { name: 'Clientes', exact: true }).click();
@@ -160,7 +210,7 @@ test('respuesta perdida: reintento desde formulario conserva UUID y no duplica e
 test('recarga conserva guardado incierto y cierre de sesión cierra también el guion abierto', async ({ page, context }) => {
   const service = await mockServices(context); await login(page); service.loseWrite(); await createClient(page);
   await expect(page.getByRole('dialog').getByRole('button', { name: 'Reintentar guardado', exact: true })).toBeVisible();
-  await page.reload(); await expect(page.getByRole('heading', { name: 'Esta semana', exact: true })).toBeVisible();
+  await page.reload(); await expect(page.getByRole('heading', { name: 'Pendientes', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Reintentar guardado', exact: true }).click(); await expect(page.getByRole('button', { name: 'Reintentar guardado', exact: true })).toHaveCount(0);
   expect(service.state.clients).toHaveLength(1); expect(service.operations[0].requestId).toBe(service.operations[1].requestId);
   await page.getByRole('button', { name: 'Clientes', exact: true }).click(); await page.getByRole('button', { name: 'Trabajar mes', exact: true }).click();

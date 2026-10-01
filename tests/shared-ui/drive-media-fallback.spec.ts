@@ -55,7 +55,6 @@ test('miniaturas MOV/M4V, recuperación y descarga original sin cargar videos al
   await page.getByLabel('Correo', { exact: true }).fill('miguel@example.test');
   await page.getByLabel('Contraseña', { exact: true }).fill('FAKE_PASSWORD');
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click();
-  await page.getByRole('button', { name: 'Producción', exact: true }).click();
   await page.getByRole('button', { name: 'Abrir Tomas de celular', exact: true }).click();
   await page.getByRole('tab', { name: 'Material', exact: true }).click();
   await expect(page.getByRole('button',{name:'Ver con Google',exact:true})).toHaveCount(2);

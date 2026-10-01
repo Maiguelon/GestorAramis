@@ -90,7 +90,7 @@ async function login(page: Page, path = '/') {
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click();
 }
 async function material(page: Page) {
-  await page.getByRole('button', { name: 'Producción', exact: true }).click();
+  await page.getByRole('button', { name: 'Pendientes', exact: true }).click();
   await page.getByRole('button', { name: 'Abrir Reel con tomas', exact: true }).click();
   await page.getByRole('tab', { name: 'Material', exact: true }).click();
   await expect(page.getByLabel('Agregar material del equipo')).toBeEnabled();
@@ -228,9 +228,9 @@ test('retorno OAuth exige login, consume la respuesta una vez y limpia el enlace
   expect(service.callbackCalls).toEqual([{ code: 'FAKE_ONE_TIME_CODE', state: 'FAKE_ONE_TIME_STATE' }]);
   expect(new URL(page.url()).hash).toBe('');
   await page.getByRole('button', { name: 'Volver al gestor' }).click();
-  await expect(page.getByRole('heading', { name: 'Esta semana', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Pendientes', exact: true })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Esta semana', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Pendientes', exact: true })).toBeVisible();
   expect(service.callbackCalls).toHaveLength(1);
 });
 

@@ -4,8 +4,8 @@ import type { Asset, Command, CommandResult, Piece } from '../../contracts/domai
 import { readLocalFile, saveLocalFile, validateLocalFile } from '../lib/local-files';
 import { createZip, safeFileName, type ZipEntry } from '../lib/download-zip';
 
-export default function TeamMaterials({ piece, act, onBusy }: {
-  piece: Piece;
+export default function TeamMaterials({ piece, act, onBusy, readOnly = false }: {
+  readOnly?: boolean; piece: Piece;
   act: (command: Command) => Promise<CommandResult | undefined>;
   onBusy: (busy: boolean) => void;
 }) {
@@ -17,7 +17,7 @@ export default function TeamMaterials({ piece, act, onBusy }: {
   useEffect(()=>{onBusy(busy || pending.length > 0);return ()=>onBusy(false);},[busy,pending.length,onBusy]);
 
   async function upload(files: File[]) {
-    if (!files.length) return;
+    if (readOnly || !files.length) return;
     const revision = piece.revision;
     const existing = piece.teamAssets ?? [];
     const stored: Asset[] = [];
@@ -83,7 +83,7 @@ export default function TeamMaterials({ piece, act, onBusy }: {
     {error && <p className="error-banner" role="alert">{error}</p>}
     {pending.length > 0 && <div className="notice-banner">Guardamos {pending.length} archivo(s), pero la pieza cambió antes de vincularlos. <button className="text-button" onClick={attachPending}>Vincular a la pieza actual</button><button className="text-button" onClick={()=>{if(confirm('¿Descartar la vinculación de estos archivos? Tendrás que seleccionarlos de nuevo.'))setPending([]);}}>Descartar vinculación</button></div>}
     <button className="button secondary" disabled={busy || pending.length > 0 || !piece.teamAssets?.length} onClick={() => void downloadAll()}><Download size={15}/>{zipping ? 'Preparando ZIP…' : 'Descargar todo (ZIP)'}</button>
-    <label className="team-file-picker"><Upload size={16}/>{busy && !zipping ? progress : 'Agregar material del equipo'}<input aria-label="Agregar material del equipo" type="file" multiple disabled={busy || pending.length > 0} onChange={event => { const files = Array.from(event.currentTarget.files ?? []); event.currentTarget.value = ''; void upload(files); }}/></label>
+    {!readOnly && <label className="team-file-picker"><Upload size={16}/>{busy && !zipping ? progress : 'Agregar material del equipo'}<input aria-label="Agregar material del equipo" type="file" multiple disabled={busy || pending.length > 0} onChange={event => { const files = Array.from(event.currentTarget.files ?? []); event.currentTarget.value = ''; void upload(files); }}/></label>}
     <div aria-live="polite">{busy && <p className="form-hint">{zipping ? progress : 'Guardando en este navegador…'}</p>}</div>
     <div className="team-asset-list">{(piece.teamAssets ?? []).map(asset => <LocalAsset key={asset.id} asset={asset}/>)}</div>
     {!piece.teamAssets?.length && !busy && <p className="form-hint">Todavía no hay material del equipo adjunto.</p>}

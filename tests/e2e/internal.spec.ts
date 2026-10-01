@@ -10,7 +10,7 @@ async function openRequest(page:Page, dialog:Locator){
   return popup;
 }
 
-test('recorrido del equipo: crear, recibir material, pedir cambios, aprobar y publicar una versión',async({page})=>{
+test('recorrido del equipo: crear, recibir material, pedir cambios, aprobar una versión como cierre del trabajo',async({page})=>{
   const errors:string[]=[]; page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/');
   await page.getByRole('button',{name:'Nuevo contenido'}).click();
@@ -64,15 +64,11 @@ test('recorrido del equipo: crear, recibir material, pedir cambios, aprobar y pu
   await expect(dialog.getByText('Aprobada',{exact:true})).toBeVisible();
   await review2.close();
   await dialog.getByRole('tab',{name:'Detalles',exact:true}).click();
-  await dialog.getByRole('button',{name:'Marcar como programado'}).click();
-  await expect(dialog.locator('.status-pill')).toHaveText('Programado');
-  await dialog.getByRole('button',{name:'Marcar como publicado'}).click();
-  await expect(dialog.locator('.status-pill')).toHaveText('Publicado');
-  await expect(dialog.getByRole('textbox',{name:'Texto de publicación',exact:true})).toBeDisabled();
-  await dialog.getByRole('tab',{name:'Revisión',exact:true}).click();
-  await expect(dialog.getByRole('button',{name:'Preparar nueva versión'})).toHaveCount(0);
+  await expect(dialog.locator('.status-pill')).toHaveText('Aprobado');
+  await expect(dialog.getByRole('button',{name:'Marcar como programado'})).toHaveCount(0);
+  await expect(dialog.getByRole('button',{name:'Marcar como publicado'})).toHaveCount(0);
   const saved=await state(page);
-  expect(saved.pieces.find(piece=>piece.id===pieceId)).toMatchObject({status:'published',ownerId:'member-lucia'});
+  expect(saved.pieces.find(piece=>piece.id===pieceId)).toMatchObject({status:'approved',ownerId:'member-lucia'});
   expect(saved.reviews.filter(review=>review.pieceId===pieceId).map(review=>[review.version,review.status])).toEqual([[1,'changes'],[2,'approved']]);
   expect(saved.materials.find(request=>request.pieceId===pieceId)?.status).toBe('complete');
   expect(errors).toEqual([]);
@@ -130,17 +126,17 @@ test('una respuesta WhatsApp y un mensaje editado no se trasladan a otra revisi�
   await second.close();
 });
 
-test('publicar requiere resolver los cambios sin guardar del editor',async({page})=>{
+test('abrir el texto y cambiar de sección requiere resolver el borrador',async({page})=>{
   await page.goto('/');
   await page.getByRole('button',{name:'Abrir Ideas para compartir'}).click();
   const dialog=page.getByRole('dialog');
   await dialog.getByRole('textbox',{name:'Texto de publicación',exact:true}).fill('Texto modificado que todavía no está aprobado');
-  await expect(dialog.getByRole('button',{name:'Marcar como publicado'})).toBeDisabled();
+  await expect(dialog.locator('.expand-text-actions a')).toHaveAttribute('aria-disabled','true');
   await dialog.getByRole('tab',{name:'Revisión',exact:true}).click();
   await expect(dialog.getByRole('alert')).toContainText('Guardá los detalles');
   await expect(dialog.getByRole('textbox',{name:'Texto de publicación',exact:true})).toHaveValue('Texto modificado que todavía no está aprobado');
   await dialog.getByRole('button',{name:'Descartar borrador'}).click();
-  await expect(dialog.getByRole('button',{name:'Marcar como publicado'})).toBeEnabled();
+  await expect(dialog.locator('.expand-text-actions a')).toHaveAttribute('aria-disabled','false');
 });
 
 test('una edición de otra pestaña no pisa el borrador y el guardado persiste al recargar',async({page,context})=>{

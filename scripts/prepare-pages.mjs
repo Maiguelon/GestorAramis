@@ -20,6 +20,10 @@ const backend = parseEnv(await readFile(join(root, '.dev.vars'), 'utf8'));
 const url = backend.SUPABASE_URL;
 const key = backend.SUPABASE_PUBLISHABLE_KEY;
 const workspace = backend.ARAMIS_WORKSPACE_ID;
+const notificationEnabled = backend.NOTIFICATION_EMAIL_ENABLED === 'true';
+if (notificationEnabled && (!backend.NOTIFICATION_FROM || !backend.RESEND_API_KEY || !backend.SUPABASE_SERVICE_ROLE_KEY)) {
+  throw new Error('Complete and verify the notification sender before enabling email.');
+}
 if (frontend.VITE_APP_MODE !== 'production' || frontend.VITE_API_BASE_URL !== '/api') {
   throw new Error('Pages requires production mode and a same-origin /api endpoint.');
 }
@@ -52,9 +56,13 @@ await writeFile(join(staging, 'wrangler.json'), JSON.stringify({
   name: 'gestor-aramis',
   pages_build_output_dir: './site',
   compatibility_date: '2026-09-01',
-  vars: { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key, ARAMIS_WORKSPACE_ID: workspace },
+  vars: { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key, ARAMIS_WORKSPACE_ID: workspace,
+    NOTIFICATION_EMAIL_ENABLED: String(notificationEnabled),
+    NOTIFICATION_APP_URL: backend.NOTIFICATION_APP_URL ?? 'https://gestor-aramis.pages.dev',
+    ...(backend.NOTIFICATION_FROM ? { NOTIFICATION_FROM: backend.NOTIFICATION_FROM } : {}),
+  },
 }, null, 2) + '\n');
-const privateValues = ['SUPABASE_SERVICE_ROLE_KEY','GOOGLE_CLIENT_SECRET','DRIVE_ENCRYPTION_KEY'].map(name=>backend[name]).filter(Boolean);
+const privateValues = ['SUPABASE_SERVICE_ROLE_KEY','RESEND_API_KEY','GOOGLE_CLIENT_SECRET','DRIVE_ENCRYPTION_KEY'].map(name=>backend[name]).filter(Boolean);
 async function checkNoSecrets(directory) {
   for (const entry of await readdir(directory,{withFileTypes:true})) {
     const path=join(directory,entry.name);

@@ -64,6 +64,7 @@ const blankState = (): WorkspaceState => ({ schemaVersion: 1, clients: [], membe
 
 /** Auth and API are browser mocks. These tests do not prove real Supabase permissions. */
 async function mockServices(context: BrowserContext) {
+  await context.route('**/api/notifications/preferences',route=>route.fulfill({json:{preferences:{audience:'unassigned',cadence:'daily',enabled:true,dailyTime:'09:00',revision:1},sendingEnabled:false,lastEmail:null}}));
   await context.route('**/api/drive/status', route => route.fulfill({ json: { configured: false, connected: false } }));
   await context.route('**/api/drive/media-session', route => route.fulfill({ json: { ok: true } }));
   let state = blankState();
@@ -114,6 +115,59 @@ async function createClient(page: Page, name = 'Cliente compartido') {
   await form.getByLabel('Reels por mes', { exact: true }).fill('1');
   await form.getByRole('button', { name: 'Crear cliente', exact: true }).click();
 }
+
+test('avisos propios conservan el mismo guardado después de respuesta perdida y recarga',async({page,context})=>{
+ await mockServices(context);
+ let preferences={audience:'unassigned',cadence:'daily',enabled:true,dailyTime:'09:00',revision:1},lost=true;
+ const requests:Array<{requestId:string;preferences:typeof preferences&{expectedRevision:number}}>=[];
+ const receipts=new Map<string,unknown>();
+ await context.route('**/api/notifications/preferences',async route=>{
+  expect(route.request().headers().authorization).toBe(`Bearer ${accessToken}`);
+  if(route.request().method()==='POST'){
+   const body=route.request().postDataJSON();requests.push(body);
+   if(!receipts.has(body.requestId)){
+    const {expectedRevision,...fields}=body.preferences;expect(expectedRevision).toBe(preferences.revision);
+    preferences={...fields,revision:expectedRevision+1};receipts.set(body.requestId,{preferences,sendingEnabled:false,lastEmail:null});
+   }
+   if(lost){lost=false;return route.abort('failed');}
+   return route.fulfill({json:receipts.get(body.requestId)});
+  }
+  return route.fulfill({json:{preferences,sendingEnabled:false,lastEmail:null}});
+ });
+ await login(page);await page.getByRole('button',{name:'Configuración',exact:true}).click();
+ const card=page.locator('#notifications');
+ await expect(card.getByText('El envío de correos todavía no está activado.',{exact:false})).toBeVisible();
+ await card.getByLabel('Avisos de',{exact:true}).selectOption('design');
+ await card.getByLabel('Horario del resumen',{exact:false}).fill('10:30');
+ await card.getByRole('button',{name:'Guardar avisos',exact:true}).click();
+ await expect(card.getByRole('button',{name:'Reintentar guardado'})).toBeVisible();
+ await expect(card.getByLabel('Frecuencia')).toBeDisabled();
+ await page.goto('/?settings=notifications');
+ await expect(card.getByRole('button',{name:'Reintentar guardado'})).toBeVisible();
+ await card.getByRole('button',{name:'Reintentar guardado'}).click();
+ await expect(card.getByRole('status')).toHaveText('Preferencias guardadas.');
+ expect(requests).toHaveLength(2);expect(requests[0]).toEqual(requests[1]);expect(preferences.revision).toBe(2);
+ await page.setViewportSize({width:390,height:844});
+ await card.getByLabel('Frecuencia').selectOption('six_hours');
+ await expect(card.getByLabel('Horario del resumen',{exact:false})).toHaveCount(0);
+ await page.screenshot({path:'work/notifications-mobile.png',fullPage:true});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await card.getByRole('button',{name:'Guardar avisos',exact:true}).click();
+ await expect(card.getByRole('status')).toHaveText('Preferencias guardadas.');
+ expect(preferences.cadence).toBe('six_hours');
+ await page.setViewportSize({width:1440,height:1000});await page.screenshot({path:'work/notifications-desktop.png',fullPage:true});
+});
+
+test('el enlace del correo abre la pieza sólo después del ingreso al espacio',async({page,context})=>{
+ const service=await mockServices(context),pieceId='30000000-0000-4000-8000-000000000099';
+ service.state.clients.push({id:'client-link',name:'Cliente del enlace',initials:'CL',color:'#8b2634',contactName:'',phone:''});
+ service.state.pieces.push({id:pieceId,clientId:'client-link',title:'Pieza enlazada',format:'post',status:'production',ownerId:memberId,plannedDate:'2030-01-02',caption:'Texto de prueba',script:'',internalNote:'Nota del equipo',revision:1,archived:false,visibleToClient:false,createdAt:'2026-09-01T12:00:00Z',updatedAt:'2026-09-01T12:00:00Z'});
+ await page.goto(`/?piece=${pieceId}`);await expect(page.getByRole('dialog')).toHaveCount(0);
+ await page.getByLabel('Correo',{exact:true}).fill('miguel@example.test');await page.getByLabel('Contraseña',{exact:true}).fill('FAKE_TEST_PASSWORD');
+ await page.getByRole('button',{name:'Ingresar',exact:true}).click();
+ await expect(page.getByRole('dialog')).toBeVisible();await expect(page.getByRole('dialog').getByText('Pieza enlazada',{exact:true})).toBeVisible();
+ expect(service.operations).toHaveLength(0);
+});
 
 test('logo del cliente se guarda, se ve en otra pestaña y puede quitarse', async ({ page, context }) => {
   const service = await mockServices(context); await login(page); await createClient(page, 'Cliente con logo');

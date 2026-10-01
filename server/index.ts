@@ -1,10 +1,11 @@
+import { dispatchNotifications, handleNotificationPreferences, type NotificationEnv } from './notifications';
 import { verifySupabaseUser } from './authz';
 import { ServiceError, type Fetcher } from './errors';
 import { callWorkspaceRpc } from './workspace-repository';
 import { googleCallbackRedirect, handleDriveRequest, preparePieceFolders } from './drive-service';
 import type { Piece } from '../contracts/domain';
 
-export interface WorkerEnv {
+export interface WorkerEnv extends NotificationEnv {
   SUPABASE_URL?: string;
   SUPABASE_PUBLISHABLE_KEY?: string;
   ARAMIS_WORKSPACE_ID?: string;
@@ -84,6 +85,7 @@ export async function handleRequest(request: Request, env: WorkerEnv, fetcher: F
     }
     const config = configuration(env);
     if (url.pathname === '/api/google/callback') return googleCallbackRedirect(request);
+    if (url.pathname === '/api/notifications/preferences') return await handleNotificationPreferences(request, env, config, fetcher);
     if (url.pathname.startsWith('/api/drive/')) return await handleDriveRequest(request, env, config, fetcher);
     if (!['/api/workspace', '/api/commands'].includes(url.pathname)) throw new ServiceError('feature_unavailable', 501);
     if ((url.pathname === '/api/workspace' && request.method !== 'GET')
@@ -98,6 +100,7 @@ export async function handleRequest(request: Request, env: WorkerEnv, fetcher: F
       const pieces=saved.state.pieces.filter(p=>!p.archived&&(command.command.type==='create-piece'?p.id===saved.entityId:p.clientId===command.command.clientId&&p.planMonth===command.command.month));
       context.waitUntil(preparePieceFolders(env,config,user.id,pieces,saved.state.clients,fetcher));
     }
+    if(context && command && env.NOTIFICATION_EMAIL_ENABLED === 'true') context.waitUntil(dispatchNotifications(env,fetcher).catch(()=>{console.warn('notification_dispatch_failed');}));
     return Response.json(result, { headers: HEADERS });
   } catch (error) {
     const safe = error instanceof ServiceError ? error : new ServiceError('internal_error', 500);

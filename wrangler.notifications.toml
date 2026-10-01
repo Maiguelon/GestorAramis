@@ -1,0 +1,12 @@
+name = "gestor-aramis-notifications"
+main = "server/notification-worker.ts"
+compatibility_date = "2026-09-01"
+workers_dev = false
+
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
+# Activate only after the verified sender and private secrets are installed.
+NOTIFICATION_EMAIL_ENABLED = "false"
+NOTIFICATION_APP_URL = "https://gestor-aramis.pages.dev"

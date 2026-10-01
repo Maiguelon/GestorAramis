@@ -1,5 +1,13 @@
 # Decisiones
 
+## D26 — Avisos internos agrupados (2026-10-01)
+
+Diseño recibe entradas y devoluciones a producción; Marketing recibe nuevas entregas para revisión. Área elegida por persona y guardada en servidor, independiente de responsable, permisos y vista del navegador. Default diario a las 09:00 Argentina; horario editable, inmediato, cada hora, cada seis horas (00/06/12/18 Argentina) o pausa. Novedades registradas en la transacción de negocio; no se notifica por editar textos ni por trabajo anterior a activar el área. Se excluyen novedades que ya dejaron de requerir intervención. No son avisos diarios repetidos de vencidos.
+
+Worker separado con Cron cada minuto permite enviar aunque nadie abra el gestor; Pages acelera los avisos inmediatos después de un comando confirmado. Una cola privada y leases coordinan ambos. Cada batch conserva su cuerpo y clave de idempotencia en los reintentos; incertidumbre fuera de 23 horas, agotamiento de intentos o rechazo definitivo se retienen para revisión, sin reenvío ciego. Correo muestra identificación, fecha, motivo explícito de devolución y enlaces que exigen acceso normal; no adjunta material ni notas internas.
+
+Remitente en subdominio existente `avisos.aramis.agency`, sin comprar otro dominio ni cambiar Zoho. Activación autorizada por Miguel tras prueba real entregada en Resend. El envío a proveedor y la lectura humana son evidencias distintas. Sin SMTP de Auth, notificaciones a clientes ni WhatsApp automático en este bloque. Ver `handoffs/C11-email-notifications.md`.
+
 ## D25 — Un solo contenido para Historias (2026-09-23)
 
 Historias editan un único campo “Contenido de la historia” para slides. Persiste en `caption`, que ya alimenta la versión de Entrega/Revisión; `script` sigue siendo estrictamente privado. Los guiones antiguos de Historias se conservan en `script` y se muestran al equipo como indicaciones anteriores de sólo lectura. No mezclarlos automáticamente con `caption`, porque eso podría divulgar instrucciones internas al cliente. Reel, Post y Carrusel mantienen los dos campos. La vista de texto completo tiene un botón destacado arriba de las pestañas, accesible desde cualquier sección del detalle, y sigue abriendo sólo lo guardado; los cambios sin guardar bloquean el enlace. No requiere esquema nuevo ni reescritura de datos.

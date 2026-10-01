@@ -36,9 +36,9 @@ export class SharedWorkspaceStore {
   private pending: { command: Command; requestId: string } | null = null;
   constructor(private baseUrl = '', private transport: typeof fetch = (...args) => fetch(...args), private newId = () => crypto.randomUUID(), private journal?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>) {}
   getSnapshot = () => this.snapshot;
-  /** Same-origin authenticated transport for Drive. The returned body can stream. */
+  /** Allowlisted same-origin authenticated transport. The returned body can stream. */
   async authenticatedFetch(path: string, init: RequestInit = {}): Promise<Response> {
-    if (!path.startsWith('/api/drive/') || /[\\?#]/.test(path)) throw new SharedApiError('VALIDATION', 'Ruta no permitida.');
+    if (!(path.startsWith('/api/drive/') || path === '/api/notifications/preferences') || /[\\?#]/.test(path)) throw new SharedApiError('VALIDATION', 'Ruta no permitida.');
     if (!this.token || !this.userId) throw new SharedApiError('SESSION_REQUIRED', 'Ingresá para abrir el espacio del equipo.');
     const generation = this.generation;
     const controller = new AbortController(); this.controllers.add(controller);

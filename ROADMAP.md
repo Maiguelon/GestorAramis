@@ -52,6 +52,10 @@ Mensajes editables y URL según scope; abrir WhatsApp/copy sin enviar automátic
 ## C10 — cierre
 Camino E2E: pedir material → entregar → producir → revisar → cambiar → aprobar → programar → publicar. Calendario por sesión/link; errores externos recuperables; backup Supabase y restauración en entorno distinto; versión estable y rollback compatible con datos; subdominio y correo; monitorizar errores sin datos sensibles. Probar con 3 clientes por 2 semanas. Metas observacionales: bloqueos en <1 minuto; operaciones simples <30 segundos; 80% solicitudes por link sin ayuda. No simular métricas.
 
+## C11 — avisos internos (integrado y verificado, 2026-10-01)
+
+Plan por bloques N1–N5 en `docs/PLAN_EMAIL_NOTIFICATIONS.md`. Preferencias individuales, eventos transaccionales, agrupación, reintentos y Worker programado; UI con enlaces autenticados. Resend/Namecheap configurados, prueba real agrupada entregada a Miguel y equipo activado a las 09:00 Argentina. Handoff `handoffs/C11-email-notifications.md`. Este cierre no completa el SMTP de Auth, el portal cliente ni el piloto C10. Orden siguiente acordado: observar avisos, conectar las vistas de cliente y luego métricas internas.
+
 ## División entre sesiones y agentes
 Coordinador conserva contratos, dependencias, integración y checkpoints. Hasta 3 agentes, archivos/ramas sin solapamiento. Entrega handoffs/Cxx.md: alcance, evidencia, instrucciones, referencia commit, limitaciones y próximo paso. Subdividir C04a OAuth, C04b carga, C04c reproducción si falta margen. No dejar grandes módulos sin integrar.
 

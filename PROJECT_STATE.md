@@ -1,5 +1,17 @@
 # Estado del proyecto
 
+## Avisos internos por correo activos — 2026-10-01
+
+N1–N5 cerrados y publicados en **bb87f26d.gestor-aramis.pages.dev** y **https://gestor-aramis.pages.dev/**. Migración `202609300002_notifications.sql` aplicada una vez; no repetir. Worker `gestor-aramis-notifications` activo cada minuto, versión **350529dd-8dbd-4bac-8ed1-1136e46caead**, sin endpoint público. Pages y Worker tienen el envío habilitado y claves privadas sólo como secretos/configuración ignorada.
+
+Remitente **Aramis <gestor@avisos.aramis.agency>**, dominio verificado en Resend (São Paulo). Tres registros nuevos en Namecheap bajo avisos/rsend/send; web y correo Zoho conservados. Resend usa una clave restringida a envío desde ese dominio. Configuración real del equipo: Eliana → Diseño; Eric y Miguel → Marketing; todos habilitados, diario **09:00 Argentina**. Inicialización explícita sin avisar por el trabajo anterior. Cada persona puede cambiar área, frecuencia, horario o pausar desde Configuración → Avisos por correo; la vista Gestión/Diseño sigue siendo independiente.
+
+Prueba real: dos posts sintéticos de producción generaron **un correo agrupado a Miguel**, batch `b8e3b42f-b53a-4a90-88f1-f029b3afc843`, un intento, Resend `01a0f5a2-13e7-755f-b765-9d54f2cfcb00`, **sent + delivered** a las 01:03 Argentina del 1/10. Enlace abrió la pieza correcta con sesión normal. No se afirma lectura humana ni llegada a una carpeta específica de Outlook. Cliente y dos piezas de prueba archivados, sin borrado ni cambios de archivos Drive. Limpieza y preferencias verificadas tras la interrupción de créditos. Guardado real de las preferencias de Miguel confirmado y persistente al recargar; banner de envío inactivo ausente en publicación final.
+
+Validación: **525 unitarias / 23 archivos**, **27 recorridos compartidos** (incluyen reintento idempotente de preferencias y enlace de mail tras login), SQL real alojado dentro de rollback aprobado, revisión escritorio/390 px, TypeScript/Vite/Worker y smoke remoto del alias aprobados. La compilación local final de Wrangler quedó esperando después de producir el bundle; se detuvo ese proceso concreto y se completó el despliegue, que recompiló y publicó con éxito. No se modificaron dependencias para ese cierre. `redirect:manual` evita el fallo real de `redirect:error` en workerd y rechaza respuestas 3xx.
+
+Handoff y procedimiento: **handoffs/C11-email-notifications.md**. Próximo: observar los resúmenes con novedades reales del equipo; luego vistas remotas de clientes. No pendiente ninguna cuenta para activar este bloque. Google continúa External/Testing, separado del correo: renovación comprobada el 30/9 y recordatorio de revisión para el 7/10. Los enlaces/OTP/clientes reales y métricas siguen en bloques posteriores.
+
 ## Conexión de Drive comprobada — 2026-09-30
 
 Miguel informó haber pulsado la renovación. Comprobación real de la credencial persistida: intercambio de refresh token exitoso y lectura de metadatos de la carpeta raíz con HTTP 200; permiso `drive` conservado. Token de acceso obtenido sólo en memoria, sin modificar la conexión persistida ni archivos. Esto confirma conexión operativa; no acredita por sí solo la hora del último consentimiento ni reinicia el plazo de Testing. Evidencia y procedimiento en `handoffs/C04-drive-renewal-check.md`.

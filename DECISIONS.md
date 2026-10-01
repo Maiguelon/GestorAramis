@@ -1,5 +1,11 @@
 # Decisiones
 
+## D27 — Corte de V1 interna y siguiente fase (2026-10-01)
+
+Miguel confirma uso real por el equipo y considera completa la V1 interna desde antes de los avisos por correo. El corte de producto cubre planificación, material, producción y revisión internos. Los mails amplían esa versión; las vistas/enlaces de clientes y sus pruebas reales pertenecen a la siguiente fase. Esto actualiza la división de entregas sin declarar cumplidos los bloques de clientes ni el piloto completo de la hoja de ruta original.
+
+El README describe los requisitos de OAuth por despliegue, separado del ingreso del equipo mediante Supabase. External/Testing es el estado operativo de la conexión Google actual de Aramis, conservado en PROJECT_STATE y handoffs, no una restricción inherente al producto ni un requisito de todas sus instalaciones.
+
 ## D26 — Avisos internos agrupados (2026-10-01)
 
 Diseño recibe entradas y devoluciones a producción; Marketing recibe nuevas entregas para revisión. Área elegida por persona y guardada en servidor, independiente de responsable, permisos y vista del navegador. Default diario a las 09:00 Argentina; horario editable, inmediato, cada hora, cada seis horas (00/06/12/18 Argentina) o pausa. Novedades registradas en la transacción de negocio; no se notifica por editar textos ni por trabajo anterior a activar el área. Se excluyen novedades que ya dejaron de requerir intervención. No son avisos diarios repetidos de vencidos.

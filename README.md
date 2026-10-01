@@ -4,7 +4,7 @@
 
 Gestor Aramis brings monthly planning, production assets, design handoffs and review into one workspace. It was built around the day-to-day work of the Aramis team and is now used internally to coordinate real content production.
 
-**Current status:** the internal V1 is deployed and in use, with shared data, Google Drive integration and email notifications. Client-facing calendars, approvals and material requests exist as local prototypes; their live integration is the next phase.
+**Current status:** the internal V1 is complete, deployed and in use by the team. Planning, production and review were already part of the working release before email notifications were added as a subsequent improvement. Client-facing calendars, approvals and material requests exist as local prototypes; their live integration is the next product phase.
 
 [Open the deployed app — team login required](https://gestor-aramis.pages.dev/) · [Run the local demo](#run-the-local-demo) · [Architecture](#architecture) · [Verification](#verification)
 
@@ -20,7 +20,7 @@ The product follows that workflow. Marketing manages the plan; design opens a pr
 
 The planned client experience follows the same principle: a WhatsApp message opens the relevant calendar, approval or upload page directly. Those remote client flows are not active in the deployed V1 yet.
 
-## What the internal V1 does
+## Current functionality
 
 | Capability | Behavior |
 |---|---|
@@ -32,7 +32,7 @@ The planned client experience follows the same principle: a WhatsApp message ope
 | Source material | Upload to Drive through the app, or add files directly to the linked Drive folder and bring them into the piece when the app checks it. Preview thumbnails, download originals or download a ZIP. |
 | Delivery and review | Keep finished work separate from source footage. Submit an ordered, versioned delivery for review; approve it or return it to production with a required reason. |
 | History | Keep approved work visible through its planned publication date, then show it in History. Archive and restore pieces while preserving their records and files. |
-| Email notifications | Notify design about production entries and returns, and marketing about new deliveries for review. Daily summaries default to 09:00 Argentina; each person can change frequency, time or pause them. |
+| Email notifications — added after V1 | Notify design about production entries and returns, and marketing about new deliveries for review. Daily summaries default to 09:00 Argentina; each person can change frequency, time or pause them. |
 
 ### Workflow
 
@@ -186,9 +186,11 @@ The work spans operational discovery, workflow design, service integration and d
 
 ## Current boundaries and next steps
 
-The deployed application serves the internal team. Client access, live calendar links, remote approvals and client uploads are the next product phase; authentication emails and self-service account recovery also remain separate work. Social publishing is handled outside the app. Internal metrics come after the client workflows.
+The internal V1 covers the team's planning, production and review workflow and is already in use. Client access, live calendar links, remote approvals and client uploads belong to the next product phase. Authentication emails and self-service account recovery are separate improvements. Social publishing is handled outside the app. Internal metrics come after the client workflows.
 
-Google OAuth is still configured for external testing and requires periodic renewal. Browser uploads depend on the browser remaining active; the native Drive app is the practical option for large mobile batches. Google video playback also depends on the viewer's own Drive access, and a pinned delivery is distinct from a source preview. These operating constraints are documented in the Drive handoffs.
+Each deployment needs its own Google OAuth configuration for the Drive integration, separate from staff sign-in through Supabase. Connection setup and renewal procedures are documented in the Drive handoffs; the OAuth publishing status of the current Aramis deployment is an operational detail recorded in [PROJECT_STATE.md](PROJECT_STATE.md).
+
+Browser uploads depend on the browser remaining active; the native Drive app is the practical option for large mobile batches. Google video playback also depends on the viewer's own Drive access, and a pinned delivery is distinct from a source preview. These operating constraints are documented in the Drive handoffs.
 
 ## Project documentation
 

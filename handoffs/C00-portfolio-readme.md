@@ -22,3 +22,11 @@ Documentation only: no application code or service configuration changed, no mig
 ## Next action
 
 Product development stays paused until Miguel requests the next block. The planned next phase remains the live client views; this README update does not implement or enable them. Review README status and dated evidence when that phase is actually integrated.
+
+## Follow-up — V1 milestone and deployment-specific OAuth
+
+Miguel confirms that the team already used the internal product before email notifications and considers that internal V1 complete. README now states that milestone explicitly and treats notifications as a subsequent improvement. Client-facing prototypes still require live integration in the next phase; no client acceptance criteria or hosted verification are marked complete.
+
+The general README no longer describes External/Testing or periodic renewal as a product-wide constraint. It distinguishes staff sign-in through Supabase from Google OAuth configured for each deployment. The current Aramis connection's actual publishing status remains in operational notes. ROADMAP, DECISIONS and PROJECT_STATE record the milestone for continuity.
+
+Existing screenshots are unchanged: their data is fictional, and they still use the pre-existing sample brand logos. A wholly fictional set of logos was discussed as an optional presentation update, not implemented here. Relative links, anchors and Markdown structure verified; documentation-only change, no repeated functional tests or deployment.

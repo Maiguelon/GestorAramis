@@ -2,6 +2,8 @@
 
 Versión acordada el 2026-09-06. Objetivo: coordinación interna visible para la hermana del usuario y calendario, aprobaciones y material para clientes desde WhatsApp. Contratos compartidos en contracts/. Detalles y justificación en DECISIONS.md.
 
+**Corte actualizado — 2026-10-01:** Miguel considera completa la **V1 interna**, en uso real desde antes de los correos. Avisos internos C11 son una mejora posterior. Los bloques de clientes se mantienen pendientes como siguiente fase; la tabla fechada del 12/9 y el alcance original se conservan como historial, sin afirmar que el piloto completo esté cerrado. Estado vigente y evidencia en PROJECT_STATE.md; decisión D27.
+
 ## Estados y regla de cierre
 Pendiente → En curso → Probado en aislamiento → Integrado. Bloqueado siempre indica la dependencia. Demo/local y servicios reales se informan por separado. Una interfaz simulada NO completa un bloque de producción.
 

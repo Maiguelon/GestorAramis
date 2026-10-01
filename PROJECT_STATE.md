@@ -1,5 +1,9 @@
 # Estado del proyecto
 
+## V1 interna cerrada y alcance del README aclarado — 2026-10-01
+
+Miguel confirma que el equipo usa el gestor y considera terminada la V1 interna desde antes de los correos. Se registra ese corte: planificación, producción, material y revisión forman la versión interna operativa; avisos por mail son una mejora posterior. Las vistas/enlaces de cliente son la próxima fase, aún sin habilitar en producción. El README en inglés refleja ese estado y distingue login de Supabase de la configuración OAuth de Google por despliegue. Se retiró la afirmación general de Testing/caducidad; el estado real de esa conexión se conserva en las notas operativas anteriores. Capturas conservadas, con datos ficticios y logos de muestra existentes. Sólo documentación: enlaces y estructura Markdown comprobados, sin cambios de aplicación ni servicios. Handoff actualizado: `handoffs/C00-portfolio-readme.md`. El desarrollo de nuevas funciones sigue detenido hasta el próximo pedido.
+
 ## README de portfolio — 2026-10-01
 
 README reescrito en inglés para describir la V1 interna que usa el equipo: problema operativo, flujo, funciones reales, decisiones, arquitectura, demo sin cuentas, configuración compartida, verificación y próximos bloques. Dos capturas nuevas en `docs/images/` tomadas de una demo local aislada con fixtures ficticias, no de clientes o material de producción. Se distingue la aplicación alojada con login de las vistas de cliente aún locales y la evidencia histórica de pruebas de una ejecución nueva. Links, comandos, archivos de imágenes y estructura Markdown comprobados; sin cambios de código, dependencias ni despliegue, por lo que no se repitieron suites funcionales. Handoff: `handoffs/C00-portfolio-readme.md`. Desarrollo de producto detenido por pedido de Miguel; siguiente fase sigue pendiente de su arranque.

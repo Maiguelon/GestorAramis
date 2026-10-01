@@ -1,5 +1,9 @@
 # Estado del proyecto
 
+## Plan de Pendientes, Aprobados e Historial — 2026-09-30
+
+Plan preparado en `docs/PLAN_PENDIENTES_HISTORIAL.md`; todavía sin implementar. Gestión abrirá todo el trabajo pendiente, con fechas ascendente y alcance Esta semana opcional; Atención separado del proceso, Aprobados al fondo hasta su fecha inclusive y luego consulta en Historial. Diseño conservará su entrada enfocada en producción, con Calendario directo y selector de consulta En espera/Revisión/Aprobados; Gestión seguirá disponible desde Vista de trabajo. Retirar Producción del menú de Gestión. Recuperación de archivadas es un bloque independiente porque el comando actual rechaza editar archivadas y algunas lecturas Drive exigen pieza activa. Bloques P1–P5 con criterios reproducibles y compatibilidad de estados existentes. No hubo cambios de UI, datos alojados ni despliegue en esta preparación.
+
 ## Cambio rápido de formato — 2026-09-28
 
 Publicado en **2a82abc2.gestor-aramis.pages.dev** y alias habitual. Al abrir una pieza, la etiqueta de formato junto al cliente es ahora un selector de Reel, Post, Carrusel o Historia. Guardar otra opción actualiza la pieza con la revisión vigente, sin cambiar título, material, textos ni etapa. Si hay cambios sin guardar en Detalles, el selector espera a que se guarden; el selector anterior dentro de Detalles sigue disponible. No hubo migración ni cambios en piezas reales durante la prueba. Ver `handoffs/C05-format-quick-edit.md`.

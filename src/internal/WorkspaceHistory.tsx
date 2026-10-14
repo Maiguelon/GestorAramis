@@ -14,9 +14,15 @@ export default function WorkspaceHistory({ state, today, select }: { state: Work
   const [month, setMonth] = useState('');
   const [search, setSearch] = useState('');
   const source = category === 'completed' ? historicalWork(state, today) : archivedWork(state);
-  const shown = source.filter(piece => (clientId === 'all' || piece.clientId === clientId)
-    && (!month || pieceMonth(piece) === month)
-    && `${piece.title} ${state.clients.find(client => client.id === piece.clientId)?.name}`.toLowerCase().includes(search.toLowerCase()));
+  const shown = source.flatMap(piece => {
+    const client = state.clients.find(client => client.id === piece.clientId);
+    // Retired clients are omitted from the workspace catalog; their old pieces may still be returned.
+    // Join to that catalog before rendering, searching or offering recovery of a piece.
+    if (!client || (clientId !== 'all' && piece.clientId !== clientId)
+      || (month && pieceMonth(piece) !== month)
+      || !`${piece.title} ${client.name}`.toLowerCase().includes(search.toLowerCase())) return [];
+    return [{ piece, client }];
+  });
   return <section className="workspace-history">
     <div className="history-categories" aria-label="Categoría del historial">
       <button className="button secondary" aria-pressed={category === 'completed'} onClick={() => setCategory('completed')}>Completados</button>
@@ -29,8 +35,7 @@ export default function WorkspaceHistory({ state, today, select }: { state: Work
       {month && <button className="text-button" onClick={() => setMonth('')}>Todos los meses</button>}
     </div>
     <p className="form-hint">{category === 'completed' ? 'Aprobados de fechas pasadas y publicaciones anteriores. Siguen disponibles en el calendario y en el plan del cliente.' : 'Piezas retiradas del trabajo y del calendario. Podés consultarlas o recuperarlas a planificación.'}</p>
-    <div className="history-list">{shown.length ? shown.map(piece => {
-      const client = state.clients.find(client => client.id === piece.clientId)!;
+    <div className="history-list">{shown.length ? shown.map(({ piece, client }) => {
       return <button className="history-row" key={piece.id} onClick={() => select(piece.id)} aria-label={`Abrir ${piece.title}`}>
         <ClientAvatar client={client}/><div className="history-piece"><span>{client.name} · <FormatBadge format={piece.format}/></span><strong>{piece.title}</strong><small>Plan de {dateLabel(`${pieceMonth(piece)}-01`, { month: 'long', year: 'numeric' })}</small></div>
         <span className="history-date">{dateLabel(piece.plannedDate, { day: 'numeric', month: 'short', year: 'numeric' })}</span>

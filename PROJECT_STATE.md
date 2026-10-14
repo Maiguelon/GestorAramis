@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Historial tolera clientes retirados — 2026-10-13
+
+Publicado en **9a119ba7.gestor-aramis.pages.dev** y **https://gestor-aramis.pages.dev/**. Se reprodujo con la sesión real el fallo de Archivados: la RPC omite clientes con archived_at pero conserva piezas antiguas de esos clientes; la pantalla asumía que siempre existía su nombre. Historial ahora relaciona cada pieza con el catálogo de clientes disponible antes de buscar, contar y dibujar filas. Los registros de clientes retirados se omiten de Completados/Archivados; los de clientes vigentes siguen consultables y recuperables. No se borran datos ni se modifica SQL, permisos, Drive o avisos.
+
+Validación: nuevo recorrido compartido reprodujo el mismo TypeError antes del cambio y pasó después; cubre vacío, clientes ausentes, piezas vigentes, búsqueda y ausencia de writes. Recuperación compartida existente y cinco recorridos demo de pendientes/historial aprobados. TypeScript/Vite/Worker y smoke remoto aprobados. Con la sesión real tras publicar se abrieron Completados (7 piezas) y Archivados (15 piezas), sin errores nuevos de consola ni cambios de registros reales. Handoff: `handoffs/C05-history-client-filter.md`. Para comprobarlo, recargar y entrar a Gestión → Historial → Archivados. Siguiente fase de clientes sigue pendiente de autorización.
+
 ## Etiqueta Caption — 2026-10-13
 
 Publicado en **76331a59.gestor-aramis.pages.dev** y **https://gestor-aramis.pages.dev/**. Reel, Post y Carrusel muestran **Caption** en el editor de Detalles, la lectura ampliada y la consulta de piezas archivadas. Historias conserva su único campo Contenido de la historia. Sólo cambia texto de interfaz: mismos datos, guardado, permisos y versiones.

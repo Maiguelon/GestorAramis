@@ -3,6 +3,41 @@ import type { Command, CommandResult, WorkspaceState } from '../../contracts/dom
 import { applyCommand, DomainError } from '../../src/domain/engine';
 import { writeFile } from 'node:fs/promises';
 
+test('historial vacío y piezas de clientes retirados no interrumpen la navegación', async ({page,context}) => {
+  const service = await mockServices(context);
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.clock.setFixedTime(new Date('2026-10-13T15:00:00Z'));
+  await login(page);
+  await page.getByRole('button',{name:'Historial',exact:true}).click();
+  const empty = page.getByRole('heading',{name:'No hay piezas en este historial con estos filtros.',exact:true});
+  await expect(empty).toBeVisible();
+  await page.getByRole('button',{name:'Archivados',exact:true}).click();
+  await expect(empty).toBeVisible();
+
+  service.state.clients.push({id:'cliente-vigente',name:'Cliente vigente',initials:'CV',color:'#8b2634',contactName:'',phone:''});
+  const base: WorkspaceState['pieces'][number] = {id:'archivada-vigente',clientId:'cliente-vigente',title:'Archivada vigente',format:'post',status:'approved',ownerId:memberId,plannedDate:'2026-09-01',caption:'Caption guardado',script:'Guion conservado',internalNote:'',archived:true,revision:1,visibleToClient:false,createdAt:'2026-09-01T12:00:00Z',updatedAt:'2026-09-01T12:00:00Z'};
+  service.state.pieces.push(base,
+    {...base,id:'archivada-retirada',clientId:'cliente-retirado',title:'Archivada de cliente retirado'},
+    {...base,id:'completada-vigente',title:'Completada vigente',archived:false},
+    {...base,id:'completada-retirada',clientId:'cliente-retirado',title:'Completada de cliente retirado',archived:false});
+  const original = structuredClone(service.state);
+  await page.reload();
+  await page.getByRole('button',{name:'Historial',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Abrir Completada vigente',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Abrir Completada de cliente retirado',exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'Archivados',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Abrir Archivada vigente',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Abrir Archivada de cliente retirado',exact:true})).toHaveCount(0);
+  await page.getByRole('textbox',{name:'Buscar en historial',exact:true}).fill('sin coincidencias');
+  await expect(empty).toBeVisible();
+  await page.getByRole('textbox',{name:'Buscar en historial',exact:true}).fill('Cliente vigente');
+  await expect(page.getByRole('button',{name:'Abrir Archivada vigente',exact:true})).toBeVisible();
+  expect(errors).toEqual([]);
+  expect(service.operations).toHaveLength(0);
+  expect(service.state).toEqual(original);
+});
+
 test('archivada consulta archivos sin sincronizar y recupera un guardado incierto sin duplicarlo', async ({page,context}) => {
   const service = await mockServices(context);
   const pieceId = '30000000-0000-4000-8000-000000000009';

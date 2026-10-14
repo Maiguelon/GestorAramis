@@ -1,5 +1,9 @@
 # Decisiones
 
+## D28 — Alta de piezas en Marketing (2026-10-13)
+
+Nuevo contenido no pide área: crea la pieza en Planificación / Marketing, porque el alta todavía no incluye texto ni material listo para Diseño. El formulario envía workArea=marketing explícitamente. El alta desde el mes del cliente ya sigue esa regla. La preparación y el paso posterior a Producción conservan el flujo existente.
+
 ## D27 — Corte de V1 interna y siguiente fase (2026-10-01)
 
 Miguel confirma uso real por el equipo y considera completa la V1 interna desde antes de los avisos por correo. El corte de producto cubre planificación, material, producción y revisión internos. Los mails amplían esa versión; las vistas/enlaces de clientes y sus pruebas reales pertenecen a la siguiente fase. Esto actualiza la división de entregas sin declarar cumplidos los bloques de clientes ni el piloto completo de la hoja de ruta original.

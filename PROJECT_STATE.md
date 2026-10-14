@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Nuevo contenido sin selector de área — 2026-10-13
+
+Publicado en **57cc81f6.gestor-aramis.pages.dev** y **https://gestor-aramis.pages.dev/**. Se retira Marketing/Diseño del formulario Nuevo contenido y el comando crea explícitamente en Marketing, con el estado inicial Planificación existente. Alta desde Clientes ya usaba Marketing. Decisión D28; handoff `handoffs/C05-new-piece-marketing.md`.
+
+Validación: recorrido demo existente de creación/material/revisión/aprobación aprobado; TypeScript/Vite/Worker y smoke remoto aprobados. Formulario real comprobado con la sesión existente: título, cliente, formato y fecha, sin selector Área. Se cerró sin crear registros y se restauró la preferencia Diseño usada antes de comprobarlo. No se agregan tests nuevos para este ajuste de formulario. Para verlo, recargar → Gestión → Nuevo contenido.
+
 ## Historial tolera clientes retirados — 2026-10-13
 
 Publicado en **9a119ba7.gestor-aramis.pages.dev** y **https://gestor-aramis.pages.dev/**. Se reprodujo con la sesión real el fallo de Archivados: la RPC omite clientes con archived_at pero conserva piezas antiguas de esos clientes; la pantalla asumía que siempre existía su nombre. Historial ahora relaciona cada pieza con el catálogo de clientes disponible antes de buscar, contar y dibujar filas. Los registros de clientes retirados se omiten de Completados/Archivados; los de clientes vigentes siguen consultables y recuperables. No se borran datos ni se modifica SQL, permisos, Drive o avisos.

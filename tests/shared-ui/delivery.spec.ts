@@ -63,6 +63,6 @@ test('delivery upload → review → changes visible in Design → new version �
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
  await page.screenshot({path:'work/delivery-mobile.png',fullPage:true});
  await page.getByRole('button',{name:'Aprobar entrega',exact:true}).click();expect(service.p.status).toBe('approved');
- await page.getByRole('tab',{name:'Detalles',exact:true}).click();await expect(page.getByRole('textbox',{name:'Texto de publicación',exact:true})).toBeDisabled();await expect(page.getByRole('button',{name:'Marcar como programado',exact:true})).toHaveCount(0);expect(service.p.status).toBe('approved');
+ await page.getByRole('tab',{name:'Detalles',exact:true}).click();await expect(page.getByRole('textbox',{name:'Caption',exact:true})).toBeDisabled();await expect(page.getByRole('button',{name:'Marcar como programado',exact:true})).toHaveCount(0);expect(service.p.status).toBe('approved');
  await page.reload();expect(service.p.deliveries).toHaveLength(2);
 });

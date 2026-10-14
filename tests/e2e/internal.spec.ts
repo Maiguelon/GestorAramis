@@ -130,11 +130,11 @@ test('abrir el texto y cambiar de sección requiere resolver el borrador',async(
   await page.goto('/');
   await page.getByRole('button',{name:'Abrir Ideas para compartir'}).click();
   const dialog=page.getByRole('dialog');
-  await dialog.getByRole('textbox',{name:'Texto de publicación',exact:true}).fill('Texto modificado que todavía no está aprobado');
+  await dialog.getByRole('textbox',{name:'Caption',exact:true}).fill('Texto modificado que todavía no está aprobado');
   await expect(dialog.locator('.expand-text-actions a')).toHaveAttribute('aria-disabled','true');
   await dialog.getByRole('tab',{name:'Revisión',exact:true}).click();
   await expect(dialog.getByRole('alert')).toContainText('Guardá los detalles');
-  await expect(dialog.getByRole('textbox',{name:'Texto de publicación',exact:true})).toHaveValue('Texto modificado que todavía no está aprobado');
+  await expect(dialog.getByRole('textbox',{name:'Caption',exact:true})).toHaveValue('Texto modificado que todavía no está aprobado');
   await dialog.getByRole('button',{name:'Descartar borrador'}).click();
   await expect(dialog.locator('.expand-text-actions a')).toHaveAttribute('aria-disabled','false');
 });

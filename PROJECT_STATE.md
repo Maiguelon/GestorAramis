@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Etiqueta Caption — 2026-10-13
+
+Publicado en **76331a59.gestor-aramis.pages.dev** y **https://gestor-aramis.pages.dev/**. Reel, Post y Carrusel muestran **Caption** en el editor de Detalles, la lectura ampliada y la consulta de piezas archivadas. Historias conserva su único campo Contenido de la historia. Sólo cambia texto de interfaz: mismos datos, guardado, permisos y versiones.
+
+Validación: compilación TypeScript/Vite y empaquetado Pages/Worker; cuatro recorridos demo existentes y un recorrido compartido de entrega/revisión/aprobación con API simulada; smoke remoto del alias aprobado, sin operaciones autenticadas sobre datos reales. No se agregan pruebas nuevas ni se repiten suites ajenas a la etiqueta. Handoff: `handoffs/C05-caption-label.md`. Para comprobarlo, recargar el gestor y abrir una pieza → Detalles o Abrir texto completo. Siguiente fase de clientes conversada, aún sin implementación nueva ni habilitación remota.
+
 ## V1 interna cerrada y alcance del README aclarado — 2026-10-01
 
 Miguel confirma que el equipo usa el gestor y considera terminada la V1 interna desde antes de los correos. Se registra ese corte: planificación, producción, material y revisión forman la versión interna operativa; avisos por mail son una mejora posterior. Las vistas/enlaces de cliente son la próxima fase, aún sin habilitar en producción. El README en inglés refleja ese estado y distingue login de Supabase de la configuración OAuth de Google por despliegue. Se retiró la afirmación general de Testing/caducidad; el estado real de esa conexión se conserva en las notas operativas anteriores. Capturas conservadas, con datos ficticios y logos de muestra existentes. Sólo documentación: enlaces y estructura Markdown comprobados, sin cambios de aplicación ni servicios. Handoff actualizado: `handoffs/C00-portfolio-readme.md`. El desarrollo de nuevas funciones sigue detenido hasta el próximo pedido.

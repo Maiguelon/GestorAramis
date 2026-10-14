@@ -33,7 +33,7 @@ export default function ArchivedPieceDetail({ piece, state, execute, onClose }: 
     </Tabs.List>
       <Tabs.Content value="text" className="detail-tab-content archived-text">
         {piece.format !== 'story' && <><h3>Guion e instrucciones de producción</h3><p className="preserve-lines">{piece.script || 'Sin indicaciones.'}</p></>}
-        <h3>{piece.format === 'story' ? 'Contenido de la historia' : 'Texto de publicación'}</h3><p className="preserve-lines">{piece.caption || 'Sin texto.'}</p>
+        <h3>{piece.format === 'story' ? 'Contenido de la historia' : 'Caption'}</h3><p className="preserve-lines">{piece.caption || 'Sin texto.'}</p>
         {piece.format === 'story' && piece.script?.trim() && <details><summary>Indicaciones anteriores · Sólo equipo</summary><p className="preserve-lines">{piece.script}</p></details>}
         {piece.internalNote && <><h3>Nota interna</h3><p className="preserve-lines">{piece.internalNote}</p></>}
       </Tabs.Content>

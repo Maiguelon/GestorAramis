@@ -183,7 +183,7 @@ test('Una archivada se consulta sin editar ni subir y se recupera a Planificaci�
   await expect(page.getByRole('button', { name: 'Abrir Pieza archivada', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Abrir Pieza archivada', exact: true }).click();
   await expect(page.getByRole('dialog').getByLabel('Guion e instrucciones de producción')).toHaveValue(original.script!);
-  await expect(page.getByRole('dialog').getByRole('textbox', { name: 'Texto de publicación', exact: true })).toHaveValue(original.caption);
+  await expect(page.getByRole('dialog').getByRole('textbox', { name: 'Caption', exact: true })).toHaveValue(original.caption);
   await page.goto('/request/demo-archived-review');
   await expect(page.getByRole('heading', { name: 'Este enlace no está disponible.', exact: true })).toBeVisible();
 });

@@ -26,7 +26,7 @@ test('Historia usa un solo contenido y conserva indicaciones anteriores privadas
  const dialog=page.getByRole('dialog');
  await expect(dialog.getByLabel('Contenido de la historia')).toHaveValue('Idea privada en preparación.');
  await expect(dialog.getByLabel('Guion e instrucciones de producción')).toHaveCount(0);
- await expect(dialog.getByLabel('Texto de publicación')).toHaveCount(0);
+ await expect(dialog.getByLabel('Caption')).toHaveCount(0);
  await expect(dialog.locator('.story-legacy-notes')).toContainText('Indicación privada anterior para el equipo.');
  await expect(dialog.getByRole('link',{name:'Abrir texto completo'})).toBeVisible();
  await dialog.getByLabel('Contenido de la historia').fill('Slide 1: Presentación\nSlide 2: El equipo');

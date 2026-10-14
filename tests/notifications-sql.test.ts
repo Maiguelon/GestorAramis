@@ -65,7 +65,7 @@ describe('transactional notification outbox (isolated PostgreSQL)',()=>{
  it('capture observes final production state and command replay/editing do not duplicate alerts',async()=>{
   await reset();let p=await piece();
   p=await edit(p,{status:'production',workArea:'marketing',productionStage:'recording'});expect(await count()).toBe(0);
-  const original=p,key=randomUUID(),patch={workArea:'design',productionStage:'ready'};
+  const original=p,key=randomUUID(),patch={status:'production',workArea:'design',productionStage:'ready'};
   p=await edit(p,patch,key);expect(await count()).toBe(1);
   await edit(original,patch,key);expect(await count()).toBe(1);
   p=await edit(p,{productionStage:'editing',script:'Updated instructions'});expect(await count()).toBe(1);

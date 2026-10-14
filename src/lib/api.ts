@@ -96,6 +96,20 @@ function readSnapshot(): { state: WorkspaceState; raw: string } {
     return { state, raw: initialized };
   }
   const state = parseWorkspace(raw);
+  const legacyPreparation = state.pieces.filter(piece => !piece.archived && piece.status === 'production'
+    && (piece.productionStage === 'recording' || piece.workArea === 'marketing'));
+  if (legacyPreparation.length) {
+    const now = new Date().toISOString();
+    for (const piece of legacyPreparation) {
+      Object.assign(piece, { status: 'planned', workArea: 'marketing', productionStage: 'ready', revision: piece.revision + 1, updatedAt: now });
+      state.activities.push({id: crypto.randomUUID(), pieceId: piece.id, text: 'Preparación y grabación integradas a Planificación.', actor: 'Sistema', createdAt: now, visibility: 'internal'});
+    }
+    if (readRaw() !== raw) return readSnapshot();
+    const migrated = JSON.stringify(state);
+    writeRaw(migrated);
+    cached = structuredClone(state); cachedRaw = migrated;
+    return { state, raw: migrated };
+  }
   cached = structuredClone(state); cachedRaw = raw;
   return { state, raw };
 }

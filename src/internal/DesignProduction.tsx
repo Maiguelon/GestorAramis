@@ -13,17 +13,17 @@ export { productionWaitReason } from '../domain/work-lists';
 
 type DesignCategory = 'production' | 'waiting' | 'review' | 'approved';
 const categoryLabels: Record<DesignCategory, string> = {
-  production: 'Para producción', waiting: 'En espera', review: 'Revisión', approved: 'Aprobados',
+  production: 'Para producción', waiting: 'Planificación', review: 'Revisión', approved: 'Aprobados',
 };
 const categoryNotes: Record<DesignCategory, string> = {
   production: 'Primero las fechas más próximas. Incluye piezas futuras y sin fecha.',
-  waiting: 'Necesitan un paso previo antes de continuar en Diseño.',
+  waiting: 'Preparación de Marketing. Todavía no requieren trabajo de Diseño.',
   review: 'Entregas pendientes de revisión por Marketing.',
   approved: 'Trabajo aprobado hasta su fecha prevista inclusive. Las piezas anteriores se consultan en Historial desde Gestión.',
 };
 const emptyMessages: Record<DesignCategory, [string, string]> = {
   production: ['No hay piezas listas para Diseño.', 'Las piezas aparecerán acá cuando Marketing las pase a producción.'],
-  waiting: ['No hay piezas en espera.', 'Las piezas que necesitan grabación, material o un paso de Marketing aparecerán acá.'],
+  waiting: ['No hay piezas en planificación.', 'Marketing prepara el contenido y lo pasa a producción cuando está listo para Diseño.'],
   review: ['No hay piezas en revisión.', 'Las entregas enviadas a Marketing aparecerán acá.'],
   approved: ['No hay aprobados por ahora.', 'Las piezas aprobadas permanecen acá hasta su fecha prevista.'],
 };
@@ -41,7 +41,7 @@ export default function DesignProduction({ state, today, open }: {
   const active = state.pieces.filter(piece => !piece.archived);
   const groups: Record<DesignCategory, Piece[]> = {
     production: active.filter(piece => piece.status === 'production' && !productionWaitReason(state, piece)),
-    waiting: active.filter(piece => piece.status === 'production' && !!productionWaitReason(state, piece)),
+    waiting: active.filter(piece => piece.status === 'planned' || (piece.status === 'production' && !!productionWaitReason(state, piece))),
     review: active.filter(piece => piece.status === 'review'),
     approved: active.filter(piece => isApprovedPiece(piece) && !isHistoricalPiece(piece, today)),
   };
@@ -66,7 +66,7 @@ export default function DesignProduction({ state, today, open }: {
       {shown.map(piece => {
         const client = state.clients.find(client => client.id === piece.clientId)!;
         const overdue = !isApprovedPiece(piece) && !!piece.plannedDate && piece.plannedDate < today;
-        const stage = category === 'waiting' ? productionWaitReason(state, piece) : category === 'approved' ? 'Aprobado' : categoryLabels[category];
+        const stage = category === 'waiting' ? piece.status === 'planned' ? 'Planificación · Marketing' : productionWaitReason(state, piece) : category === 'approved' ? 'Aprobado' : categoryLabels[category];
         return <article className="design-task" key={piece.id} aria-label={piece.title}>
           <div className="design-task-identity"><ClientAvatar client={client}/><div><span>{client.name} · <FormatBadge format={piece.format}/></span><h2><button onClick={() => open(piece.id)}>{piece.title}</button></h2></div></div>
           <ChangeReason piece={piece} compact/><div className={`design-date ${overdue ? 'overdue' : ''}`}><span>Publicación prevista</span><strong>{dateText(piece.plannedDate)}</strong>{overdue ? <small>Fecha vencida</small> : piece.plannedDate === today ? <small>Hoy</small> : null}</div>

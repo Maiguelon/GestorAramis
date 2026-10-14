@@ -1,7 +1,6 @@
-.production-controls { margin: 18px 0; padding: 15px; background: #f4f6f8; border: 1px solid #dce1e7; border-radius: 8px; }
-.production-controls h3 { margin: 0 0 7px; font-size: 15px; }
-.production-controls .detail-bottom-actions { margin-top: 12px; }
-.production-controls button[aria-pressed="true"] { background: #1b2a41; color: white; border-color: #1b2a41; }
+.piece-state-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: -9px 0 20px; }
+.piece-state-actions .button { min-height: 39px; }
+@media (max-width: 560px) { .piece-state-actions .button { width: 100%; } }
 .team-materials { padding-bottom: 24px; }
 .team-file-picker { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 12px; border: 1px dashed #9aa7b7; border-radius: 8px; color: #1b2a41; font-size: 13px; font-weight: 700; cursor: pointer; }
 .team-file-picker:focus-within { outline: 2px solid #5c9cd9; outline-offset: 2px; }

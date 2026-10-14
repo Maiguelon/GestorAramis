@@ -1,5 +1,13 @@
 # Estado del proyecto
 
+## Flujo simple y Deshacer aprobación — 2026-10-13
+
+Publicado en **62d0e851.gestor-aramis.pages.dev** y **https://gestor-aramis.pages.dev/**. Preparación/grabación queda en Planificación. Pasar a producción manda directamente a Diseño; se elimina el bloque Esperando grabación. Las acciones están arriba del detalle, junto al estado, e incluyen Volver a planificación. Deshacer aprobación, confirmado por Miguel, vuelve a Revisión con el mismo ID, versión, Caption y archivos; queda auditado y no pide un motivo de cambios ficticio. Pedir cambios sigue requiriendo explicación y devolviendo a Diseño.
+
+Migración **202610130001_simple_production_undo_approval.sql aplicada con éxito una vez**. Dos piezas activas de grabación/Marketing pasaron a Planificación con revisión incrementada e historial; archivos, aprobaciones y archivados conservados. Postflight: función nueva presente, helper privado sin ejecución directa para authenticated, cero preparaciones antiguas restantes y dos actividades de migración. No repetir la migración. Demo conserva datos anteriores mediante migración local de una sola vez; comandos recording antiguos se interpretan como Planificación en ambos dominios.
+
+Validación: suite unitaria completa de 532 casos y luego los 20 de API con un caso nuevo de migración local (533 casos distintos cubiertos); 28 recorridos demo y 13 compartidos focalizados aprobados entre suites y repeticiones justificadas. TypeScript/Vite/Worker, QA móvil y smoke remoto aprobados. Prueba alojada bajo rol authenticated e identidad staff, con cliente/pieza sintéticos dentro de rollback: producción directa, vuelta a planificación, corrección exacta, reintento idempotente, conflicto y auditoría singular, evento de revisión único; todo descartado, sin archivos ni correo enviados. En la UI real se observaron 11 piezas para Diseño, cinco en Planificación y el botón Pasar a producción sobre una pieza migrada. No se deshicieron aprobaciones reales. Handoff: `handoffs/C05-simple-production-undo-approval.md`. Para probar, recargar y abrir una pieza; las acciones están antes de las pestañas. Próxima fase de clientes sigue pendiente.
+
 ## Nuevo contenido sin selector de área — 2026-10-13
 
 Publicado en **57cc81f6.gestor-aramis.pages.dev** y **https://gestor-aramis.pages.dev/**. Se retira Marketing/Diseño del formulario Nuevo contenido y el comando crea explícitamente en Marketing, con el estado inicial Planificación existente. Alta desde Clientes ya usaba Marketing. Decisión D28; handoff `handoffs/C05-new-piece-marketing.md`.

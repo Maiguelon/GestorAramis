@@ -33,7 +33,7 @@ test('Diseño recuerda la entrada, separa esperas y permite trabajar sin pasar p
   await expect(page.getByRole('button', { name: 'Calendario', exact: true })).toBeVisible();
   await expect(page.locator('.management-nav')).toHaveCount(0);
   await page.getByLabel('Ver en Diseño').selectOption('waiting');
-  await expect(page.locator('.design-task-list')).toContainText('Esperando grabación');
+  await expect(page.locator('.design-task-list')).toContainText('Planificación · Marketing');
   await expect(page.locator('.design-task-list')).toContainText('Material pendiente de verificar');
   await expect(page.getByRole('article', { name: 'Diseño vencido', exact: true })).toHaveCount(0);
   await page.getByLabel('Ver en Diseño').selectOption('review');

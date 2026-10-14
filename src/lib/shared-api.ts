@@ -104,7 +104,7 @@ export class SharedWorkspaceStore {
     }
   }
   async execute(command: Command): Promise<CommandResult> {
-    if (!['create-client', 'update-client', 'generate-month', 'create-piece', 'update-piece', 'restore-piece', 'submit-delivery', 'review-delivery'].includes(command.type) || (command.type === 'update-piece' && command.patch.teamAssets !== undefined)) throw new SharedApiError('NOT_CONNECTED', 'Esta función requiere la próxima integración de archivos y clientes.');
+    if (!['create-client', 'update-client', 'generate-month', 'create-piece', 'update-piece', 'restore-piece', 'submit-delivery', 'review-delivery', 'undo-approval'].includes(command.type) || (command.type === 'update-piece' && command.patch.teamAssets !== undefined)) throw new SharedApiError('NOT_CONNECTED', 'Esta función requiere la próxima integración de archivos y clientes.');
     if (!this.snapshot.workspace) throw new SharedApiError('SESSION_REQUIRED', 'Esperá a que cargue el espacio del equipo.');
     if (this.snapshot.busy) throw new SharedApiError('WRITE_IN_PROGRESS', 'Esperá a que termine de guardarse el cambio.');
     if (this.pending) {

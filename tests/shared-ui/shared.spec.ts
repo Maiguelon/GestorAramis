@@ -247,7 +247,7 @@ test('la vista Diseño reúne piezas listas y en edición sin generar cambios al
   await expect(page.getByRole('article', { name: 'Pieza en edición previa', exact: true })).toContainText('Para producción');
   await expect(task.getByRole('button', { name: 'Empezar a producir' })).toHaveCount(0);
   await task.getByRole('button', { name: 'Abrir pieza' }).click();
-  await expect(page.getByRole('dialog').getByText('Producción: Para producción')).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('button',{name:'Volver a planificación',exact:true})).toBeVisible();
   await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
   expect(service.operations).toHaveLength(0);
   expect(service.state.pieces[0].productionStage).toBe('ready');

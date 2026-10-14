@@ -151,7 +151,7 @@ describe('attention and Design readiness', () => {
     const work = piece('work', { status: 'production', workArea: 'design', productionStage: 'editing' });
     const state = stateWith(work);
     expect(productionWaitReason(state, work)).toBe(null);
-    expect(productionWaitReason(state, { ...work, productionStage: 'recording' })).toBe('Esperando grabación · Marketing');
+    expect(productionWaitReason(state, { ...work, productionStage: 'recording' })).toBe('Planificación · Marketing');
     expect(productionWaitReason(state, { ...work, workArea: 'marketing' })).toBe('Pendiente de Marketing');
     state.materials = [{ id: 'material', pieceId: work.id, instructions: '', dueDate: null, status: 'pending', assets: [], createdAt: '2026-09-30T12:00:00.000Z', sentAt: null }];
     expect(productionWaitReason(state, work)).toBe('Esperando material del cliente');

@@ -42,6 +42,27 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
 describe('demo storage and isolation', () => {
+  it('migrates legacy preparation once without resetting content or touching approvals and archives', async () => {
+    const api = await import('../src/lib/api');
+    const state = api.readWorkspace();
+    const p = state.pieces[0];
+    Object.assign(p,{status:'production',workArea:'marketing',productionStage:'recording',caption:'Texto conservado'});
+    const archived = state.pieces.find(piece=>piece.id==='piece-norte-production')!;
+    Object.assign(archived,{archived:true,workArea:'marketing',productionStage:'recording'});
+    const original=structuredClone(state);
+    storage.setItem('aramis.workspace.demo.v1',JSON.stringify(state));
+    const before=storage.setCalls;
+    const migrated=api.readWorkspace();
+    expect(migrated.pieces[0]).toMatchObject({status:'planned',workArea:'marketing',productionStage:'ready',revision:p.revision+1,caption:p.caption,script:p.script});
+    expect(migrated.pieces.slice(1)).toEqual(original.pieces.slice(1));
+    expect(migrated.reviews).toEqual(original.reviews);
+    expect(migrated.activities.filter(item=>item.pieceId===p.id&&item.text.includes('integradas a Planificación'))).toHaveLength(1);
+    expect(storage.setCalls).toBe(before+1);
+    vi.resetModules();
+    expect((await import('../src/lib/api')).readWorkspace()).toEqual(migrated);
+    expect(storage.setCalls).toBe(before+1);
+  });
+
   it('initializes once and restores changed state after a module reload', async () => {
     const first = await import('../src/lib/api');
     expect(first.readWorkspace().pieces).toHaveLength(7);

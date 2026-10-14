@@ -165,6 +165,25 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
       activity(piece, 'Contenido creado.');
       break;
     }
+    case 'undo-approval': {
+      if (!state.members.some(member => member.id === context.actor)) fail('FORBIDDEN', 'Sólo el equipo puede deshacer una aprobación.');
+      if (Object.keys(command).some(key => !['type', 'pieceId', 'expectedRevision', 'approvalId'].includes(key)) || !Number.isSafeInteger(command.expectedRevision) || command.expectedRevision < 0 || typeof command.approvalId !== 'string') fail('VALIDATION', 'La corrección no es válida.');
+      const piece = findPiece(state, command.pieceId);
+      if (!state.clients.some(client => client.id === piece.clientId)) fail('NOT_FOUND', 'No encontramos ese cliente.');
+      if (piece.revision !== command.expectedRevision) fail('CONFLICT', 'El contenido cambió. Actualizá la vista antes de corregir la aprobación.');
+      if (piece.status !== 'approved') fail('INVALID_TRANSITION', 'La pieza ya no está aprobada.');
+      const delivery = [...(piece.deliveries ?? [])].sort((a,b) => b.version-a.version)[0];
+      const review = latestReview(state, piece.id);
+      const approval = delivery ?? review;
+      if (!approval || approval.id !== command.approvalId) fail('CONFLICT', 'La versión aprobada cambió.');
+      if (approval.status !== 'approved' || delivery?.invalidatedAt || approval.caption !== piece.caption) fail('INVALID_TRANSITION', 'La aprobación ya no está vigente.');
+      approval.status = 'pending';
+      if (delivery) Object.assign(delivery, { comment: '', source: null, decidedBy: null, decidedAt: null });
+      Object.assign(piece, { status: 'review', workArea: 'marketing', productionStage: 'ready' });
+      activity(piece, `Aprobación de v${approval.version} deshecha por el equipo; vuelve a revisión.`);
+      entityId = piece.id;
+      break;
+    }
     case 'restore-piece': {
       if (!state.members.some(member => member.id === context.actor)) fail('FORBIDDEN', 'Sólo el equipo puede recuperar contenido.');
       if (Object.keys(command).some(key => !['type', 'pieceId', 'expectedRevision'].includes(key)) || !Number.isSafeInteger(command.expectedRevision) || command.expectedRevision < 0) fail('VALIDATION', 'La recuperación no es válida.');
@@ -187,7 +206,10 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
     case 'update-piece': {
       const piece = findPiece(state, command.pieceId);
       if (piece.revision !== command.expectedRevision) fail('CONFLICT', 'El contenido cambió. Actualizá la vista antes de guardar.');
-      const patch = command.patch;
+      const patch = { ...command.patch };
+      if (patch.productionStage === 'recording') Object.assign(patch, { status: 'planned', workArea: 'marketing', productionStage: 'ready' });
+      else if (patch.status === 'production') Object.assign(patch, { workArea: 'design', productionStage: 'ready' });
+      else if (patch.status === 'planned') Object.assign(patch, { workArea: 'marketing', productionStage: 'ready' });
       const allowed = ['title', 'format', 'ownerId', 'plannedDate', 'visibleToClient', 'caption', 'internalNote', 'archived', 'status', 'planMonth', 'workArea', 'productionStage', 'script', 'teamAssets'];
       if (Object.keys(patch).some(key => !allowed.includes(key))) fail('VALIDATION', 'La actualización incluye campos no admitidos.');
       if (patch.planMonth !== undefined && !isPlanMonth(patch.planMonth)) fail('VALIDATION', 'Elegí un mes válido.');

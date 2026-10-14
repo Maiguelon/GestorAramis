@@ -12,7 +12,7 @@ function fixture(): WorkspaceState {
   const patch = (id: string, change: Partial<Piece>) => Object.assign(state.pieces.find(piece => piece.id === id)!, change);
   patch('piece-norte-overdue', { title: 'Vencida para revisión', plannedDate: '2026-09-28', workArea: 'marketing', planMonth: '2026-09' });
   patch('piece-oliva-review', { title: 'Revisión de esta semana', plannedDate: '2026-10-01', workArea: 'marketing', planMonth: '2026-10' });
-  patch('piece-oliva-material', { title: 'Producción de esta semana', plannedDate: '2026-10-02', workArea: 'marketing', planMonth: '2026-10' });
+  patch('piece-oliva-material', { title: 'Producción de esta semana', status: 'production', productionStage: 'ready', plannedDate: '2026-10-02', workArea: 'design', planMonth: '2026-10' });
   patch('piece-norte-production', { title: 'Producción futura', plannedDate: '2026-11-15', workArea: 'design', planMonth: '2026-11' });
   patch('piece-bruma-idea', { title: 'Sin fecha de otro mes', plannedDate: null, workArea: 'marketing', planMonth: '2027-01' });
   patch('piece-oliva-approved', { title: 'Aprobada hoy', plannedDate: today, workArea: 'marketing', planMonth: '2026-09' });

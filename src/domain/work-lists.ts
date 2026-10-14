@@ -70,7 +70,7 @@ export function needsAttention(state: WorkspaceState, piece: Piece, today: strin
 
 /** Preserve the existing readiness rule: Design starts only after Marketing and material checks. */
 export function productionWaitReason(state: WorkspaceState, piece: Piece): string | null {
-  if (piece.productionStage === 'recording') return 'Esperando grabación · Marketing';
+  if (piece.productionStage === 'recording') return 'Planificación · Marketing';
   if (piece.workArea === 'marketing') return 'Pendiente de Marketing';
   const material = activeMaterial(state, piece.id);
   if (material) return material.status === 'received' ? 'Material pendiente de verificar' : 'Esperando material del cliente';

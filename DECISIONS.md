@@ -1,5 +1,11 @@
 # Decisiones
 
+## D29 — Preparación en Planificación y corrección de aprobaciones (2026-10-13)
+
+Preparar texto, grabar y reunir material pertenece a Planificación / Marketing. Pasar a producción significa listo para Diseño y asigna directamente Diseño / ready, sin elegir una subetapa. Se elimina Esperando grabación de la interfaz; los registros activos antiguos de producción en Marketing o recording pasan a Planificación conservando contenido, fechas e historial. Comandos antiguos que soliciten recording se interpretan como volver a Planificación. Diseño puede consultar Planificación desde el selector, con Producción como entrada habitual.
+
+Acciones de estado visibles arriba del detalle: Pasar a producción, Volver a planificación y, en una pieza aprobada, Deshacer aprobación. Miguel confirma que esta última debe volver a Revisión. Requiere confirmar la corrección, la revisión vigente y el ID de la versión; conserva la entrega exacta y registra quién la deshizo. Una aprobación accidental no es una devolución de Diseño: no exige inventar un motivo. Pedir cambios conserva su explicación obligatoria y el retorno a Producción. No se habilita aprobar mediante un selector arbitrario de estados. Los avisos existentes siguen el estado final y las preferencias actuales.
+
 ## D28 — Alta de piezas en Marketing (2026-10-13)
 
 Nuevo contenido no pide área: crea la pieza en Planificación / Marketing, porque el alta todavía no incluye texto ni material listo para Diseño. El formulario envía workArea=marketing explícitamente. El alta desde el mes del cliente ya sigue esa regla. La preparación y el paso posterior a Producción conservan el flujo existente.

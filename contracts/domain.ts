@@ -23,6 +23,7 @@ export interface ClientView { client: Pick<Client, 'id' | 'name' | 'initials' | 
 
 export type ClientInput = Pick<Client, 'name' | 'contactName' | 'phone'> & { monthlyPlan: MonthlyPlan; logo?: string | null };
 export type Command =
+ | { type: 'undo-approval'; pieceId: string; expectedRevision: number; approvalId: string }
  | { type: 'restore-piece'; pieceId: string; expectedRevision: number }
  | { type: 'submit-delivery'; pieceId: string; expectedRevision: number; assetIds: string[] }
  | { type: 'review-delivery'; pieceId: string; expectedRevision: number; deliveryId: string; decision: 'approved' | 'changes'; comment: string; source: 'team' | 'client' }

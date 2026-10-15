@@ -58,7 +58,7 @@ await writeFile(join(staging, 'wrangler.json'), JSON.stringify({
   compatibility_date: '2026-09-01',
   vars: { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key, ARAMIS_WORKSPACE_ID: workspace,
     NOTIFICATION_EMAIL_ENABLED: String(notificationEnabled),
-    NOTIFICATION_APP_URL: backend.NOTIFICATION_APP_URL ?? 'https://gestor-aramis.pages.dev',
+    NOTIFICATION_APP_URL: backend.NOTIFICATION_APP_URL ?? 'https://gestor.aramis.agency',
     ...(backend.NOTIFICATION_FROM ? { NOTIFICATION_FROM: backend.NOTIFICATION_FROM } : {}),
   },
 }, null, 2) + '\n');

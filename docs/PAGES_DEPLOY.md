@@ -1,6 +1,10 @@
 # Publicación en Cloudflare Pages
 
-Proyecto `gestor-aramis`, publicación directa desde esta computadora. Dirección estable: https://gestor-aramis.pages.dev. No está conectado a despliegues automáticos de GitHub. Un commit o push por sí solo no publica esta app.
+Proyecto `gestor-aramis`, publicación directa desde esta computadora. Dirección del equipo: https://gestor.aramis.agency. No está conectado a despliegues automáticos de GitHub. Un commit o push por sí solo no publica esta app.
+
+Desde el 14/10/2026 el subdominio propio evita el fallo DNS observado para `pages.dev`. En Namecheap, sólo `gestor` usa ALIAS → `gestor-aramis.pages.dev`, TTL 5 minutos: Namecheap resuelve el destino y responde A/AAAA. Un CNAME simple todavía fallaba en la red probada al seguir el destino bloqueado. Cloudflare Pages tiene `gestor.aramis.agency` asociado y certificado activo. No reemplazarlo por IPs fijas ni modificar los registros de la web, correo o nameservers. Evidencia y pendiente del retorno OAuth en `../handoffs/C10-custom-domain.md`.
+
+El equipo ingresa de nuevo con sus mismas cuentas. La sesión y las preferencias del navegador pertenecen a cada origen; Diseño puede necesitar elegir de nuevo su vista. `NOTIFICATION_APP_URL` debe usar el dominio propio en Pages y en el Worker de avisos.
 
 ## Preparar y verificar
 
@@ -27,7 +31,7 @@ Wrangler ya fue autorizado por el titular en esta computadora con lectura de usu
 
 ```powershell
 npm.cmd run pages:deploy
-npm.cmd run pages:smoke -- https://gestor-aramis.pages.dev
+npm.cmd run pages:smoke -- https://gestor.aramis.agency
 ```
 
 `pages:deploy` reconstruye antes de publicar en la rama de producción `main`. Mantener el proyecto y la cuenta correctos; si esta computadora accede a varias cuentas, fijar `CLOUDFLARE_ACCOUNT_ID` de la cuenta Aramis para ese comando. No cambiar `wrangler.toml`: corresponde al Worker de desarrollo; la configuración de Pages se genera separadamente.

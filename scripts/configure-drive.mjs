@@ -13,11 +13,18 @@ const names = ['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','GOOGLE_REDIRECT_URI','
 const input = process.argv.find(arg => arg.endsWith('.json'));
 const config = parseEnv(await readFile(path, 'utf8'));
 if (input) {
+  // Preserve the configured origin when re-importing credentials. Changing a
+  // site's domain must not silently put OAuth back on its previous hostname.
+  const redirectUri = config.GOOGLE_REDIRECT_URI ?? 'https://gestor.aramis.agency/api/google/callback';
+  const allowedRedirects = new Set([
+    'https://gestor.aramis.agency/api/google/callback',
+    'https://gestor-aramis.pages.dev/api/google/callback',
+  ]);
   const oauth = JSON.parse(await readFile(input, 'utf8')).web;
-  if (oauth?.project_id !== 'gestor-aramis' || !oauth.client_id || !oauth.client_secret || !oauth.redirect_uris?.includes('https://gestor-aramis.pages.dev/api/google/callback')) throw new Error('Unexpected OAuth project or callback. No settings changed.');
+  if (oauth?.project_id !== 'gestor-aramis' || !oauth.client_id || !oauth.client_secret || !allowedRedirects.has(redirectUri) || !oauth.redirect_uris?.includes(redirectUri)) throw new Error('Unexpected OAuth project or callback. No settings changed.');
   config.GOOGLE_CLIENT_ID = oauth.client_id;
   config.GOOGLE_CLIENT_SECRET = oauth.client_secret;
-  config.GOOGLE_REDIRECT_URI = 'https://gestor-aramis.pages.dev/api/google/callback';
+  config.GOOGLE_REDIRECT_URI = redirectUri;
   config.DRIVE_ENCRYPTION_KEY ||= randomBytes(32).toString('base64');
   await writeFile(path, Object.entries(config).map(([name,value]) => `${name}=${JSON.stringify(value)}`).join('\n')+'\n');
   console.log('Local OAuth configuration saved; encryption key preserved if present.');

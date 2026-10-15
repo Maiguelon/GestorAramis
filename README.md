@@ -6,7 +6,7 @@ Gestor Aramis brings monthly planning, production assets, design handoffs and re
 
 **Current status:** the internal V1 is complete, deployed and in use by the team. Planning, production and review were already part of the working release before email notifications were added as a subsequent improvement. Client-facing calendars, approvals and material requests exist as local prototypes; their live integration is the next product phase.
 
-[Open the deployed app — team login required](https://gestor-aramis.pages.dev/) · [Run the local demo](#run-the-local-demo) · [Architecture](#architecture) · [Verification](#verification)
+[Open the deployed app — team login required](https://gestor.aramis.agency/) · [Run the local demo](#run-the-local-demo) · [Architecture](#architecture) · [Verification](#verification)
 
 ![Management view showing pending content, deadlines and next actions](docs/images/pending-work.jpg)
 

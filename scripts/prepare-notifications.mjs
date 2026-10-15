@@ -7,7 +7,7 @@ import {parseEnv} from 'node:util';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const env=parseEnv(await readFile(join(root,'.dev.vars'),'utf8'));
 const enabled=env.NOTIFICATION_EMAIL_ENABLED==='true';
-const appUrl=env.NOTIFICATION_APP_URL??'https://gestor-aramis.pages.dev';
+const appUrl=env.NOTIFICATION_APP_URL??'https://gestor.aramis.agency';
 if(!/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(env.SUPABASE_URL??'')
  || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(env.ARAMIS_WORKSPACE_ID??''))throw new Error('Missing public database/workspace configuration.');
 const parsed=new URL(appUrl);

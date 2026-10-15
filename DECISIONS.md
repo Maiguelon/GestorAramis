@@ -1,5 +1,9 @@
 # Decisiones
 
+## D30 — Dominio propio para el acceso del equipo (2026-10-14)
+
+Miguel autoriza `gestor.aramis.agency` en Namecheap/Cloudflare y el ajuste de retornos Drive y enlaces de correo. Cambiar DNS de una PC no resuelve el acceso del equipo; no se aplica ese cambio. Se conserva la aplicación, proyecto Pages, cuentas, base y permisos actuales. ALIAS de Namecheap en el único host `gestor`, con TTL de cinco minutos, evita que el resolver del dispositivo tenga que seguir `pages.dev`; no se fijan direcciones IP. Se verifican TLS, API y acceso real antes de recomendar el enlace. La nueva dirección exige iniciar sesión y elegir preferencias de vista una vez por origen. El ajuste OAuth requiere registrar el retorno nuevo en el cliente Google existente, conservando el anterior y la misma clave de cifrado; no se amplían scopes ni se crean credenciales nuevas.
+
 ## D29 — Preparación en Planificación y corrección de aprobaciones (2026-10-13)
 
 Preparar texto, grabar y reunir material pertenece a Planificación / Marketing. Pasar a producción significa listo para Diseño y asigna directamente Diseño / ready, sin elegir una subetapa. Se elimina Esperando grabación de la interfaz; los registros activos antiguos de producción en Marketing o recording pasan a Planificación conservando contenido, fechas e historial. Comandos antiguos que soliciten recording se interpretan como volver a Planificación. Diseño puede consultar Planificación desde el selector, con Producción como entrada habitual.

@@ -1,5 +1,13 @@
 # Estado del proyecto
 
+## Google OAuth en producción y renovación posterior — 2026-10-15
+
+Miguel completó los campos Branding y publicó OAuth personalmente. Sus capturas muestran Audience **In production**, marca no publicada/verificada y permisos sensibles/restringidos sin verificar; no son evidencia de revisión solicitada o aprobada. Después informó que completó la renovación desde el gestor, pasando el aviso de app no verificada. La ejecución posterior de `node work/verify-drive-renewal.mjs` confirmó connectionStored=true, refreshSucceeded=true, driveMetadataStatus=200, rootFolderReadable=true y readWriteScopePreserved=true. No se modificaron archivos, scopes, credenciales ni carpetas.
+
+El estado operativo vigente deja de ser External/Testing: ya no corresponde programar la renovación semanal por esa condición. La nueva autorización fuera de Testing la realizó el titular; el refresh de comprobación por sí solo no demostraría esa renovación ni la duración futura del token. Tokens aún pueden revocarse/vencer por otras causas. Se retiró con automation_update el recordatorio del 22/10 (deleteStatus=deleted), siguiendo su condición de cierre al salir de Testing. No recrearlo por leer entradas históricas.
+
+La integración actual de una cuenta conocida para el equipo encaja en principio en la excepción de uso personal/pocas personas conocidas documentada por Google, también para scopes restringidos. Publicación, marca verificada y permisos verificados son estados distintos. No se tramitó revisión de permisos ni se afirma aprobación Google; si se amplía quién conecta cuentas, revisar de nuevo los requisitos. Evidencia y fuentes en `handoffs/C04-oauth-public-pages.md`. Sin nuevo despliegue ni cambios de código/SQL por esta comprobación.
+
 ## Logo SVG sin placa e icono de pluma — publicado 2026-10-15
 
 Publicado **71058e28.gestor-aramis.pages.dev**, también en el dominio propio. Ingreso/carga/error de acceso usan una variante azul institucional del SVG original sobre fondo claro, sin recuadro. Fallback general y vistas demo de cliente usan la misma variante; sidebar y cabeceras públicas conservan el SVG claro sobre fondo oscuro. La pluma del SVG original, coincidente con la marca de los PNG de la carpeta Drive que aportó Miguel, sustituye la A genérica en root/About/Privacy/manifest y en la ruta antigua de icono. SVG cuadrado con color para temas claro/oscuro; los originales Drive se inspeccionaron/descargaron sin modificar nada.

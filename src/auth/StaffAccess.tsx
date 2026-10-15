@@ -52,7 +52,7 @@ export default function StaffAccess({ children }: { children: ReactNode }) {
   if (!snapshot.workspace) return <AccessPage><h1>{snapshot.loading ? 'Cargando el espacio…' : 'No pudimos abrir el espacio'}</h1>{snapshot.error && <p role="alert" className="error-banner">{snapshot.error}</p>}<div className="settings-actions"><button className="button primary" disabled={snapshot.loading} onClick={() => void sharedWorkspace.refresh()}>Volver a intentar</button><button className="button secondary" onClick={() => void signOut()}>Cerrar sesión</button></div></AccessPage>;
   return <StaffContext.Provider value={{ signOut, email: session.user.email ?? '' }}>{children}</StaffContext.Provider>;
 }
-function AccessPage({ children }: { children: ReactNode }) { return <main className="staff-access-page"><section className="staff-access-card"><div className="staff-access-logo"><img src="/brand/aramis.svg" alt="Aramis" /></div>{children}<nav className="staff-public-links" aria-label="Información del gestor"><a href="/acerca/">Acerca del gestor</a><a href="/privacidad/">Privacidad</a></nav></section></main>; }
+function AccessPage({ children }: { children: ReactNode }) { return <main className="staff-access-page"><section className="staff-access-card"><div className="staff-access-logo"><img src="/brand/aramis-ink.svg" alt="Aramis" width="300" height="100" /></div>{children}<nav className="staff-public-links" aria-label="Información del gestor"><a href="/acerca/">Acerca del gestor</a><a href="/privacidad/">Privacidad</a></nav></section></main>; }
 function LoginForm() {
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   async function submit(event: FormEvent<HTMLFormElement>) {

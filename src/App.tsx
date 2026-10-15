@@ -9,7 +9,7 @@ import { DriveCallback } from './internal/DriveConnection';
 class AppBoundary extends Component<{ children: ReactNode }, { error: string }> {
   state = { error: '' };
   static getDerivedStateFromError(error: Error) { return { error: error.message }; }
-  render() { return this.state.error ? <main className="setup-page"><div className="brand-word">aramis.</div><h1>No pudimos abrir el espacio</h1><p>{this.state.error}</p>{APP_MODE === 'demo' && <button className="button primary" onClick={() => { if (confirm('¿Restablecer los datos de ejemplo? Se eliminarán los cambios de esta demostración.')) { resetDemo(); location.href = '/'; } }}>Restablecer demostración</button>}</main> : this.props.children; }
+  render() { return this.state.error ? <main className="setup-page"><img className="setup-logo" src="/brand/aramis-ink.svg" alt="Aramis" width="180" height="60"/><h1>No pudimos abrir el espacio</h1><p>{this.state.error}</p>{APP_MODE === 'demo' && <button className="button primary" onClick={() => { if (confirm('¿Restablecer los datos de ejemplo? Se eliminarán los cambios de esta demostración.')) { resetDemo(); location.href = '/'; } }}>Restablecer demostración</button>}</main> : this.props.children; }
 }
 export default function App() {
   const [driveCallback, setDriveCallback] = useState(() => location.hash.startsWith('#drive-callback='));

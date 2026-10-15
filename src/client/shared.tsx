@@ -31,12 +31,12 @@ export function bytesLabel(bytes: number) {
 export function ClientHeader({ name, page }: { name: string; page: string }) {
   return <>
     <div className="client-demo"><span><i /> Demostración · datos ficticios locales</span><a href="/">Volver al equipo <ArrowUpRight size={13} /></a></div>
-    <header className="client-header"><a href="/" className="client-brand" aria-label="Aramis, volver al equipo"><img src="/brand/aramis.svg" alt="Aramis" /></a><div className="client-header-right"><span>{name}</span><small>{page}</small></div></header>
+    <header className="client-header"><a href="/" className="client-brand" aria-label="Aramis, volver al equipo"><img src="/brand/aramis-ink.svg" alt="Aramis" width="300" height="100" /></a><div className="client-header-right"><span>{name}</span><small>{page}</small></div></header>
   </>;
 }
 
 export function ClientFooter() {
-  return <footer className="client-footer"><span>Aramis</span><span><ShieldCheck size={14} /> Enlace privado</span></footer>;
+  return <footer className="client-footer"><img className="client-footer-logo" src="/brand/aramis-ink.svg" alt="Aramis" width="300" height="100"/><span><ShieldCheck size={14} /> Enlace privado</span></footer>;
 }
 
 export function Unavailable({ error }: { error: string }) {

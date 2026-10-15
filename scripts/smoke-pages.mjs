@@ -7,6 +7,13 @@ const base = new URL(process.argv[2] ?? 'http://127.0.0.1:8788').origin;
 const health = await fetch(`${base}/api/health`);
 assert.equal(health.status, 200);
 assert.equal((await health.json()).configured, true);
+const faviconPath = '/brand/feather.svg';
+const favicon = await fetch(base + faviconPath);
+assert.equal(favicon.status, 200);
+assert.match(favicon.headers.get('content-type'), /image\/svg\+xml/);
+const manifest = await fetch(base + '/manifest.webmanifest');
+assert.equal(manifest.status, 200);
+assert.equal((await manifest.json()).icons[0].src, faviconPath);
 for (const path of ['/api/notifications/preferences', '/api/drive/pieces/00000000-0000-4000-8000-000000000001/delivery-assets', '/api/workspace', '/api/commands', '/api/drive/status', '/api/drive/assets/00000000-0000-4000-8000-000000000001/content', '/api/drive/assets/00000000-0000-4000-8000-000000000001/thumbnail', '/api/drive/assets/00000000-0000-4000-8000-000000000001/viewer']) {
   const response = await fetch(base + path, path.endsWith('commands')
     ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' } : {});
@@ -38,6 +45,7 @@ try {
     assert.match(response.headers()['x-robots-tag'], /noindex/);
     await publicPage.getByRole('heading', { name: heading, exact: true }).waitFor();
     assert.equal(await publicPage.locator('html').getAttribute('lang'), 'en');
+    assert.equal(await publicPage.locator('link[rel=icon]').getAttribute('href'), faviconPath);
     assert.equal(await publicPage.locator('script').count(), 0);
     assert.equal(await publicPage.locator('input[type=password]').count(), 0);
     assert.equal(await publicPage.getByRole('link', { name: 'Open workspace', exact: true }).first().getAttribute('href'), '/');
@@ -59,6 +67,7 @@ try {
     assert.equal(response.status(), 200);
     await page.getByRole('heading', { name: 'Ingresar al equipo', exact: true }).waitFor();
     await page.getByLabel('Correo', { exact: true }).waitFor();
+    assert.equal(await page.locator('link[rel=icon]').getAttribute('href'), faviconPath);
     assert.equal(await page.getByRole('link', { name: 'Privacidad', exact: true }).getAttribute('href'), '/privacidad/');
     assert.match(response.headers()['x-robots-tag'], /noindex/);
   }

@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Logo SVG sin placa e icono de pluma — publicado 2026-10-15
+
+Publicado **71058e28.gestor-aramis.pages.dev**, también en el dominio propio. Ingreso/carga/error de acceso usan una variante azul institucional del SVG original sobre fondo claro, sin recuadro. Fallback general y vistas demo de cliente usan la misma variante; sidebar y cabeceras públicas conservan el SVG claro sobre fondo oscuro. La pluma del SVG original, coincidente con la marca de los PNG de la carpeta Drive que aportó Miguel, sustituye la A genérica en root/About/Privacy/manifest y en la ruta antigua de icono. SVG cuadrado con color para temas claro/oscuro; los originales Drive se inspeccionaron/descargaron sin modificar nada.
+
+TypeScript/Vite/Pages, paquete sin secretos y smoke local/remoto aprobados. Comprobación anónima alojada: logo SVG cargado, fondo transparente del contenedor, favicon y manifest con la ruta nueva. QA visual de ingreso y pluma a 16/32/128 px en ambos temas. Capturas ignoradas `work/brand-login-hosted.png`, `work/brand-feather-light.png` y `work/brand-feather-dark.png`. No se cambian datos, Auth, OAuth, permisos ni correo; Google Branding/producción sigue pendiente. Handoff `handoffs/C05-brand-assets.md`. Para ver el cambio, recargar; el favicon puede requerir cerrar y abrir una pestaña antigua.
+
 ## Homepage y privacidad públicas para OAuth — publicadas 2026-10-15
 
 Miguel solicita ambas páginas en inglés, sin login, y confirma miguelcarreteroangel@gmail.com como contacto público. Publicadas en **65b3fd0d.gestor-aramis.pages.dev** y el dominio propio: **https://gestor.aramis.agency/acerca/** y **https://gestor.aramis.agency/privacidad/**. Se reutiliza el SVG existente, idéntico por SHA-256 al que entregó. Páginas HTML estáticas con fuentes locales y CSP restringida; sin JavaScript ni consultas a Auth, workspace o Drive. Login y configuración de Drive enlazan la información pública. La raíz sigue siendo el ingreso del equipo.

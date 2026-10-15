@@ -12,7 +12,7 @@ Variables privadas en `.dev.vars` local ignorado y en secretos de Cloudflare Pag
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`.
 - `DRIVE_ENCRYPTION_KEY`: 32 bytes aleatorios en base64. **Conservar esta clave**; cambiarla impide descifrar conexiones y cargas pendientes existentes.
 
-El callback registrado es `https://gestor-aramis.pages.dev/api/google/callback`. `scripts/configure-drive.mjs <ruta-al-JSON-OAuth>` incorpora el JSON descargado a la configuración local, preservando la clave de cifrado si ya existe. `node scripts/configure-drive.mjs --install` envía sólo las cinco variables por entrada privada de Wrangler a producción. No imprime valores ni los copia al paquete público. Cambios de secretos requieren una nueva publicación para tomar efecto.
+El callback activo desde el 15/10/2026 es `https://gestor.aramis.agency/api/google/callback`, registrado en el cliente OAuth existente Gestor Aramis Web y en GOOGLE_REDIRECT_URI del servidor. El callback anterior de pages.dev sigue autorizado en Google por compatibilidad, pero la renovación se inicia desde el dominio propio para satisfacer la comprobación de mismo origen. `scripts/configure-drive.mjs <ruta-al-JSON-OAuth>` incorpora el JSON descargado a la configuración local, preservando la clave de cifrado y el retorno configurado si ya existen; el JSON debe incluir ese retorno. `node scripts/configure-drive.mjs --install` envía sólo las cinco variables por entrada privada de Wrangler a producción. No imprime valores ni los copia al paquete público. Cambios de secretos requieren una nueva publicación para tomar efecto.
 
 `scripts/capture-server-key.mjs` es un formulario local de uso único para instalar una clave ya existente sin pegarla en una conversación. Tiene dirección aleatoria, escucha sólo en loopback y caduca a los 15 minutos. No crea ni rota claves. No publicar este formulario ni el archivo local.
 
@@ -20,8 +20,8 @@ El empaquetado de Pages conserva la lista de variables públicas y verifica que 
 
 ## Conectar y usar
 
-1. Ingresar al dominio estable y abrir **Configuración → Conectar Drive**.
-2. Elegir la cuenta de Google autorizada y conceder `drive.file`. Volver al gestor y comprobar el mensaje de conexión.
+1. Ingresar a **https://gestor.aramis.agency** y abrir **Configuración → Google Drive → Renovar conexión** (o **Conectar Drive** si aún no existe conexión).
+2. Elegir la misma cuenta de Google del espacio. La integración actual usa `drive.file` y `drive`, autorizados previamente para incorporar y enviar a la papelera material subido desde Drive. Volver al gestor y comprobar el mensaje de conexión; no ampliar permisos por renovar.
 3. Abrir una pieza → **Material** → seleccionar una o varias tomas. El avance es por archivo; el gestor confirma cada archivo con Google antes de adjuntarlo.
 4. El material queda disponible para previsualizar, descargar individualmente o agrupar en ZIP. El guion se mantiene en el gestor y conserva su botón para abrirlo completo en otra pestaña.
 
@@ -35,7 +35,7 @@ La primera carga crea `Gestor Aramis / Cliente / YYYY-MM / Pieza / Material`. El
 - ZIP completo hasta 256 MiB para limitar memoria del navegador. Si falla un archivo, no se entrega un ZIP parcial. Para conjuntos mayores, descargar individualmente o abrir la carpeta de Drive. Esto no limita el tamaño de cada subida.
 - Las previsualizaciones usan una cookie privada breve y lectura por rangos; cada solicitud vuelve a comprobar usuario y pertenencia. Los formatos que el navegador no puede reproducir siguen siendo descargables.
 - Una cuenta Google diferente no reemplaza una conexión existente por accidente. Usar **Renovar conexión** con la misma cuenta si se revoca o vence.
-- Google permanece en External/Testing: la autorización de prueba tiene duración limitada. La publicación de OAuth y sus datos legales son un paso posterior.
+- Google permanece en External/Testing: los refresh tokens de esta integración vencen a los siete días. Renovar conexión completa un consentimiento nuevo, pero no cambia ese estado; el refresh automático de access tokens tampoco reinicia ese plazo. La publicación de OAuth y sus datos legales son un paso posterior.
 - La carga de material no significa “tomas completas” ni aprueba la pieza. Revisiones y clientes reales siguen en bloques posteriores.
 
 ## Verificación y continuidad

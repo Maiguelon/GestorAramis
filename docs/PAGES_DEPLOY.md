@@ -2,7 +2,7 @@
 
 Proyecto `gestor-aramis`, publicación directa desde esta computadora. Dirección del equipo: https://gestor.aramis.agency. No está conectado a despliegues automáticos de GitHub. Un commit o push por sí solo no publica esta app.
 
-Desde el 14/10/2026 el subdominio propio evita el fallo DNS observado para `pages.dev`. En Namecheap, sólo `gestor` usa ALIAS → `gestor-aramis.pages.dev`, TTL 5 minutos: Namecheap resuelve el destino y responde A/AAAA. Un CNAME simple todavía fallaba en la red probada al seguir el destino bloqueado. Cloudflare Pages tiene `gestor.aramis.agency` asociado y certificado activo. No reemplazarlo por IPs fijas ni modificar los registros de la web, correo o nameservers. Evidencia y pendiente del retorno OAuth en `../handoffs/C10-custom-domain.md`.
+Desde el 14/10/2026 el subdominio propio evita el fallo DNS observado para `pages.dev`. En Namecheap, sólo `gestor` usa ALIAS → `gestor-aramis.pages.dev`, TTL 5 minutos: Namecheap resuelve el destino y responde A/AAAA. Un CNAME simple todavía fallaba en la red probada al seguir el destino con fallo DNS. Cloudflare Pages tiene `gestor.aramis.agency` asociado y certificado activo. No reemplazarlo por IPs fijas ni modificar los registros de la web, correo o nameservers. El retorno OAuth de Drive al dominio propio quedó registrado, publicado y probado con una renovación real el 15/10/2026. Evidencia en `../handoffs/C10-custom-domain.md`.
 
 El equipo ingresa de nuevo con sus mismas cuentas. La sesión y las preferencias del navegador pertenecen a cada origen; Diseño puede necesitar elegir de nuevo su vista. `NOTIFICATION_APP_URL` debe usar el dominio propio en Pages y en el Worker de avisos.
 

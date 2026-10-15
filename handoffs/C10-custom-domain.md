@@ -24,7 +24,7 @@ No se cambió el DNS de la PC: Miguel condicionó ese cambio a que sirviera para
 - node work/verify-drive-renewal.mjs: refreshSucceeded=true, driveMetadataStatus=200, rootFolderReadable=true, readWriteScopePreserved=true. Lee la conexión existente, descifra sólo en memoria y consulta metadatos; no guarda access tokens ni modifica material. Esto confirma operatividad actual, no una nueva fecha de consentimiento.
 - No cambios de SQL, datos, permisos ni formato de archivos. No se repitieron suites de negocio por cambios de URL/configuración. Evidencia visual anónima en work/custom-domain-login.jpg.
 
-## Pendiente: retorno OAuth en Google
+## Historial: retorno OAuth inicialmente pendiente
 
 GOOGLE_REDIRECT_URI sigue apuntando al origen pages.dev. No cambiarlo a un retorno que todavía no esté registrado en Google. El Drive actual funciona por refresh; renovar desde gestor.aramis.agency aún falla la comprobación de mismo origen de drive-service.ts.
 
@@ -38,3 +38,15 @@ Para cerrar, cuando el panel vuelva a cargar:
 4. Actualizar PROJECT_STATE y este handoff con el resultado. No repetir migraciones ni recrear carpetas o cuentas. Los usuarios deben iniciar sesión una vez en el nuevo origen y Eliana puede necesitar volver a elegir Diseño.
 
 Fuentes: [dominios en Pages](https://developers.cloudflare.com/pages/configuration/custom-domains/), [ALIAS en Namecheap](https://www.namecheap.com/support/knowledgebase/article.aspx/10128/2237/how-to-create-an-alias-record/), [subdominios en Namecheap](https://www.namecheap.com/support/knowledgebase/article.aspx/9776/2237/how-to-create-a-subdomain-for-my-domain/).
+
+## Cierre del retorno OAuth — 2026-10-15
+
+Miguel autorizó avanzar con el ajuste. El formulario de Google volvió a cargar. Se añadió el retorno nuevo al cliente Gestor Aramis Web y se guardó; otra apertura del detalle confirmó ambos retornos persistidos, sin nuevo cliente, secreto ni origen JavaScript. Captura ignorada: `work/google-custom-domain-oauth.png`.
+
+Se sustituyó sólo GOOGLE_REDIRECT_URI en .dev.vars mediante comprobación de que las demás variables permanecían iguales. `node scripts/configure-drive.mjs --install` instaló las cinco variables existentes sin rotarlas. `npm.cmd run pages:deploy` pasó TypeScript, Vite, Worker y control de secretos; publicación **a574eb6c.gestor-aramis.pages.dev**. `npm.cmd run pages:smoke -- https://gestor.aramis.agency` aprobó login/ruta de texto, API configurada y denegación anónima/de otro origen. No hubo cambios de código funcional ni motivos para repetir las suites de negocio.
+
+Desde la sesión real de Miguel en el origen nuevo se pulsó Configuración → Renovar conexión, se eligió miguelcarreteroangel@gmail.com y se completó el consentimiento. Google mostró que drive.file y drive ya estaban concedidos: renovación con la misma cuenta y los mismos permisos, sin ampliación. El callback volvió al dominio nuevo y la UI confirmó «Google Drive quedó conectado. Ya podés subir material desde una pieza.» Captura ignorada: `work/drive-renewal-custom-domain.png`. Se volvió al gestor, donde se cargaron los pendientes.
+
+`node work/verify-drive-renewal.mjs` posterior confirmó refreshSucceeded=true, driveMetadataStatus=200, rootFolderReadable=true, readWriteScopePreserved=true. No se guardaron tokens en logs ni se modificó material; tampoco se crearon carpetas ni se enviaron mensajes/correos. Se conservaron generación de conexión, raíz y clave AES; no se repitieron migraciones.
+
+Estado: retorno y botón operativos. Google sigue External/Testing y conserva el límite de siete días; renovar antes del 22/10 si no se resuelve la publicación OAuth. No se creó un nuevo recordatorio. Para renovar, usar siempre https://gestor.aramis.agency → Configuración → Google Drive → Renovar conexión; el origen viejo ya no coincide con el retorno activo del servidor. Mantener por ahora el callback anterior autorizado en Google no hace que ese origen vuelva a ser el principal.

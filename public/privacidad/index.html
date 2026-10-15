@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1b2a41">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="How Gestor Aramis accesses, uses, stores and shares workspace information and Google Drive data, and how to request deletion or revoke access.">
+  <link rel="canonical" href="https://gestor.aramis.agency/privacidad/">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="stylesheet" href="/info/site.css">
+  <title>Gestor Aramis — Privacy Policy</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/acerca/" aria-label="Gestor Aramis home"><img src="/brand/aramis.svg" alt="Aramis" width="300" height="100"></a>
+      <nav aria-label="Main navigation"><a href="/acerca/">About</a><a href="/privacidad/" aria-current="page">Privacy</a><a href="/">Open workspace</a></nav>
+    </div>
+  </header>
+  <main class="policy" id="main">
+    <div class="page-intro">
+      <p class="eyebrow">Gestor Aramis</p>
+      <h1>Privacy policy</h1>
+      <p class="updated">Effective and last updated: October 15, 2026</p>
+      <p class="lead">This policy explains how Aramis handles information in its internal content planning, production and review workspace.</p>
+      <p>Aramis operates Gestor Aramis at <a href="https://gestor.aramis.agency/">gestor.aramis.agency</a>. For support or privacy requests, contact <a class="contact-email" href="mailto:miguelcarreteroangel@gmail.com">miguelcarreteroangel@gmail.com</a>.</p>
+    </div>
+    <nav class="policy-contents" aria-label="Policy contents"><ul>
+      <li><a href="#information">Information we handle</a></li><li><a href="#purposes">How we use it</a></li><li><a href="#google-drive">Google Drive</a></li><li><a href="#access">Access and providers</a></li><li><a href="#storage">Storage and security</a></li><li><a href="#retention">Retention and deletion</a></li><li><a href="#choices">Your choices</a></li><li><a href="#changes">Policy changes</a></li>
+    </ul></nav>
+    <section id="information">
+      <h2>1. Information we handle</h2>
+      <ul>
+        <li><strong>Team account information:</strong> names, email addresses, account identifiers, workspace membership and notification preferences. Supabase handles staff authentication.</li>
+        <li><strong>Content and client records:</strong> client names and contact details entered by the team, logos, monthly plans, scripts, captions, internal notes, dates, comments, delivery versions and activity history.</li>
+        <li><strong>Google connection information:</strong> the connected account's email and Drive account identifier, granted permissions and OAuth access and refresh tokens needed to maintain the connection.</li>
+        <li><strong>Files and file metadata:</strong> uploaded or linked footage, images, documents and finished work; file and folder identifiers, names, types, sizes, checksums, modification information, thumbnails and revision references.</li>
+        <li><strong>Essential technical information:</strong> sign-in sessions, browser preferences, pending operation and upload metadata, and request or delivery information processed by our hosting, authentication and email providers.</li>
+      </ul>
+    </section>
+    <section id="purposes">
+      <h2>2. How we use information</h2>
+      <p>We use this information to authenticate the team, organize client work, coordinate marketing and design, store and retrieve production files, record review decisions, send configured work notifications and investigate operational or security issues.</p>
+      <p>We do not sell personal information or Google user data, use it for advertising, or use Google Drive data to train generalized artificial intelligence or machine-learning models. The application does not include advertising trackers or third-party analytics scripts.</p>
+    </section>
+    <section id="google-drive">
+      <h2>3. Google Drive access and use</h2>
+      <p>The workspace administrator connects a Google account using Google's authorization flow. This is separate from each staff member's Gestor Aramis login. Authorized workspace members can use that shared connection to work with the workspace's materials.</p>
+      <p>The application requests the <strong>drive.file</strong> permission and the broader <strong>drive</strong> permission. The latter allows Google-level access to all Drive files available to the connected account, including files added through the native Drive application. Our server restricts the application's operations to folders and materials linked to the workspace; it does not scan the account's entire Drive.</p>
+      <p>We use Drive data to create workspace folders, upload material, list and import material from linked piece folders, retrieve metadata and previews, stream or download files, preserve exact delivery revisions and move selected source material to the trash after confirmation. The integration does not automatically change file-sharing permissions or make files public.</p>
+      <p>Files and thumbnails may pass through our server to reach an authorized team member. Google video previews opened inside the application use Google's viewer and the viewer's own Google session and file permissions.</p>
+      <p>Information received from Google APIs is handled in accordance with the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including its Limited Use requirements. Transfers are limited to providing these visible features through the providers described below, security needs or applicable legal requirements. Team access to shared materials is part of the workspace's intended operation.</p>
+    </section>
+    <section id="access">
+      <h2>4. Who can access information</h2>
+      <p>Workspace information and materials are accessible through the application to authorized Aramis team members. Management and Design are work views, not separate permissions. This policy describes the current internal release; live client-facing access is not enabled.</p>
+      <p>We use the following service providers to operate the workspace:</p>
+      <ul>
+        <li><strong>Google Drive:</strong> storage of source material and deliveries, file metadata, thumbnails and video viewing.</li>
+        <li><strong>Supabase:</strong> staff authentication, workspace records, file references, notification records and encrypted integration credentials.</li>
+        <li><strong>Cloudflare:</strong> website hosting, API processing, authorized file streaming and scheduled notification processing.</li>
+        <li><strong>Resend:</strong> delivery of work notification emails. Emails contain recipient information and relevant task details and links; they do not attach source footage or include Google OAuth tokens.</li>
+      </ul>
+      <p>These providers process the information needed for their functions under their own service terms and privacy policies. Infrastructure and processing may be located outside the country where a team member or client resides. We may also disclose information when required by applicable law or to address security incidents.</p>
+    </section>
+    <section id="storage">
+      <h2>5. Storage, security and browser data</h2>
+      <p>Original files and retained delivery revisions are stored in Google Drive. Workspace records and file references are stored in Supabase. Google integration tokens are encrypted before database storage; private integration credentials stay on the server. Production connections use HTTPS, and the API checks staff identity and workspace membership before providing protected information.</p>
+      <p>The browser stores essential sign-in session information and work-view preferences, as well as identifiers and metadata needed to retry operations and resume uploads. A short-lived, HTTP-only cookie authorizes private media requests. Clearing site data removes local sessions and preferences and can interrupt pending uploads; it does not delete workspace records or Drive files.</p>
+      <p>The public About and Privacy pages use locally hosted assets and do not request workspace data. Opening Google's video viewer or an external link connects to that provider, which may use its own cookies and privacy practices.</p>
+    </section>
+    <section id="retention">
+      <h2>6. Retention and deletion</h2>
+      <p>Workspace records, file references, activity history and delivery versions are retained for ongoing client work, review history and operation of the workspace. The current release has no automatic deletion schedule for those records. Archiving a piece changes its visibility in the work queue; it does not delete its records or files.</p>
+      <p>Sending source material to the trash through the application moves the linked file to Google Drive's trash. Google controls its recovery and subsequent deletion. Deleting or changing a file directly in Drive may leave historical references in the workspace. Finished delivery revisions can remain retained to preserve what was reviewed.</p>
+      <p>To request access to, correction of or deletion of your information, email <a class="contact-email" href="mailto:miguelcarreteroangel@gmail.com">miguelcarreteroangel@gmail.com</a>, identifying the account or material concerned. Requests are handled manually by Aramis, with identity and authority checks where needed. We will explain any records that must be retained for ongoing work or applicable legal obligations. Provider backups and technical logs may remain subject to their retention cycles.</p>
+    </section>
+    <section id="choices">
+      <h2>7. Your choices and revoking Google access</h2>
+      <p>Team members can sign out and manage work email notifications in the application's settings.</p>
+      <p>The connected Google account holder can revoke Gestor Aramis access through <a href="https://myaccount.google.com/connections">Google Account connections</a>. Revocation stops future authorized Drive operations once existing access ceases to be valid. It does not automatically delete files in Drive, the staff account, or workspace records and encrypted connection data already stored. Contact Aramis if you also want those records removed.</p>
+      <p>Because Drive is connected for the workspace, revoking that connection affects file access for the team until it is connected again.</p>
+    </section>
+    <section id="changes">
+      <h2>8. Changes to this policy</h2>
+      <p>We will update this page and its date when our data practices change. Before using Google user data for a new purpose, we will disclose the change and obtain any required authorization. Questions about this policy can be sent to <a class="contact-email" href="mailto:miguelcarreteroangel@gmail.com">miguelcarreteroangel@gmail.com</a>.</p>
+    </section>
+  </main>
+  <footer class="site-footer"><span>Gestor Aramis · Operated by Aramis</span><nav aria-label="Footer navigation"><a href="/acerca/">About the workspace</a><a href="mailto:miguelcarreteroangel@gmail.com">Contact</a></nav></footer>
+</body>
+</html>

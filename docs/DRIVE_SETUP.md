@@ -20,6 +20,12 @@ El empaquetado de Pages conserva la lista de variables públicas y verifica que 
 
 ## Conectar y usar
 
+### Información pública de OAuth
+
+Desde el 15/10/2026, Google Auth Platform → Branding puede usar Homepage **https://gestor.aramis.agency/acerca/** y Privacy Policy **https://gestor.aramis.agency/privacidad/**. Ambas están publicadas en inglés, sin login; el contacto público confirmado es miguelcarreteroangel@gmail.com. Si Google solicita acreditar el dominio, comprobar aramis.agency en Search Console con la cuenta propietaria del proyecto. Tener las páginas publicadas no cambia por sí mismo el estado Testing ni completa la verificación de marca/permisos. Evidencia y límites en `../handoffs/C04-oauth-public-pages.md`.
+
+### Renovación y material
+
 1. Ingresar a **https://gestor.aramis.agency** y abrir **Configuración → Google Drive → Renovar conexión** (o **Conectar Drive** si aún no existe conexión).
 2. Elegir la misma cuenta de Google del espacio. La integración actual usa `drive.file` y `drive`, autorizados previamente para incorporar y enviar a la papelera material subido desde Drive. Volver al gestor y comprobar el mensaje de conexión; no ampliar permisos por renovar.
 3. Abrir una pieza → **Material** → seleccionar una o varias tomas. El avance es por archivo; el gestor confirma cada archivo con Google antes de adjuntarlo.

@@ -1,5 +1,11 @@
 # Decisiones
 
+## D31 — Información pública y privacidad de OAuth (2026-10-15)
+
+Miguel solicita las páginas About y Privacy en inglés para completar Branding antes de publicar OAuth. Se alojan sin login en `/acerca/` y `/privacidad/`, con el mismo dominio y despliegue; la raíz conserva el ingreso habitual del equipo. Son HTML estático, sin JavaScript ni consultas a Auth, workspace o Drive. Se mantiene el logo SVG existente: es idéntico por SHA-256 al archivo entregado por Miguel. Fuentes locales con su licencia; no se agregan servicios de analítica ni dependencias.
+
+Miguel confirma que se publique miguelcarreteroangel@gmail.com como contacto. El texto describe la V1 interna vigente, el alcance amplio de Google y la restricción de operaciones en servidor, proveedores, almacenamiento, sesiones esenciales, retención manual, papelera, revisiones y revocación. No promete borrado automático al archivar o revocar ni versiones de cliente que todavía no están habilitadas. Login y conexión de Drive enlazan la información pública. Crear estas páginas no cambia el estado Testing, inicia verificación Google ni publica OAuth; esos pasos se comprueban por separado.
+
 ## D30 — Dominio propio para el acceso del equipo (2026-10-14)
 
 Miguel autoriza `gestor.aramis.agency` en Namecheap/Cloudflare y el ajuste de retornos Drive y enlaces de correo. Cambiar DNS de una PC no resuelve el acceso del equipo; no se aplica ese cambio. Se conserva la aplicación, proyecto Pages, cuentas, base y permisos actuales. ALIAS de Namecheap en el único host `gestor`, con TTL de cinco minutos, evita que el resolver del dispositivo tenga que seguir `pages.dev`; no se fijan direcciones IP. Se verifican TLS, API y acceso real antes de recomendar el enlace. La nueva dirección exige iniciar sesión y elegir preferencias de vista una vez por origen. El ajuste OAuth requiere registrar el retorno nuevo en el cliente Google existente, conservando el anterior y la misma clave de cifrado; no se amplían scopes ni se crean credenciales nuevas.

@@ -1,12 +1,22 @@
 # Estado del proyecto
 
+## Homepage y privacidad públicas para OAuth — publicadas 2026-10-15
+
+Miguel solicita ambas páginas en inglés, sin login, y confirma miguelcarreteroangel@gmail.com como contacto público. Publicadas en **65b3fd0d.gestor-aramis.pages.dev** y el dominio propio: **https://gestor.aramis.agency/acerca/** y **https://gestor.aramis.agency/privacidad/**. Se reutiliza el SVG existente, idéntico por SHA-256 al que entregó. Páginas HTML estáticas con fuentes locales y CSP restringida; sin JavaScript ni consultas a Auth, workspace o Drive. Login y configuración de Drive enlazan la información pública. La raíz sigue siendo el ingreso del equipo.
+
+Contenido fiel a la V1 interna: funciones y alcance de Drive, proveedores actuales, tokens cifrados, material/revisiones, sesiones esenciales, retención manual, papelera, solicitud de eliminación y revocación. No se promete borrado automático ni acceso de clientes. Decisión D31; handoff `handoffs/C04-oauth-public-pages.md`.
+
+Verificación: TypeScript/Vite/Pages y control del paquete sin secretos aprobados. Smoke Pages local y remoto final aprobados: ambas páginas con JavaScript desactivado, URLs directas, inglés, logo, enlaces, CSP, ausencia de consultas privadas/terceros y ancho móvil; ingreso/texto privados y API sin sesión/de otro origen siguen protegidos. Tres recorridos compartidos simulados existentes pasan (ingreso/edición, reintento/cierre de sesión, clientes cerrados). QA visual escritorio IAB y móvil 390 px. Capturas alojadas ignoradas en `work/public-about-hosted.png` y `work/public-privacy-hosted.png`. Sin cambios de datos, SQL, credenciales, permisos Drive ni avisos.
+
+**Pendiente:** poner ambos enlaces en Google Auth Platform → Branding y comprobar si pide propiedad de aramis.agency en Search Console. No se cambió Google ni se publicó OAuth en este bloque; Testing sigue vigente hasta confirmación real. Después de Publish app, renovar una vez la conexión desde Configuración y comprobarla. El recordatorio solicitado por Miguel para **22/10 a las 09:00 Argentina** está creado en este chat; no duplicarlo ni retirarlo antes de confirmar que ya no es necesario.
+
 ## Retorno de Google al dominio propio — cerrado 2026-10-15
 
 Miguel autorizó completar el ajuste pendiente. Google Auth Platform volvió a cargar: se agregó y se comprobó en una apertura nueva `https://gestor.aramis.agency/api/google/callback` en el cliente OAuth existente Gestor Aramis Web, conservando el retorno anterior. Sólo GOOGLE_REDIRECT_URI cambió en la configuración local ignorada; credenciales y clave de cifrado conservadas. Los cinco secretos existentes se reinstalaron con el helper y Pages se publicó en **a574eb6c.gestor-aramis.pages.dev**, también disponible en el dominio propio.
 
 Prueba real desde la sesión de Miguel: Configuración → Renovar conexión → misma cuenta Google → permisos existentes drive.file + drive, sin ampliación → retorno a gestor.aramis.agency → «Google Drive quedó conectado». Comprobación de servidor posterior: refreshSucceeded=true, driveMetadataStatus=200, rootFolderReadable=true, readWriteScopePreserved=true. Compilación TypeScript/Vite/Pages, control de secretos del paquete y smoke remoto normal aprobados. No se modificaron piezas ni material; tampoco se crearon carpetas, se cambiaron permisos de archivos ni se enviaron correos.
 
-El botón de renovación queda operativo desde la dirección nueva. Esta renovación sí completó un consentimiento nuevo; un refresh por sí solo no lo habría hecho. Google sigue en External/Testing: renovar antes del 22/10/2026 si no se resuelve antes la publicación OAuth. No se programó otro recordatorio. Evidencia y pasos reproducibles en `handoffs/C10-custom-domain.md`; captura local ignorada `work/drive-renewal-custom-domain.png`.
+El botón de renovación queda operativo desde la dirección nueva. Esta renovación sí completó un consentimiento nuevo; un refresh por sí solo no lo habría hecho. Google sigue en External/Testing: renovar antes del 22/10/2026 si no se resuelve antes la publicación OAuth. Al cerrar esta entrega aún no se había programado otro recordatorio; se creó después a pedido de Miguel, como aclara la nota superior. Evidencia y pasos reproducibles en `handoffs/C10-custom-domain.md`; captura local ignorada `work/drive-renewal-custom-domain.png`.
 
 ## Restablecimiento de contraseña de Miguel — confirmado (iniciado 2026-10-14)
 

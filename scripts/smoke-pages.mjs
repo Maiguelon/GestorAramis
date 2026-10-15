@@ -22,6 +22,35 @@ assert.equal(foreignPreferences.status,403);
 
 const browser = await chromium.launch();
 try {
+  // Informational pages must work without running the staff app or accessing
+  // workspace/auth services, even in a browser with JavaScript disabled.
+  const publicContext = await browser.newContext({ javaScriptEnabled: false });
+  const publicPage = await publicContext.newPage();
+  const publicRequests = [];
+  const publicFailures = [];
+  publicPage.on('request', request => publicRequests.push(request.url()));
+  publicPage.on('response', response => { if (response.status() >= 400) publicFailures.push(response.url()); });
+  for (const [path, heading] of [['/acerca/', 'Gestor Aramis'], ['/privacidad/', 'Privacy policy']]) {
+    const response = await publicPage.goto(base + path);
+    assert.equal(response.status(), 200);
+    assert.equal(publicPage.url(), base + path, 'Public URL must resolve directly, without redirecting to login');
+    assert.match(response.headers()['content-security-policy'], /default-src 'none'/);
+    assert.match(response.headers()['x-robots-tag'], /noindex/);
+    await publicPage.getByRole('heading', { name: heading, exact: true }).waitFor();
+    assert.equal(await publicPage.locator('html').getAttribute('lang'), 'en');
+    assert.equal(await publicPage.locator('script').count(), 0);
+    assert.equal(await publicPage.locator('input[type=password]').count(), 0);
+    assert.equal(await publicPage.getByRole('link', { name: 'Open workspace', exact: true }).first().getAttribute('href'), '/');
+    assert.equal(await publicPage.getByRole('link', { name: 'Privacy', exact: true }).getAttribute('href'), '/privacidad/');
+    assert.equal(await publicPage.getByRole('link', { name: 'Contact', exact: true }).getAttribute('href'), 'mailto:miguelcarreteroangel@gmail.com');
+    assert.equal(await publicPage.getByRole('img', { name: 'Aramis', exact: true }).evaluate(img => img.complete && img.naturalWidth > 0), true);
+    await publicPage.setViewportSize({width:390,height:844});
+    assert.equal(await publicPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Public pages must fit a mobile viewport');
+    await publicPage.setViewportSize({width:1280,height:800});
+  }
+  assert.deepEqual(publicFailures, []);
+  assert.equal(publicRequests.every(value => new URL(value).origin === base && !new URL(value).pathname.startsWith('/api/')), true, 'Public pages must not call authentication, workspace or third-party services');
+  await publicContext.close();
   const page = await browser.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -30,10 +59,11 @@ try {
     assert.equal(response.status(), 200);
     await page.getByRole('heading', { name: 'Ingresar al equipo', exact: true }).waitFor();
     await page.getByLabel('Correo', { exact: true }).waitFor();
+    assert.equal(await page.getByRole('link', { name: 'Privacidad', exact: true }).getAttribute('href'), '/privacidad/');
     assert.match(response.headers()['x-robots-tag'], /noindex/);
   }
   assert.deepEqual(errors, []);
 } finally {
   await browser.close();
 }
-console.log(`PASS ${base}: login and expanded-text routes, configured API, anonymous/cross-origin denial including Drive. No authenticated operations tested.`);
+console.log(`PASS ${base}: public English pages without JavaScript or data requests, mobile layout, login and expanded-text routes, configured API, anonymous/cross-origin denial including Drive. No authenticated operations tested.`);

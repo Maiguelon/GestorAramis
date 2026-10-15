@@ -8,6 +8,8 @@ Gestor Aramis brings monthly planning, production assets, design handoffs and re
 
 [Open the deployed app — team login required](https://gestor.aramis.agency/) · [Run the local demo](#run-the-local-demo) · [Architecture](#architecture) · [Verification](#verification)
 
+[About Gestor Aramis](https://gestor.aramis.agency/acerca/) · [Privacy policy](https://gestor.aramis.agency/privacidad/) — public English pages, accessible without a team account.
+
 ![Management view showing pending content, deadlines and next actions](docs/images/pending-work.jpg)
 
 *Screenshots use fictional demo data. The application UI is in Spanish.*

@@ -4,7 +4,7 @@
 
 Miguel informó que el gestor no abría y que también le fallaba a un colega. Se reprodujo ERR_NAME_NOT_RESOLVED en IAB y NXDOMAIN en el DNS habitual para gestor-aramis.pages.dev y su despliegue. Los resolvers 1.1.1.1 / 8.8.8.8 y DoH público devolvían las direcciones correctas; acceder con esa resolución manteniendo hostname/TLS devolvía HTML, JS, CSS y health HTTP 200. Esto identifica el fallo local antes de cargar la aplicación; no demuestra el mensaje exacto que veía el colega.
 
-No se cambió el DNS de la PC: Miguel condicionó ese cambio a que sirviera para todos. Autorizó expresamente usar gestor.aramis.agency en Namecheap y Cloudflare, ajustar retorno de Drive y enlaces de avisos. Ingresó a Namecheap personalmente cuando se detectó sesión vencida. Más tarde informó que ya pudo ingresar al gestor nuevo con su cuenta normal.
+No se cambió el DNS de la PC: Miguel condicionó ese cambio a que sirviera para todos. Autorizó expresamente usar gestor.aramis.agency en Namecheap y Cloudflare, ajustar retorno de Drive y enlaces de avisos. Ingresó a Namecheap personalmente cuando se detectó sesión vencida. Más tarde informó que pudo abrir el gestor nuevo. Aclaración posterior: no se cuenta ese mensaje como evidencia de login autenticado, ya que pidió restablecer su contraseña; ver C03-password-reset.md.
 
 ## Configuración aplicada
 
@@ -20,7 +20,7 @@ No se cambió el DNS de la PC: Miguel condicionó ese cambio a que sirviera para
 - node --check scripts/configure-drive.mjs y pages:prepare (TypeScript, Vite, Worker y paquete sin secretos) aprobados.
 - Smoke remoto normal final: npm.cmd run pages:smoke -- https://gestor.aramis.agency, aprobado. Login y texto ampliado, API configurada, rechazo sin sesión / otro origen y ausencia de errores JS. Sin operaciones autenticadas ni cambios de registros.
 - El smoke previo a propagación falló por DNS. Dos helpers ignorados en work (smoke-dns-router.mjs y smoke-custom-domain.mjs) permitieron verificar de forma aislada, con TLS normal y direcciones consultadas al router. No modifican el DNS del sistema. Después se repitió el smoke oficial sin overrides y pasó; esa es la evidencia final.
-- IAB mostró Ingresar al equipo en el dominio propio. Miguel confirmó ingreso desde su navegador; la sesión de IAB continuó anónima. No afirmar inspección de piezas mediante su sesión en esta entrega.
+- IAB mostró Ingresar al equipo en el dominio propio y continuó anónimo. Miguel confirmó la apertura de la dirección; tras su aclaración posterior de contraseña olvidada, el ingreso autenticado permanece pendiente. No afirmar inspección de piezas mediante su sesión en esta entrega.
 - node work/verify-drive-renewal.mjs: refreshSucceeded=true, driveMetadataStatus=200, rootFolderReadable=true, readWriteScopePreserved=true. Lee la conexión existente, descifra sólo en memoria y consulta metadatos; no guarda access tokens ni modifica material. Esto confirma operatividad actual, no una nueva fecha de consentimiento.
 - No cambios de SQL, datos, permisos ni formato de archivos. No se repitieron suites de negocio por cambios de URL/configuración. Evidencia visual anónima en work/custom-domain-login.jpg.
 

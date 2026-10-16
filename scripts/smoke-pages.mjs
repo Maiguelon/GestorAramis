@@ -7,7 +7,7 @@ const base = new URL(process.argv[2] ?? 'http://127.0.0.1:8788').origin;
 const health = await fetch(`${base}/api/health`);
 assert.equal(health.status, 200);
 assert.equal((await health.json()).configured, true);
-const faviconPath = '/brand/feather.svg';
+const faviconPath = '/brand/a-feather.svg';
 const favicon = await fetch(base + faviconPath);
 assert.equal(favicon.status, 200);
 assert.match(favicon.headers.get('content-type'), /image\/svg\+xml/);

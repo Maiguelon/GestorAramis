@@ -1,3 +1,20 @@
+# Icono A con pluma — 2026-10-16
+
+## Alcance y resultado
+
+Miguel pide sustituir la pluma sola por la marca combinada A+pluma. Se reutilizan los contornos vectoriales originales de la A y la pluma, con la superposición y proporciones de los PNG locales inspeccionados en el bloque anterior. Se extraen las rutas de sus clips originales, evitando definiciones redundantes; no se traza ni se genera una marca distinta. `public/brand/a-feather.svg` tiene fondo transparente, lienzo cuadrado de origen cero y relleno azul institucional/claro según el tema del navegador.
+
+Se actualizan favicon de root/About/Privacy, manifest e icono de compatibilidad. La nueva ruta permite que el navegador detecte el cambio. Los wordmarks y el resto de la interfaz conservan su aspecto. No se accede nuevamente a Drive ni se cambian archivos originales, datos, permisos, OAuth o correo.
+
+## Verificación y publicación
+
+- `npm.cmd run pages:prepare`: TypeScript, Vite, compilación Pages y control del paquete sin secretos aprobados.
+- Render real con Chromium a 128/32/16 px en ambos temas; inspección de `work/brand-a-feather-light.png` y `work/brand-a-feather-dark.png` aprobada. No se afirma inspección del chrome nativo de pestañas.
+- Publicado **b97333ec.gestor-aramis.pages.dev** y alias propio actualizado.
+- `npm.cmd run pages:smoke -- https://gestor.aramis.agency`: aprobado, con SVG/manifest/referencias HTML nuevos, páginas públicas y rutas privadas protegidas. Sin operaciones autenticadas ni tests nuevos para un cambio cosmético.
+
+Próxima acción: Miguel puede recargar https://gestor.aramis.agency/ para comparar el icono. Si una pestaña antigua conserva el anterior, cerrarla y volver a abrir el gestor. No hay configuración adicional pendiente por este cambio.
+
 # SVG de marca e icono de pluma — 2026-10-15
 
 ## Alcance

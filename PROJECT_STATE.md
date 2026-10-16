@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Icono de pestaña A con pluma — publicado 2026-10-16
+
+Miguel solicita sustituir la pluma sola por la marca A+pluma de los PNG ya aportados. Publicado **b97333ec.gestor-aramis.pages.dev**, también en **https://gestor.aramis.agency/**. `public/brand/a-feather.svg` combina los contornos originales de la A y la pluma del logo SVG, siguiendo la superposición de la referencia. Lienzo cuadrado, fondo transparente y colores institucionales según tema. Root, About, Privacy, manifest e icono de compatibilidad actualizados; la ruta nueva evita reutilizar el favicon anterior en caché. Los logos del contenido no cambian.
+
+TypeScript/Vite/Pages y control del paquete sin secretos aprobados. QA visual a 16/32/128 px en temas claro/oscuro (`work/brand-a-feather-light.png`, `work/brand-a-feather-dark.png`). Smoke remoto aprobado en el dominio propio, incluyendo SVG, manifest y referencias HTML; login/API privados conservan sus restricciones. Sin cambios de datos, permisos, OAuth ni correos. Handoff `handoffs/C05-brand-assets.md`. Para ver el icono, recargar el gestor o cerrar y abrir una pestaña antigua si conserva el anterior.
+
 ## Google OAuth en producción y renovación posterior — 2026-10-15
 
 Miguel completó los campos Branding y publicó OAuth personalmente. Sus capturas muestran Audience **In production**, marca no publicada/verificada y permisos sensibles/restringidos sin verificar; no son evidencia de revisión solicitada o aprobada. Después informó que completó la renovación desde el gestor, pasando el aviso de app no verificada. La ejecución posterior de `node work/verify-drive-renewal.mjs` confirmó connectionStored=true, refreshSucceeded=true, driveMetadataStatus=200, rootFolderReadable=true y readWriteScopePreserved=true. No se modificaron archivos, scopes, credenciales ni carpetas.

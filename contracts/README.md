@@ -12,6 +12,14 @@ La primera demostración usa un almacén local de navegador y datos ficticios co
 - src/lib/api.ts provee readWorkspace(), runCommand(command), readClientView(token), subscribe(listener), resetDemo(). React useWorkspace() expone state, execute(command), error. runPublicCommand sólo devuelve entityId, nunca el workspace.
 - Cliente UI: src/client/ClientCalendar.tsx export default ({token}:{token:string}); src/client/ClientRequest.tsx export default ({token}:{token:string}); src/client/client.css. Usar readClientView/runPublicCommand(command, token), subscribe; el coordinador provee esas funciones.
 
+## Piezas multicliente (2026-10-18)
+
+`Piece.clientIds` es opcional: cuando existe contiene entre 2 y 200 IDs distintos, con `clientId` primero. `clientId` se conserva como ancla estable del almacenamiento y de las relaciones históricas. Las piezas anteriores sin lista mantienen un único cliente. `contracts/piece-clients.ts` centraliza pertenencia y etiquetas: filtros internos, búsqueda, calendario, historial y mes deben usar esas funciones, no comparar únicamente `clientId`. No clonar la pieza por cliente.
+
+`create-piece.input.clientIds` es una selección fija de clientes vigentes del mismo espacio. Seleccionar todos captura los clientes actuales; agregar clientes posteriormente no cambia piezas existentes. Sólo la RPC de staff crea la relación privada normalizada `app_private.piece_clients`. El comando conserva el recibo idempotente, la transacción y la revisión existentes. Estado, texto, material y versiones son comunes. Se muestran como extras y no reducen la base mensual. Drive usa `Multicliente / YYYY-MM / pieza`, con una carpeta por ID de pieza. No hay edición posterior de destinatarios en este bloque ni entregas por cliente.
+
+`clientIds` se omite de `PublicPiece`. La V1 sigue siendo interna: no se habilitan enlaces de aprobación/material para estas piezas ni su visibilidad pública, porque una entrega común puede contener variantes de varios clientes. La fase de clientes debe definir su proyección antes de habilitarla.
+
 ## Seguridad invariante
 La UI no es una barrera. En producción un token secreto se valida mediante hash en servidor, se restringen alcance y destino, y RLS controla acceso autenticado. Jamás devolver la lista de tokens en proyecciones públicas. No permitir que calendario emita comandos. Aprobación de versión vieja rechazada, reintentos idempotentes y comentarios independientes. Antes de marcar archivos recibidos, verificar su existencia y tamaño en el proveedor.
 

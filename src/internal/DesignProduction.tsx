@@ -1,7 +1,8 @@
+import { belongsToClient, pieceClientNames, pieceClientLabel } from '../../contracts/piece-clients';
 import { useState } from 'react';
 import { ArrowRight, FileText, Paperclip, Search } from 'lucide-react';
 import type { Piece, WorkspaceState } from '../../contracts/domain';
-import ClientAvatar from '../components/ClientAvatar';
+import PieceClientAvatar from '../components/PieceClientAvatar';
 import FormatBadge from '../components/FormatBadge';
 import { comparePieceDate, isApprovedPiece, isHistoricalPiece, productionWaitReason } from '../domain/work-lists';
 import { APP_MODE } from '../lib/api';
@@ -45,8 +46,8 @@ export default function DesignProduction({ state, today, open }: {
     review: active.filter(piece => piece.status === 'review'),
     approved: active.filter(piece => isApprovedPiece(piece) && !isHistoricalPiece(piece, today)),
   };
-  const matches = (piece: Piece) => (clientId === 'all' || piece.clientId === clientId) &&
-    `${piece.title} ${state.clients.find(client => client.id === piece.clientId)?.name ?? ''}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase());
+  const matches = (piece: Piece) => (clientId === 'all' || belongsToClient(piece, clientId)) &&
+    `${piece.title} ${pieceClientNames(piece, state.clients)}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase());
   const shown = groups[category].filter(matches).sort(comparePieceDate);
   const consultation = category === 'review' || category === 'approved';
   const hasFilters = clientId !== 'all' || !!search.trim();
@@ -64,11 +65,10 @@ export default function DesignProduction({ state, today, open }: {
     <p className="design-list-note">{categoryNotes[category]}</p>
     <div className="design-task-list">
       {shown.map(piece => {
-        const client = state.clients.find(client => client.id === piece.clientId)!;
         const overdue = !isApprovedPiece(piece) && !!piece.plannedDate && piece.plannedDate < today;
         const stage = category === 'waiting' ? piece.status === 'planned' ? 'Planificación · Marketing' : productionWaitReason(state, piece) : category === 'approved' ? 'Aprobado' : categoryLabels[category];
         return <article className="design-task" key={piece.id} aria-label={piece.title}>
-          <div className="design-task-identity"><ClientAvatar client={client}/><div><span>{client.name} · <FormatBadge format={piece.format}/></span><h2><button onClick={() => open(piece.id)}>{piece.title}</button></h2></div></div>
+          <div className="design-task-identity"><PieceClientAvatar piece={piece} clients={state.clients}/><div><span title={pieceClientNames(piece, state.clients)}>{pieceClientLabel(piece, state.clients)} · <FormatBadge format={piece.format}/></span><h2><button onClick={() => open(piece.id)}>{piece.title}</button></h2></div></div>
           <ChangeReason piece={piece} compact/><div className={`design-date ${overdue ? 'overdue' : ''}`}><span>Publicación prevista</span><strong>{dateText(piece.plannedDate)}</strong>{overdue ? <small>Fecha vencida</small> : piece.plannedDate === today ? <small>Hoy</small> : null}</div>
           <div className="design-task-actions"><span className="design-stage">{stage}</span>
             <div><a className="button secondary" href={`/text/${encodeURIComponent(piece.id)}`} target="_blank" rel="noopener noreferrer"><FileText size={16}/>Guion y texto</a><button className="button secondary" onClick={() => open(piece.id, 'material')}><Paperclip size={16}/>Material</button>

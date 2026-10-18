@@ -1,3 +1,4 @@
+import { pieceClientNames } from '../../contracts/piece-clients';
 import { useState } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
 import { Archive, FileText, History, Paperclip, RotateCcw } from 'lucide-react';
@@ -5,7 +6,7 @@ import type { Command, CommandResult, Piece, WorkspaceState } from '../../contra
 import { FORMAT_LABELS } from '../../contracts/domain';
 import { Modal } from '../components/ui';
 import { APP_MODE } from '../lib/api';
-import ClientAvatar from '../components/ClientAvatar';
+import PieceClientAvatar from '../components/PieceClientAvatar';
 import DriveMaterials from './DriveMaterials';
 import TeamMaterials from './TeamMaterials';
 import { DeliveryPreview } from './PieceDelivery';
@@ -15,7 +16,6 @@ export default function ArchivedPieceDetail({ piece, state, execute, onClose }: 
   const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
-  const client = state.clients.find(item => item.id === piece.clientId)!;
   const reviews = state.reviews.filter(review => review.pieceId === piece.id).sort((a,b) => b.version-a.version);
   async function restore() {
     if (saving || downloading || hasPendingSave('restore-piece')) return;
@@ -25,8 +25,8 @@ export default function ArchivedPieceDetail({ piece, state, execute, onClose }: 
     catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo recuperar la pieza.'); }
     finally { setSaving(false); }
   }
-  return <Modal open title={piece.title} description={`${client.name} · ${FORMAT_LABELS[piece.format]}`} wide onClose={() => { if (!saving && !downloading) onClose(); }}>
-    <div className="detail-client-identity"><ClientAvatar client={client}/><div><strong>{client.name}</strong><span className="archived-label"><Archive size={14}/>Archivado · Sólo consulta</span></div></div>
+  return <Modal open title={piece.title} description={`${pieceClientNames(piece, state.clients)} · ${FORMAT_LABELS[piece.format]}`} wide onClose={() => { if (!saving && !downloading) onClose(); }}>
+    <div className="detail-client-identity"><PieceClientAvatar piece={piece} clients={state.clients}/><div><strong>{pieceClientNames(piece, state.clients)}</strong><span className="archived-label"><Archive size={14}/>Archivado · Sólo consulta</span></div></div>
     {error && <p className="error-banner" role="alert">{error}</p>}
     <Tabs.Root defaultValue="text"><Tabs.List className="detail-tabs" aria-label="Secciones del contenido archivado">
       <Tabs.Trigger value="text"><FileText size={16}/>Texto</Tabs.Trigger><Tabs.Trigger value="delivery">Entrega</Tabs.Trigger><Tabs.Trigger value="material"><Paperclip size={16}/>Material</Tabs.Trigger><Tabs.Trigger value="history"><History size={16}/>Historial</Tabs.Trigger>

@@ -555,7 +555,7 @@ describe('external Drive synchronization HTTP',()=>{
 });
 
 describe('eager folders after saving a piece',()=>{
-  it('creates the tree once in the background, without Material, and retry reuses IDs',async()=>{
+  it.each([false,true])('creates one stable folder tree, including multiclient=%s',async(multi)=>{
     const conn=await connection();const mappings=new Map<string,Payload>();const folders=new Map<string,Payload>();let nextId=0;
     const h=harness(call=>{
       if(call.action==='connection-get')return conn;
@@ -568,14 +568,20 @@ describe('eager folders after saving a piece',()=>{
       if(init?.method==='POST') {const body=JSON.parse(String(init.body));folders.set(body.id,{...body,parents:body.parents??[],trashed:false});return Response.json(folders.get(body.id));}
       const f=folders.get(url.pathname.split('/').at(-1)!);return f?Response.json(f):new Response('',{status:404});
     });
+    const rpcFetcher:Fetcher=async(input,init)=>['/rest/v1/rpc/aramis_workspace','/rest/v1/rpc/aramis_command'].includes(new URL(String(input)).pathname) && multi
+      ? Response.json({...workspace,entityId:P,state:{...workspace.state,pieces:[{...piece,clientIds:[C,U2]}]}})
+      : h.fetcher(input,init);
     const pending:Promise<unknown>[]=[];
-    const saved=await handleRequest(post('/api/commands',{requestId:A,command:{type:'create-piece',input:{clientId:C,ownerId:U}}}),env,h.fetcher,{waitUntil:p=>pending.push(p)});
+    const saved=await handleRequest(post('/api/commands',{requestId:A,command:{type:'create-piece',input:{clientId:C,ownerId:U}}}),env,rpcFetcher,{waitUntil:p=>pending.push(p)});
     expect(saved.status).toBe(200);expect(pending).toHaveLength(1);await Promise.all(pending);
-    expect(folders.size).toBe(4);expect(mappings.has('piece:'+P+':material')).toBe(false);
-    const retry=await handleRequest(post(`/api/drive/pieces/${P}/folder`),env,h.fetcher);
+    expect(folders.size).toBe(4);
+    expect(mappings.has(multi?'client:multiclient':`client:${C}`)).toBe(true);
+    if(multi)expect([...folders.values()].some(folder=>folder.name==='Multicliente')).toBe(true);
+    expect(mappings.has('piece:'+P+':material')).toBe(false);
+    const retry=await handleRequest(post(`/api/drive/pieces/${P}/folder`),env,rpcFetcher);
     expect(retry.status).toBe(200);expect(folders.size).toBe(4);expect(await retry.json()).toEqual({folderUrl:'https://drive.google.com/drive/folders/folder-4'});
     mappings.set('piece:'+P+':material',{folderId:'legacy-material'});
-    const legacy=await handleRequest(post(`/api/drive/pieces/${P}/folder`),env,h.fetcher);
+    const legacy=await handleRequest(post(`/api/drive/pieces/${P}/folder`),env,rpcFetcher);
     expect(await legacy.json()).toEqual({folderUrl:'https://drive.google.com/drive/folders/legacy-material'});
   });
   it('confirms the saved piece even if Drive is disconnected',async()=>{

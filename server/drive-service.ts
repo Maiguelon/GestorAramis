@@ -5,6 +5,7 @@ import { callWorkspaceRpc } from './workspace-repository';
 import { decryptRefreshToken, encryptRefreshToken, exchangeGoogleCode, prepareGoogleOAuth, refreshGoogleTokens, DRIVE_READ_SCOPE, DRIVE_WRITE_SCOPE, type GoogleTokens, type OAuthState } from './google-oauth';
 import { listImportFiles } from './drive-import';
 import { pinDriveAssetRevision, streamPinnedDriveAsset, driveAssetViewer, driveAssetThumbnail, trashDriveAsset, checkDriveUpload, ensureDriveFolder, generateDriveId, getDriveAccount, initiateDriveUpload, streamDriveAsset, streamTeamDriveAsset, type UploadExpectation } from './drive';
+import { isMultiClient } from '../contracts/piece-clients';
 import type { Piece } from '../contracts/domain';
 
 type Envelope = { iv: number[]; ciphertext: number[] };
@@ -102,9 +103,10 @@ async function ensureFolder(rpc:Rpc,token:string,workspaceId:string,logicalKey:s
 async function pieceFolder(rpc:Rpc,token:string,workspaceId:string,piece:Piece,clientName:string,fetcher:Fetcher) {
   // Month/name changes never move an existing piece folder.
   const root=await ensureFolder(rpc,token,workspaceId,'root','Gestor Aramis',undefined,fetcher);
-  const client=await ensureFolder(rpc,token,workspaceId,`client:${piece.clientId}`,clientName,root,fetcher);
+  const group=isMultiClient(piece)?'multiclient':piece.clientId;
+  const client=await ensureFolder(rpc,token,workspaceId,`client:${group}`,isMultiClient(piece)?'Multicliente':clientName,root,fetcher);
   const month=piece.planMonth ?? piece.plannedDate?.slice(0,7) ?? piece.createdAt.slice(0,7);
-  const monthly=await ensureFolder(rpc,token,workspaceId,`month:${piece.clientId}:${month}`,month,client,fetcher);
+  const monthly=await ensureFolder(rpc,token,workspaceId,`month:${group}:${month}`,month,client,fetcher);
   const folder=await ensureFolder(rpc,token,workspaceId,`piece:${piece.id}`,piece.title||'Sin título',monthly,fetcher);
   const legacy=await rpc<{folderId:string}|null>('folder-get',{logicalKey:`piece:${piece.id}:material`});
   return legacy?.folderId??folder;

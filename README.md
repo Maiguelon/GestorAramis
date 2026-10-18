@@ -27,6 +27,7 @@ The planned client experience follows the same principle: a WhatsApp message ope
 | Capability | Behavior |
 |---|---|
 | Monthly planning | Configure each client's post and reel quantities, then explicitly generate the month's missing pieces. Existing work is preserved; dates are assigned manually. |
+| Multi-client content | Create one shared task for a fixed selection of clients, with a common deadline, material, delivery and review state. It appears in each selected client's filters, calendar and monthly workspace as an extra outside the monthly base. |
 | Pending work | Show all pending content by date, including overdue, future and undated pieces. Filter by client, area or stage; optionally narrow to this week. |
 | Design workspace | Open directly to pieces ready for production, with deadlines, correction reasons and shortcuts to scripts, material and the piece detail. Other stages remain available for reference. |
 | Calendar | Browse planned content without expanding a day indefinitely when it contains many pieces. The plan month and publication date are separate. |

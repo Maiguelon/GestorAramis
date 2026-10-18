@@ -1,9 +1,10 @@
+import { pieceClientNames, pieceClientLabel } from '../../contracts/piece-clients';
 import FormatBadge from '../components/FormatBadge';
 import { useMemo, useState } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Piece, WorkspaceState } from '../../contracts/domain';
 import { localDate, pieceMonth } from '../domain/selectors';
-import ClientAvatar from '../components/ClientAvatar';
+import PieceClientAvatar from '../components/PieceClientAvatar';
 import { Modal, Status } from '../components/ui';
 import './internal-calendar.css';
 
@@ -71,8 +72,8 @@ export default function InternalCalendar({ pieces, state, month, setMonth, selec
           </div>
           <div className="internal-day-pieces">{scheduled.slice(0, 2).map(piece => {
             const client = state.clients.find(client => client.id === piece.clientId);
-            return <button className="internal-calendar-piece has-client-logo" onClick={() => select(piece.id)} aria-label={`Abrir ${piece.title}`} title={`${piece.title} · ${client?.name ?? ''}`} key={piece.id}>
-              {client&&<ClientAvatar client={client}/>}<i style={{ background: client?.color }} /><strong>{piece.title}</strong><small>{client?.name}</small>
+            return <button className="internal-calendar-piece has-client-logo" onClick={() => select(piece.id)} aria-label={`Abrir ${piece.title}`} title={`${piece.title} · ${pieceClientNames(piece, state.clients)}`} key={piece.id}>
+              <PieceClientAvatar piece={piece} clients={state.clients}/><i style={{ background: client?.color }} /><strong>{piece.title}</strong><small>{pieceClientLabel(piece, state.clients)}</small>
             </button>;
           })}</div>
           {scheduled.length > 2 && <button className="internal-day-more" aria-label={`Ver los ${scheduled.length} contenidos del ${fullDate}, ${scheduled.length - 2} más`} onClick={() => setSelectedDay(day)}>+{scheduled.length - 2} más</button>}
@@ -82,10 +83,9 @@ export default function InternalCalendar({ pieces, state, month, setMonth, selec
     {!!byDate.get('')?.length && <div className="undated-list"><h3>Sin fecha · este mes</h3>{byDate.get('')!.map(piece => <button className="button secondary" key={piece.id} onClick={() => select(piece.id)}>{piece.title}<ArrowRight size={14} /></button>)}</div>}
     <Modal open={selectedDay !== null} onClose={() => setSelectedDay(null)} title={selectedDay ? dateLabel(selectedDay, { weekday: 'long', day: 'numeric', month: 'long' }) : 'Contenidos del día'} description={`${dayPieces.length} contenidos con los filtros actuales.`}>
       <div className="calendar-day-list">{dayPieces.map(piece => {
-        const client = state.clients.find(client => client.id === piece.clientId);
         return <button className="calendar-day-row" key={piece.id} onClick={() => openPiece(piece.id)} aria-label={`Abrir ${piece.title}`}>
-          {client&&<ClientAvatar client={client}/>}
-          <span className="calendar-day-content"><small>{client?.name} · <FormatBadge format={piece.format}/></small><strong>{piece.title}</strong></span>
+          <PieceClientAvatar piece={piece} clients={state.clients}/>
+          <span className="calendar-day-content"><small title={pieceClientNames(piece, state.clients)}>{pieceClientLabel(piece, state.clients)} · <FormatBadge format={piece.format}/></small><strong>{piece.title}</strong></span>
           <Status status={piece.status} /><ChevronRight size={16} />
         </button>;
       })}</div>

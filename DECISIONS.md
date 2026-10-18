@@ -1,5 +1,13 @@
 # Decisiones
 
+## D32 — Una tarea para varios clientes (2026-10-18)
+
+Miguel aprueba crear piezas multicliente para efemérides y trabajo común. El formulario mantiene el título, da una fila completa a Cliente/Clientes y pone «Varios clientes» junto a la etiqueta. El selector múltiple incluye Seleccionar todos, conserva el cliente inicial y resume los seleccionados. Formato y Fecha van juntos debajo; se retiran las dos aclaraciones redundantes del alta.
+
+Se crea una pieza con una selección fija de clientes actuales, no copias ni una categoría nueva de formato. Un solo texto, fecha, material, entrega y estado; Miguel solicita expresamente no asignar archivos de entrega por cliente. Pendientes y Diseño muestran la tarea una vez; filtros/búsqueda, calendario, mes e historial la encuentran para cualquier destinatario. Miguel luego pide un símbolo de grupo para las compartidas, conservando los nombres; los logos individuales se mantienen en piezas de un cliente. Compartidas como extras fuera del cupo/base mensual; archivar afecta a todos, con confirmación explícita. Los clientes nuevos no se agregan automáticamente a selecciones antiguas.
+
+Se conserva clientId como ancla compatible y se normaliza la selección completa en una tabla privada de la misma transacción. Sin alterar piezas existentes. Carpeta única en Drive bajo Multicliente/mes/pieza; las reservas existentes no se mueven. Los avisos siguen el evento de una sola pieza y enumeran sus clientes. El portal cliente sigue pendiente; no se proyectan destinatarios ni variantes comunes hacia enlaces públicos.
+
 ## D31 — Información pública y privacidad de OAuth (2026-10-15)
 
 Miguel solicita las páginas About y Privacy en inglés para completar Branding antes de publicar OAuth. Se alojan sin login en `/acerca/` y `/privacidad/`, con el mismo dominio y despliegue; la raíz conserva el ingreso habitual del equipo. Son HTML estático, sin JavaScript ni consultas a Auth, workspace o Drive. Se mantiene el logo SVG existente: es idéntico por SHA-256 al archivo entregado por Miguel. Fuentes locales con su licencia; no se agregan servicios de analítica ni dependencias.

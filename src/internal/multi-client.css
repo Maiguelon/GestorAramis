@@ -1,0 +1,23 @@
+.client-selection{min-width:0}
+.client-selection-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:6px;color:#56647a;font-size:11px;font-weight:700}
+.multi-client-toggle{display:flex;align-items:center;gap:7px;font-size:11px;cursor:pointer;font-weight:400}
+.client-selection input[type=checkbox]{width:15px;height:15px;margin:0;flex-shrink:0;accent-color:var(--wine)}
+.client-selection select{margin-top:0}
+.client-selection-dropdown{position:relative}
+.client-selection-dropdown>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px;border:1px solid #dce2e9;border-radius:5px;list-style:none;font-size:12px;cursor:pointer;background:#fff}
+.client-selection-dropdown>summary::-webkit-details-marker{display:none}
+.client-selection-dropdown>summary>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.client-selection-dropdown>summary>svg{flex-shrink:0}
+.client-selection-options{position:relative;margin-top:4px;background:#fff;border:1px solid #dce2e9;border-radius:5px;max-height:220px;overflow:auto;overscroll-behavior:contain;padding:5px}
+.client-selection-options>label{display:flex;align-items:center;gap:10px;padding:9px;font-size:12px;cursor:pointer;line-height:1.4}
+.client-selection-options>label:hover{background:#f5f7fa}
+.client-selection-options .client-avatar{width:25px;height:25px;flex-shrink:0;font-size:9px}
+.client-selection-options .client-selection-all{font-weight:700;border-bottom:1px solid var(--line);margin-bottom:4px}
+.client-avatar.multi-client-avatar{display:grid;place-items:center;flex-shrink:0;width:38px;height:38px;background:#edf1f6;color:var(--ink);border:1px solid #dce2e9;border-radius:6px}
+.shared-piece-note{display:inline-flex;font-size:10px;font-weight:400;color:#66758b;margin-left:7px}
+.detail-client-identity>div{min-width:0}
+.detail-client-identity strong{overflow-wrap:anywhere}
+.calendar-density .internal-calendar-piece .multi-client-avatar{position:absolute;left:5px;top:8px;width:25px;height:25px}
+.calendar-density .internal-calendar-piece .multi-client-avatar>svg{width:16px;height:16px}
+.shared-piece-summary{font-size:11px;color:#66758b;padding:8px 0}
+@media(max-width:760px){.calendar-density .internal-calendar-piece .multi-client-avatar{display:none}}

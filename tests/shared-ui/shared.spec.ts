@@ -3,6 +3,40 @@ import type { Command, CommandResult, WorkspaceState } from '../../contracts/dom
 import { applyCommand, DomainError } from '../../src/domain/engine';
 import { writeFile } from 'node:fs/promises';
 
+test('pieza multicliente compartida conserva destinatarios y un reintento no duplica la tarea', async ({page,context}) => {
+  const service=await mockServices(context);
+  service.state.clients.push(
+    {id:'20000000-0000-4000-8000-000000000071',name:'Cliente Uno',initials:'CU',color:'#8b2634',contactName:'',phone:''},
+    {id:'20000000-0000-4000-8000-000000000072',name:'Cliente Dos',initials:'CD',color:'#1b2a41',contactName:'',phone:''},
+  );
+  await login(page);
+  await page.getByRole('button',{name:'Nuevo contenido',exact:true}).click();
+  const dialog=page.getByRole('dialog');
+  await dialog.getByLabel('Título del contenido').fill('Efeméride compartida');
+  await dialog.getByLabel('Varios clientes',{exact:true}).check();
+  await dialog.locator('summary').click();
+  await dialog.getByLabel('Seleccionar todos',{exact:true}).check();
+  await dialog.locator('summary').click();
+  await dialog.getByLabel('Formato').selectOption('story');
+  await dialog.screenshot({path:'work/multi-client-create-desktop.png'});
+  service.loseWrite();
+  await dialog.getByRole('button',{name:'Crear contenido',exact:true}).click();
+  await expect(dialog.getByRole('button',{name:'Reintentar guardado',exact:true})).toBeVisible();
+  await expect(dialog.getByLabel('Varios clientes',{exact:true})).toBeDisabled();
+  await dialog.getByRole('button',{name:'Reintentar guardado',exact:true}).click();
+  await expect(dialog.getByRole('heading',{name:'Efeméride compartida',exact:true})).toBeVisible();
+  expect(service.state.pieces).toHaveLength(1);
+  expect(service.state.pieces[0].clientIds).toEqual(service.state.clients.map(client=>client.id));
+  expect(service.operations).toHaveLength(2);
+  expect(service.operations[0]).toEqual(service.operations[1]);
+  await dialog.getByRole('button',{name:'Cerrar',exact:true}).click();
+  await page.getByLabel('Filtrar por cliente',{exact:true}).selectOption(service.state.clients[1].id);
+  await expect(page.getByRole('button',{name:'Abrir Efeméride compartida',exact:true})).toHaveCount(1);
+  await page.reload();
+  await expect(page.getByRole('button',{name:'Abrir Efeméride compartida',exact:true})).toHaveCount(1);
+  expect(await page.evaluate(()=>localStorage.getItem('aramis.workspace.demo.v1'))).toBeNull();
+});
+
 test('historial vacío y piezas de clientes retirados no interrumpen la navegación', async ({page,context}) => {
   const service = await mockServices(context);
   const errors: string[] = [];

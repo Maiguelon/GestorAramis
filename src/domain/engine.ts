@@ -1,3 +1,4 @@
+import { isMultiClient } from '../../contracts/piece-clients';
 import type { Asset, Command, CommandContext, CommandResult, Piece, Review, ShareScope, WorkspaceState } from '../../contracts/domain';
 import { validClientLogo } from '../../contracts/client-logo';
 
@@ -135,7 +136,7 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
       const plan = client.monthlyPlan ?? { posts: 0, reels: 0 };
       validatePlan(plan);
       if (!plan.posts && !plan.reels) fail('EMPTY_PLAN', 'Definí la cantidad de posteos o reels antes de generar el mes.');
-      const existing = state.pieces.filter(piece => piece.clientId === client.id && !piece.archived && (piece.planMonth ?? piece.plannedDate?.slice(0, 7) ?? piece.createdAt.slice(0, 7)) === command.month);
+      const existing = state.pieces.filter(piece => piece.clientId === client.id && !isMultiClient(piece) && !piece.archived && (piece.planMonth ?? piece.plannedDate?.slice(0, 7) ?? piece.createdAt.slice(0, 7)) === command.month);
       for (const format of ['post', 'reel'] as const) {
         const total = format === 'post' ? plan.posts : plan.reels;
         const count = existing.filter(piece => format === 'post' ? ['post', 'carousel'].includes(piece.format) : piece.format === format).length;
@@ -159,8 +160,10 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
       if (command.input.planMonth !== undefined && !isPlanMonth(command.input.planMonth)) fail('VALIDATION', 'Elegí un mes válido.');
       if (command.input.workArea !== undefined && !['marketing', 'design'].includes(command.input.workArea)) fail('VALIDATION', 'El área no es válida.');
       if (command.input.title !== undefined && typeof command.input.title !== 'string') fail('VALIDATION', 'El título no es válido.');
+      const clientIds = command.input.clientIds;
+      if (clientIds !== undefined && (!Array.isArray(clientIds) || clientIds.length < 1 || clientIds.length > 200 || clientIds[0] !== command.input.clientId || new Set(clientIds).size !== clientIds.length || clientIds.some(id => typeof id !== 'string' || !state.clients.some(client => client.id === id)))) fail('VALIDATION', 'Elegí clientes válidos, sin repetir.');
       entityId = context.newId();
-      const piece: Piece = { id: entityId, clientId: command.input.clientId, title: command.input.title?.trim() || ({ post: 'Posteo sin título', reel: 'Reel sin título', carousel: 'Carrusel sin título', story: 'Historia sin título' }[format]), planMonth: command.input.planMonth ?? command.input.plannedDate?.slice(0, 7) ?? context.now.slice(0, 7), workArea: command.input.workArea ?? 'marketing', productionStage: 'ready', script: '', teamAssets: [], format, status: 'planned', ownerId: command.input.ownerId, plannedDate: command.input.plannedDate ?? null, visibleToClient: false, caption: '', internalNote: '', archived: false, revision: 0, createdAt: context.now, updatedAt: context.now };
+      const piece: Piece = { ...(clientIds && clientIds.length > 1 ? { clientIds: [...clientIds] } : {}), id: entityId, clientId: command.input.clientId, title: command.input.title?.trim() || ({ post: 'Posteo sin título', reel: 'Reel sin título', carousel: 'Carrusel sin título', story: 'Historia sin título' }[format]), planMonth: command.input.planMonth ?? command.input.plannedDate?.slice(0, 7) ?? context.now.slice(0, 7), workArea: command.input.workArea ?? 'marketing', productionStage: 'ready', script: '', teamAssets: [], format, status: 'planned', ownerId: command.input.ownerId, plannedDate: command.input.plannedDate ?? null, visibleToClient: false, caption: '', internalNote: '', archived: false, revision: 0, createdAt: context.now, updatedAt: context.now };
       state.pieces.push(piece);
       activity(piece, 'Contenido creado.');
       break;
@@ -207,6 +210,7 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
       const piece = findPiece(state, command.pieceId);
       if (piece.revision !== command.expectedRevision) fail('CONFLICT', 'El contenido cambió. Actualizá la vista antes de guardar.');
       const patch = { ...command.patch };
+      if (isMultiClient(piece) && patch.visibleToClient === true) fail('FEATURE_UNAVAILABLE', 'La pieza compartida se gestiona dentro del equipo.');
       if (patch.productionStage === 'recording') Object.assign(patch, { status: 'planned', workArea: 'marketing', productionStage: 'ready' });
       else if (patch.status === 'production') Object.assign(patch, { workArea: 'design', productionStage: 'ready' });
       else if (patch.status === 'planned') Object.assign(patch, { workArea: 'marketing', productionStage: 'ready' });
@@ -337,6 +341,7 @@ export function applyCommand(input: WorkspaceState, command: Command, context: C
     case 'create-share': {
       if (!['calendar', 'review', 'material'].includes(command.scope)) fail('VALIDATION', 'El alcance del enlace no es válido.');
       const piece = targetPiece(state, command.scope, command.targetId);
+      if (piece && isMultiClient(piece)) fail('FEATURE_UNAVAILABLE', 'La pieza compartida se gestiona dentro del equipo.');
       if (command.scope === 'review') {
         const review = state.reviews.find(item => item.id === command.targetId)!;
         if (review.status === 'superseded' || latestReview(state, review.pieceId)?.id !== review.id) fail('STALE_REVIEW', 'No se puede compartir una versión anterior.');

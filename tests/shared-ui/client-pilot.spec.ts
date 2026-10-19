@@ -39,11 +39,38 @@ test('mobile pending/calendar stay within the viewport and a revoked link closes
  const service=await publicMock(context);await page.setViewportSize({width:390,height:844});await page.goto(`/cliente#${token}`);
  await expect(page.getByRole('heading',{name:'Tus contenidos'})).toBeVisible();await page.screenshot({path:'work/client-pilot-mobile.png',fullPage:true});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
- await page.getByRole('button',{name:'Calendario',exact:true}).click();await page.getByLabel('Mes del calendario').fill('2026-10');await page.getByLabel('Vista del calendario').selectOption('month');
- await page.locator('.pilot-month-grid details').filter({hasText:'1 pieza'}).first().locator('summary').click();await expect(page.getByText('Cuidados de primavera',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Calendario',exact:true}).click();await page.getByLabel('Mes del calendario').fill('2026-10');
+ await expect(page.locator('.pilot-month-grid')).toBeVisible();await page.getByRole('button',{name:/28 de octubre, 1 pieza/}).click();await expect(page.getByRole('region',{name:'Contenidos del día'}).getByText('Cuidados de primavera',{exact:true})).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  service.revoke();await page.getByLabel('Actualizar contenidos').click();await expect(page.getByRole('heading',{name:'Este enlace no está disponible'})).toBeVisible();
  await expect(page.getByText('Cuidados de primavera',{exact:true})).toHaveCount(0);
+});
+
+test('calendar-only pieces appear on entry, with access to other months and undated pieces',async({page,context})=>{
+ await page.clock.setFixedTime(new Date('2026-10-19T15:00:00Z'));
+ const service=await publicMock(context);service.view.requests=[];
+ service.view.pieces[0].plannedDate='2026-09-28';service.view.pieces[1].plannedDate='2026-10-16';
+ service.view.pieces.push({id:'undated',title:'Contenido sin fecha',format:'story',status:'planned',plannedDate:null});
+ await page.goto(`/cliente#${token}`);
+ await expect(page.getByRole('button',{name:'Calendario',exact:true})).toHaveAttribute('aria-current','page');
+ await expect(page.locator('.pilot-month-grid')).toBeVisible();await expect(page.getByText('Otra fecha',{exact:true})).toBeVisible();
+ await expect(page.getByText('Contenido sin fecha',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'septiembre de 2026 (1)',exact:true}).click();await expect(page.getByText('Cuidados de primavera',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:/Para revisar/}).click();await expect(page.getByText('No tenés revisiones pendientes. Podés consultar el calendario.')).toBeVisible();
+ await page.getByRole('button',{name:'Ver calendario (3)',exact:true}).click();await expect(page.locator('.pilot-month-grid')).toBeVisible();expect(service.writes).toHaveLength(0);
+});
+
+test('a calendar with only past content opens its populated month; a busy day stays fixed and opens by keyboard on mobile',async({page,context})=>{
+ await page.clock.setFixedTime(new Date('2026-10-19T15:00:00Z'));
+ const service=await publicMock(context);service.view.requests=[];
+ service.view.pieces=Array.from({length:9},(_,i)=>({id:`piece-${i}`,title:`Contenido ${i+1} con título largo para este día`,format:'post',status:'production',plannedDate:'2026-09-28'}));
+ await page.setViewportSize({width:390,height:844});await page.goto(`/cliente#${token}`);
+ await expect(page.getByLabel('Mes del calendario')).toHaveValue('2026-09');
+ const busy=page.getByRole('button',{name:/28 de septiembre, 9 piezas/}),other=page.getByRole('button',{name:/29 de septiembre, 0 piezas/});
+ expect((await busy.boundingBox())?.height).toBe((await other.boundingBox())?.height);
+ await busy.focus();await page.keyboard.press('Enter');await expect(page.getByRole('region',{name:'Contenidos del día'}).getByText('Contenido 9 con título largo para este día',{exact:true})).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.screenshot({path:'work/client-calendar-mobile-fixed.png',fullPage:true});
 });
 test('final review uses only client media routes and requires a comment for changes',async({page,context})=>{
  const service=await publicMock(context);Object.assign(service.view.requests[0],{kind:'delivery',text:'Caption de la entrega',assets:[{id:'50000000-0000-4000-8000-000000000001',name:'final.png',mimeType:'image/png',size:12}]});

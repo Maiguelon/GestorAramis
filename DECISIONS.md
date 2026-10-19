@@ -147,3 +147,7 @@ Un enlace privado revocable por cliente da acceso expresamente al calendario com
 
 ## D22 — Calendario y controles del piloto (2026-10-19)
 Calendario es una cuadrícula mensual, con días de altura fija y detalle completo debajo. Sin revisiones pendientes, el enlace abre Calendario; otros meses compartidos y piezas sin fecha no quedan ocultos. Compartir en calendario no crea una solicitud de revisión. La casilla vive arriba en la tarea de Gestión, con estado único compartido con la pestaña Cliente. Diseño no ve esa pestaña ni controles de visibilidad, sin convertir la preferencia de vista en un permiso de seguridad.
+## D23 — Publicación unificada y revisión por partes (2026-10-19)
+
+Una acción en la pestaña Cliente incluye la pieza en el calendario y publica una instantánea: entrega vigente exacta con prioridad sobre el guion; caption incluido si existe. El guion se previsualiza y puede limpiarse antes de compartir. Sin contenido, sólo metadatos de calendario. Notas internas y material fuente no se publican. Cada parte presente se acepta o pide cambios por separado; aprobar parcialmente no aprueba la entrega. Un pedido de cambios final cierra la versión y vuelve a Diseño con el motivo identificado. La aprobación de guion no cambia la etapa interna. Las revisiones anteriores conservan su semántica hasta republicar explícitamente. Diseño y multicliente siguen fuera de estos controles.
+

@@ -23,14 +23,14 @@ test('client enters without staff login, comments then approves only the script,
  await expect(page.getByRole('heading',{name:'Tus contenidos'})).toBeVisible();await expect(page.getByLabel('Correo',{exact:true})).toHaveCount(0);
  await page.getByRole('button',{name:'Calendario',exact:true}).click();await page.getByLabel('Mes del calendario').fill('2026-11');await expect(page.getByText('Otra fecha',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:/Para revisar/}).click();await page.getByRole('button',{name:/Cuidados de primavera/}).click();
- await page.getByLabel('Comentario',{exact:true}).fill('¿Usamos un tono cercano?');await page.getByRole('button',{name:'Sólo comentar',exact:true}).click();
+ await page.getByRole('button',{name:'Sólo comentar',exact:true}).click();await page.getByLabel('Comentario',{exact:true}).fill('¿Usamos un tono cercano?');await page.getByRole('button',{name:'Enviar comentario',exact:true}).click();
  await expect(page.getByText('Comentario enviado. La revisión sigue pendiente.')).toBeVisible();expect(service.view.requests[0].status).toBe('pending');
- page.on('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Aprobar guion',exact:true}).click();await expect(page.getByText('Aprobación registrada.')).toBeVisible();
+ page.on('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Aceptar guion',exact:true}).click();await expect(page.getByText('Aprobación registrada.')).toBeVisible();
  expect(service.view.pieces[0].status).toBe('planned');expect(service.writes).toHaveLength(2);
 });
 test('lost response retries the identical request and does not duplicate the decision',async({page,context})=>{
  const service=await publicMock(context);service.loseOnce();await page.goto(`/cliente#${token}/${R}`);
- await page.getByLabel('Comentario',{exact:true}).fill('Cambiar el ejemplo final');await page.getByRole('button',{name:'Pedir cambios',exact:true}).click();
+ await page.getByRole('button',{name:'Solicitar cambios',exact:true}).click();await page.getByLabel('Cambios en guion',{exact:true}).fill('Cambiar el ejemplo final');await page.getByRole('button',{name:'Enviar cambios',exact:true}).click();
  await expect(page.getByRole('button',{name:'Reintentar la misma respuesta',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Reintentar la misma respuesta',exact:true}).click();await expect(page.getByText('Cambios enviados al equipo.')).toBeVisible();
  expect(service.writes).toHaveLength(2);expect(service.writes[0]).toEqual(service.writes[1]);
@@ -76,7 +76,7 @@ test('final review uses only client media routes and requires a comment for chan
  const service=await publicMock(context);Object.assign(service.view.requests[0],{kind:'delivery',text:'Caption de la entrega',assets:[{id:'50000000-0000-4000-8000-000000000001',name:'final.png',mimeType:'image/png',size:12}]});
  await context.route('**/api/client/media/**',route=>route.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6pAAAAABJRU5ErkJggg==','base64')}));
  await page.goto(`/cliente#${token}/${R}`);await expect(page.getByRole('img',{name:'final.png'})).toBeVisible();
- await page.getByRole('button',{name:'Pedir cambios',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Escribí un comentario');expect(service.writes).toHaveLength(0);
+ await expect(page.getByLabel('Cambios en entrega',{exact:true})).toHaveCount(0);await page.getByRole('button',{name:'Solicitar cambios',exact:true}).click();await expect(page.getByLabel('Cambios en entrega',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Enviar cambios',exact:true})).toBeDisabled();expect(service.writes).toHaveLength(0);
  await page.screenshot({path:'work/client-pilot-review.png',fullPage:true});
 });
 
@@ -88,9 +88,9 @@ test('a delayed refresh cannot overwrite a decision already confirmed by the cli
    await route.fulfill({json:snapshot});
  });
  await context.route('**/api/client/respond',route=>{view.requests[0].status='approved';view.requests[0].canRespond=false;return route.fulfill({json:view});});
- await page.goto(`/cliente#${token}/${R}`);await expect(page.getByRole('button',{name:'Aprobar guion',exact:true})).toBeVisible();
+ await page.goto(`/cliente#${token}/${R}`);await expect(page.getByRole('button',{name:'Aceptar guion',exact:true})).toBeVisible();
  hold=true;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect.poll(()=>held).toBe(true);
- page.on('dialog',d=>d.accept());await page.getByRole('button',{name:'Aprobar guion',exact:true}).click();await expect(page.getByText('Aprobación registrada.')).toBeVisible();
- release();await expect(page.getByRole('button',{name:'Aprobar guion',exact:true})).toHaveCount(0);
+ page.on('dialog',d=>d.accept());await page.getByRole('button',{name:'Aceptar guion',exact:true}).click();await expect(page.getByText('Aprobación registrada.')).toBeVisible();
+ release();await expect(page.getByRole('button',{name:'Aceptar guion',exact:true})).toHaveCount(0);
 });
 

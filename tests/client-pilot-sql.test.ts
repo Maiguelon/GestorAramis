@@ -108,5 +108,10 @@ describe('client pilot private PostgreSQL boundary',()=>{
    await db.exec(await readFile('supabase/tests/client_pilot_hosted.sql','utf8'));
    expect((await db.query('select id from public.pieces order by id')).rows).toEqual(before);
  });
+ it('runs the separate-content/caption hosted rollback probe',async()=>{
+   const before=(await db.query('select id from public.pieces order by id')).rows;
+   await db.exec(await readFile('supabase/tests/client_review_parts_hosted.sql','utf8'));
+   expect((await db.query('select id from public.pieces order by id')).rows).toEqual(before);
+ });
 });
 

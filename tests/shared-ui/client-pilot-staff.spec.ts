@@ -20,9 +20,9 @@ test('staff publishes a curated script and manages a reusable link; Design flow 
  });
  await page.goto('/');await page.getByLabel('Correo',{exact:true}).fill('fixture@example.test');await page.getByLabel('Contraseña',{exact:true}).fill('test-password');await page.getByRole('button',{name:'Ingresar',exact:true}).click();
  await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();const dialog=page.getByRole('dialog');await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();
- await expect(dialog.getByLabel('Texto que verá el cliente')).toHaveValue('');
+ await expect(dialog.getByLabel('Texto que verá el cliente')).toHaveValue('Indicaciones privadas para Diseño');
  await dialog.getByRole('button',{name:'Crear enlace del cliente',exact:true}).click();await expect(dialog.getByLabel('Enlace privado del cliente')).toHaveValue(`http://127.0.0.1:5175/cliente#${token}`);
- await dialog.getByLabel('Texto que verá el cliente').fill('Guion preparado sólo para el cliente');page.on('dialog',d=>d.accept());await dialog.getByRole('button',{name:'Publicar guion para revisión',exact:true}).click();
+ await dialog.getByLabel('Texto que verá el cliente').fill('Guion preparado sólo para el cliente');page.on('dialog',d=>d.accept());await dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true}).click();
  await expect(dialog.getByText('Guion v1 · Pendiente',{exact:true})).toBeVisible();expect(actions.find(a=>a.action==='publish')?.text).toBe('Guion preparado sólo para el cliente');expect(piece.status).toBe('planned');
  await dialog.screenshot({path:'work/client-pilot-staff.png'});
 });

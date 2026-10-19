@@ -21,9 +21,9 @@ async function setup(context:BrowserContext) {
     if(data.key&&receipts.has(data.key))return route.fulfill({json:receipts.get(data.key)});
     if(data.action==='calendar-show')view={...view,pieces:[calendarPiece()]};
     if(data.action==='calendar-hide')view={...view,pieces:[],requests:[]};
-    if(data.action==='publish')view={...view,pieces:[calendarPiece()],requests:[{id:'request',pieceId:P,kind:'script',version:1,text:data.text,assets:[],status:'pending',canRespond:true,comment:'',comments:[],createdAt:'2026-10-19T12:00:00Z'}]};
+    if(data.action==='publish')view={...view,pieces:[calendarPiece()],requests:[{id:'request',pieceId:P,kind:'script',version:1,text:data.text,separateParts:true,caption:piece.caption,contentStatus:data.text?'pending':null,captionStatus:piece.caption?'pending':null,assets:[],status:'pending',canRespond:true,comment:'',comments:[],createdAt:'2026-10-19T12:00:00Z'}]};
     if(data.key)receipts.set(data.key,structuredClone(view));
-    if(data.action==='calendar-show'&&lose){lose=false;return route.abort('failed');}
+    if(data.action==='publish'&&lose){lose=false;return route.abort('failed');}
     return route.fulfill({json:view});
   });
   await context.route('**/api/client/view',route=>route.fulfill({json:{client:view.client,pieces:view.pieces,requests:view.requests}}));
@@ -33,33 +33,39 @@ async function login(page:Page) {
   await page.goto('/');await page.getByLabel('Correo',{exact:true}).fill('fixture@example.test');await page.getByLabel('Contraseña',{exact:true}).fill('test-password');await page.getByRole('button',{name:'Ingresar',exact:true}).click();
 }
 
-test('calendar visibility is above the tabs and stays synchronized after script publication',async({page,context})=>{
+test('one publication button below the tabs shares the curated script and caption with the calendar',async({page,context})=>{
   const service=await setup(context);await login(page);
   await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();const dialog=page.getByRole('dialog');
-  const checkbox=dialog.getByRole('checkbox',{name:/Mostrar en el calendario del cliente/});
-  await expect(checkbox).not.toBeChecked();await expect(dialog.getByRole('tab',{name:'Detalles',exact:true})).toHaveAttribute('data-state','active');
-  expect((await checkbox.boundingBox())!.y).toBeLessThan((await dialog.getByRole('tablist').boundingBox())!.y);
-  await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();await expect(dialog.getByLabel('Texto que verá el cliente')).toHaveValue('');
-  await dialog.getByLabel('Texto que verá el cliente').fill('Guion preparado sólo para el cliente');page.on('dialog',d=>d.accept());await dialog.getByRole('button',{name:'Publicar guion para revisión',exact:true}).click();
-  await expect(dialog.getByText('Guion v1 · Pendiente',{exact:true})).toBeVisible();await expect(checkbox).toBeChecked();
-  expect(service.actions.find(a=>a.action==='publish')?.text).toBe('Guion preparado sólo para el cliente');expect(service.piece.status).toBe('planned');
-  await dialog.evaluate(el=>{el.scrollTop=0;});await dialog.screenshot({path:'work/client-calendar-header-management.png'});
+  await expect(dialog.getByRole('checkbox',{name:/Mostrar en el calendario del cliente/})).toHaveCount(0);
+  await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();await expect(dialog.getByLabel('Texto que verá el cliente')).toHaveValue(service.piece.script!);
+  const publish=dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true});
+  expect((await publish.boundingBox())!.y).toBeGreaterThan((await dialog.getByRole('tablist').boundingBox())!.y);
+  await dialog.getByLabel('Texto que verá el cliente').fill('Guion preparado sólo para el cliente');page.on('dialog',d=>d.accept());await publish.click();
+  await expect(dialog.getByText('Guion v1 · Pendiente',{exact:true})).toBeVisible();await expect(dialog.getByRole('button',{name:'Ocultar del cliente',exact:true})).toBeVisible();
+  expect(service.actions.find(a=>a.action==='publish')).toMatchObject({text:'Guion preparado sólo para el cliente',separateParts:true,kind:'script'});expect(service.piece.status).toBe('planned');
+  await dialog.screenshot({path:'work/client-review-unified-staff.png'});
 });
 
-test('header visibility retries identically and remains visible to the client after reload without a review',async({page,context})=>{
+test('unified publication retries identically, persists on reload, and does not expose an unsubmitted draft',async({page,context})=>{
   const service=await setup(context);service.loseOnce();await login(page);
   await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();const dialog=page.getByRole('dialog');
-  const checkbox=dialog.getByRole('checkbox',{name:/Mostrar en el calendario del cliente/});await checkbox.click();
-  await expect(dialog.getByRole('button',{name:'Reintentar la misma operación',exact:true})).toBeVisible();await expect(checkbox).toBeDisabled();
+  await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();page.on('dialog',d=>d.accept());
+  await dialog.getByLabel('Texto que verá el cliente').fill('Guion para publicar');await dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true}).click();
+  await expect(dialog.getByRole('button',{name:'Reintentar la misma operación',exact:true})).toBeVisible();await expect(dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true})).toBeDisabled();
   await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(dialog.getByRole('button',{name:'Reintentar la misma operación',exact:true})).toBeVisible();
-  await dialog.getByRole('button',{name:'Reintentar la misma operación',exact:true}).click();await expect(checkbox).toBeChecked();
-  const writes=service.actions.filter(a=>a.action==='calendar-show');expect(writes).toHaveLength(2);expect(writes[0]).toEqual(writes[1]);
-  await page.reload();await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();await expect(checkbox).toBeChecked();
+  await dialog.getByRole('button',{name:'Reintentar la misma operación',exact:true}).click();await expect(dialog.getByRole('button',{name:'Ocultar del cliente',exact:true})).toBeVisible();
+  const writes=service.actions.filter(a=>a.action==='publish');expect(writes).toHaveLength(2);expect(writes[0]).toEqual(writes[1]);
+  await dialog.getByRole('button',{name:'Cerrar',exact:true}).click();await page.reload();await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();
   const client=await context.newPage();await client.goto(`/cliente#${token}`);
-  await expect(client.getByRole('button',{name:'Calendario',exact:true})).toHaveAttribute('aria-current','page');await expect(client.getByText('Guion del piloto',{exact:true})).toBeVisible();
-  await expect(client.getByRole('button',{name:'Aprobar guion',exact:true})).toHaveCount(0);
-  await page.getByRole('dialog').getByRole('tab',{name:'Cliente',exact:true}).click();await page.getByRole('dialog').getByLabel('Texto que verá el cliente').fill('Texto aún privado');
-  await expect(checkbox).toBeDisabled();await client.reload();await expect(client.getByText('Texto aún privado',{exact:true})).toHaveCount(0);await client.close();
+  await client.getByRole('button',{name:/Guion del piloto/}).click();await expect(client.getByRole('region',{name:'Guion',exact:true})).toContainText('Guion para publicar');await expect(client.getByRole('region',{name:'Caption',exact:true})).toContainText('Caption privado');
+  await dialog.getByLabel('Texto que verá el cliente').fill('Texto aún privado');await client.reload();await client.getByRole('button',{name:/Guion del piloto/}).click();await expect(client.getByText('Texto aún privado',{exact:true})).toHaveCount(0);await client.close();
+});
+
+test('a valid final delivery takes precedence over the script and uses the immutable delivery caption',async({page,context})=>{
+  const service=await setup(context);service.piece.status='review';service.piece.deliveries=[{id:'60000000-0000-4000-8000-000000000001',version:2,caption:'Caption de entrega exacta',assets:[{id:'video',name:'entrega.mp4',mimeType:'video/mp4',size:100,source:'drive'}],status:'pending',createdAt:'2026-10-19T12:00:00Z',createdBy:'Diseño',comment:'',source:null,decidedBy:null,decidedAt:null}];
+  await login(page);await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();const dialog=page.getByRole('dialog');await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();
+  await expect(dialog.getByLabel('Texto que verá el cliente')).toHaveCount(0);await expect(dialog.getByText('entrega.mp4',{exact:true})).toBeVisible();await expect(dialog.getByText('Caption de entrega exacta',{exact:true})).toBeVisible();
+  page.on('dialog',d=>d.accept());await dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true}).click();expect(service.actions.find(a=>a.action==='publish')).toMatchObject({kind:'delivery',deliveryId:service.piece.deliveries[0].id,separateParts:true});expect(service.actions.find(a=>a.action==='publish')).not.toHaveProperty('text');
 });
 
 test('Design omits the client tab and visibility, including pieces opened from Calendar',async({page,context})=>{

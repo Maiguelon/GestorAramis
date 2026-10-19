@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import type { Piece } from '../../contracts/domain';
 import type { PilotAction, PilotStaffView } from '../../contracts/client-pilot';
 import { PilotError, staffPilot } from '../lib/client-pilot';
 import { sharedWorkspace } from '../lib/shared-api';
@@ -18,7 +17,7 @@ interface Controller {
 const Context = createContext<Controller | null>(null);
 export const useClientPilot = () => useContext(Context);
 
-/** The header toggle and review tab share one publication state and retry boundary. */
+/** Publication controls share one state and retry boundary with the piece dialog. */
 export function ClientPilotProvider({ clientId, revision, children }: { clientId: string; revision?: number; children: ReactNode }) {
   const [view, setView] = useState<PilotStaffView | null>(null);
   const [error, setError] = useState(''), [notice, setNotice] = useState('');
@@ -74,20 +73,9 @@ export function ClientPilotFeedback() {
   return <>{state.error && <div role="alert" className="error-banner">{state.error}{state.pending && <button type="button" className="button secondary" disabled={state.busy} onClick={() => void state.save(state.pending!, state.pending!)}>Reintentar la misma operación</button>}</div>}{state.notice && <p role="status" className="notice-banner">{state.notice}</p>}</>;
 }
 
-export function ClientCalendarVisibility({ piece, disabled, onBusy }: { piece: Piece; disabled: boolean; onBusy: (value: boolean) => void }) {
+export function ClientPilotBusy({ onBusy }: { onBusy: (value: boolean) => void }) {
   const state = useClientPilot();
   const pending = !!state?.pending, busy = !!state?.busy;
   useEffect(() => { onBusy(busy || pending); return () => onBusy(false); }, [busy, pending, onBusy]);
-  if (!state) return null;
-  const visible = !!state.view?.pieces.some(p => p.id === piece.id);
-  return <div className="piece-client-visibility">
-    <label className="visibility-field">
-      <input type="checkbox" checked={visible} disabled={disabled || busy || pending || !state.view} onChange={() => {
-        if (visible && !confirm('¿Ocultar del calendario? También se retiran las revisiones pendientes de esta pieza.')) return;
-        void state.save({ action: visible ? 'calendar-hide' : 'calendar-show', clientId: piece.clientId, pieceId: piece.id, expectedRevision: piece.revision });
-      }}/>
-      <span><strong>Mostrar en el calendario del cliente</strong><small>{!state.view ? 'Cargando visibilidad…' : visible ? 'Visible: título, formato, fecha y estado. Las revisiones se comparten en Cliente.' : 'Comparte título, formato, fecha y estado. Las revisiones se comparten en Cliente.'}</small></span>
-    </label>
-    <ClientPilotFeedback/>
-  </div>;
+  return null;
 }

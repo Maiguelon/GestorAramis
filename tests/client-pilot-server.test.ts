@@ -51,4 +51,25 @@ describe('public client pilot HTTP boundary',()=>{
    const revoked=vi.fn(async()=>Response.json({code:'P0001',message:'INVALID_ACCESS'},{status:400}));
    expect((await handleRequest(request,env,revoked)).status).toBe(403);expect(revoked).toHaveBeenCalledTimes(1);
  });
+ it('streams the pinned revision with byte ranges, without exposing Drive tokens or using the mutable head',async()=>{
+   const A='50000000-0000-4000-8000-000000000001',G='60000000-0000-4000-8000-000000000001';
+   const asset={id:A,pieceId:U,clientId:C,workspaceId:W,name:'final.mp4',mimeType:'video/mp4',size:6,driveFileId:'fixture-file',checksum:'b'.repeat(32),driveRevisionId:'pinned-one',folderId:'fixture-folder',generation:G};
+   const key=await keyFor(env),encrypted=await seal({token,clientId:C,expiresAt:Date.now()+60_000},key,`${W}:client-media`);
+   const connection={generation:G,encryptedTokens:await seal({accessToken:'PRIVATE_GOOGLE_TOKEN',refreshToken:'PRIVATE_REFRESH',expiresAt:Date.now()+3_600_000},key,`${W}:tokens`)};
+   const visited:string[]=[];
+   const fetcher=vi.fn(async(input:RequestInfo|URL,init?:RequestInit)=>{
+     const url=new URL(String(input));visited.push(url.href);
+     if(url.pathname.endsWith('/aramis_client_pilot')){const data=JSON.parse(String(init?.body));return Response.json(data.p_action==='asset'?asset:connection);}
+     if(url.searchParams.get('alt')==='media'){
+       expect(url.pathname).toContain('/revisions/pinned-one');expect(new Headers(init?.headers).get('Range')).toBe('bytes=0-2');
+       return new Response('abc',{status:206,headers:{'Content-Range':'bytes 0-2/6','Content-Length':'3'}});
+     }
+     if(url.pathname.endsWith('/revisions/pinned-one'))return Response.json({id:'pinned-one',mimeType:asset.mimeType,size:'6',md5Checksum:asset.checksum,keepForever:true});
+     return Response.json({id:asset.driveFileId,name:asset.name,mimeType:asset.mimeType,size:'6',md5Checksum:'c'.repeat(32),parents:['fixture-folder'],trashed:false,headRevisionId:'different-head',appProperties:{workspaceId:W,clientId:C}});
+   });
+   const request=new Request(`https://gestor.example/api/client/media/${C}/${U}/${A}`,{headers:{Cookie:`aramis-client-media=${btoa(JSON.stringify(encrypted))}`,Range:'bytes=0-2'}});
+   const response=await handleRequest(request,env,fetcher);expect(response.status).toBe(206);expect(await response.text()).toBe('abc');
+   expect(response.headers.get('Content-Range')).toBe('bytes 0-2/6');expect(response.headers.get('Cache-Control')).toContain('no-store');
+   expect(visited.filter(u=>u.includes('alt=media'))).toHaveLength(1);expect(JSON.stringify([...response.headers])).not.toContain('PRIVATE');
+ });
 });

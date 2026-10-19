@@ -91,7 +91,14 @@ export async function handleClientPilot(request:Request,env:WorkerEnv,config:Con
   if((path.endsWith('/view')&&request.method!=='GET')||(path.endsWith('/respond')&&request.method!=='POST'))throw new ServiceError('method_not_allowed',405);
   const token=request.headers.get('Authorization')?.replace(/^Bearer /,'')??'';
   const rpc=pilotRpc(env,config,null,await hashShareToken(token),bounded);
-  const result=await rpc<Record<string,unknown>>(path.endsWith('/view')?'view':'respond',path.endsWith('/respond')?await body(request):{});
+  let payload:Record<string,unknown>={};
+  if(path.endsWith('/respond')){
+    payload=await body(request);
+    if(Object.keys(payload).some(k=>!['requestId','key','decision','comment','author'].includes(k))
+      ||!['approved','changes','comment'].includes(String(payload.decision))||typeof payload.comment!=='string'||typeof payload.author!=='string')throw new ServiceError('VALIDATION',400);
+    uuid(payload.requestId);uuid(payload.key);
+  }
+  const result=await rpc<Record<string,unknown>>(path.endsWith('/view')?'view':'respond',payload);
   const clientId=uuid((result.client as {id:string}|undefined)?.id);
   const encrypted=await seal({token,clientId,expiresAt:Date.now()+15*60_000},await keyFor(env),`${config.workspaceId}:client-media`);
   const cookie=btoa(JSON.stringify(encrypted));

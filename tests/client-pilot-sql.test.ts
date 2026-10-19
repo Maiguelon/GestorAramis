@@ -85,5 +85,10 @@ describe('client pilot private PostgreSQL boundary',()=>{
    await staff('link-rotate',{tokenHash:'b'.repeat(64),encryptedToken:cipher});await expect(view()).rejects.toThrow('INVALID_ACCESS');
    expect((await rpc('view',{},null,'b'.repeat(64)) as PilotView).client.id).toBe(C);
  });
+ it('runs the hosted probe without leaving synthetic records',async()=>{
+   const before=(await db.query('select id from public.pieces order by id')).rows;
+   await db.exec(await readFile('supabase/tests/client_pilot_hosted.sql','utf8'));
+   expect((await db.query('select id from public.pieces order by id')).rows).toEqual(before);
+ });
 });
 

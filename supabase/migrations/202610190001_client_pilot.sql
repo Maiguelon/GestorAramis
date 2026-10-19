@@ -228,4 +228,12 @@ begin
 end $$;
 revoke all on function app_private.client_pilot_archive() from public,anon,authenticated;
 create trigger client_pilot_archive after update of archived on public.pieces for each row execute function app_private.client_pilot_archive();
+-- The same helper now also receives responses directly from a client capability.
+do $migration$
+declare body text;
+begin
+ body:=pg_get_functiondef('app_private.delivery_command(uuid,jsonb,text)'::regprocedure);
+ if strpos(body,' (cliente, registrado por el equipo)')=0 then raise exception 'Client attribution anchor missing'; end if;
+ execute replace(body,' (cliente, registrado por el equipo)',' (cliente)');
+end $migration$;
 commit;

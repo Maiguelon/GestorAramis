@@ -6,6 +6,7 @@ import Workspace from './internal/Workspace';
 import { APP_MODE, resetDemo } from './lib/api';
 import StaffAccess from './auth/StaffAccess';
 import { DriveCallback } from './internal/DriveConnection';
+import ClientPortal from './client/ClientPortal';
 class AppBoundary extends Component<{ children: ReactNode }, { error: string }> {
   state = { error: '' };
   static getDerivedStateFromError(error: Error) { return { error: error.message }; }
@@ -14,6 +15,7 @@ class AppBoundary extends Component<{ children: ReactNode }, { error: string }> 
 export default function App() {
   const [driveCallback, setDriveCallback] = useState(() => location.hash.startsWith('#drive-callback='));
   const [route, token = ''] = location.pathname.split('/').filter(Boolean);
+  if (route === 'cliente') return <AppBoundary><ClientPortal/></AppBoundary>;
   if (APP_MODE !== 'demo') {
     if (route === 'calendar' || route === 'request') return <main className="setup-page"><h1>El acceso de clientes todavía no está habilitado</h1><p>Este entorno está disponible sólo para el equipo de Aramis. La conexión de aprobaciones y material es el próximo bloque.</p></main>;
     return <AppBoundary><StaffAccess>{driveCallback && !route ? <DriveCallback onDone={() => setDriveCallback(false)}/> : route === 'text' ? <PieceText pieceId={decodeURIComponent(token)} /> : !route ? <Workspace /> : <main className="setup-page"><h1>Esta página no existe.</h1><a href="/">Volver al espacio de Aramis</a></main>}</StaffAccess></AppBoundary>;

@@ -38,7 +38,7 @@ export class SharedWorkspaceStore {
   getSnapshot = () => this.snapshot;
   /** Allowlisted same-origin authenticated transport. The returned body can stream. */
   async authenticatedFetch(path: string, init: RequestInit = {}): Promise<Response> {
-    if (!(path.startsWith('/api/drive/') || path === '/api/notifications/preferences') || /[\\?#]/.test(path)) throw new SharedApiError('VALIDATION', 'Ruta no permitida.');
+    if (!(path.startsWith('/api/drive/') || path === '/api/notifications/preferences' || path === '/api/client-pilot/staff') || /[\\?#]/.test(path)) throw new SharedApiError('VALIDATION', 'Ruta no permitida.');
     if (!this.token || !this.userId) throw new SharedApiError('SESSION_REQUIRED', 'Ingresá para abrir el espacio del equipo.');
     const generation = this.generation;
     const controller = new AbortController(); this.controllers.add(controller);

@@ -34,15 +34,15 @@ function googleConfig(env: WorkerEnv) {
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET || !env.GOOGLE_REDIRECT_URI || !env.DRIVE_ENCRYPTION_KEY || !env.SUPABASE_SERVICE_ROLE_KEY) throw new ServiceError('configuration_missing',503);
   return { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET, redirectUri: env.GOOGLE_REDIRECT_URI };
 }
-async function keyFor(env: WorkerEnv) {
+export async function keyFor(env: WorkerEnv) {
   try {
     const bytes = Uint8Array.from(atob(env.DRIVE_ENCRYPTION_KEY ?? ''), c => c.charCodeAt(0));
     if (bytes.length !== 32) throw new Error();
     return await crypto.subtle.importKey('raw',bytes,'AES-GCM',false,['encrypt','decrypt']);
   } catch { throw new ServiceError('configuration_missing',503); }
 }
-async function seal(value: unknown, key: CryptoKey, context: string) { return encryptRefreshToken(JSON.stringify(value),key,context); }
-async function open<T>(value: Envelope,key:CryptoKey,context:string):Promise<T> {
+export async function seal(value: unknown, key: CryptoKey, context: string) { return encryptRefreshToken(JSON.stringify(value),key,context); }
+export async function open<T>(value: Envelope,key:CryptoKey,context:string):Promise<T> {
   try { return JSON.parse(await decryptRefreshToken(value,key,context)) as T; }
   catch { throw new ServiceError('google_reconnect_required',502); }
 }
@@ -81,7 +81,7 @@ async function readBody(request:Request):Promise<Record<string,unknown>> {
 }
 function only(data:Record<string,unknown>,names:string[]) {if(Object.keys(data).some(k=>!names.includes(k)))throw new ServiceError('VALIDATION',400);}
 
-async function connected(rpc:Rpc,key:CryptoKey,env:WorkerEnv,workspace:string,fetcher:Fetcher) {
+export async function connected(rpc:Rpc,key:CryptoKey,env:WorkerEnv,workspace:string,fetcher:Fetcher) {
   const connection=await rpc<Connection|null>('connection-get');
   if(!connection)throw new ServiceError('google_reconnect_required',409);
   let tokens=await open<GoogleTokens>(connection.encryptedTokens,key,workspace+':tokens');

@@ -4,6 +4,7 @@ import { ServiceError, type Fetcher } from './errors';
 import { callWorkspaceRpc } from './workspace-repository';
 import { googleCallbackRedirect, handleDriveRequest, preparePieceFolders } from './drive-service';
 import type { Piece } from '../contracts/domain';
+import { handleClientPilot } from './client-pilot';
 
 export interface WorkerEnv extends NotificationEnv {
   SUPABASE_URL?: string;
@@ -84,6 +85,11 @@ export async function handleRequest(request: Request, env: WorkerEnv, fetcher: F
       return Response.json({ service: 'gestor-aramis', status: 'ok', businessApi: 'team-core', configured }, { headers: HEADERS });
     }
     const config = configuration(env);
+    if (url.pathname.startsWith('/api/client/') || url.pathname === '/api/client-pilot/staff') {
+      const response = await handleClientPilot(request, env, config, fetcher);
+      if (context && url.pathname === '/api/client/respond' && response.ok && env.NOTIFICATION_EMAIL_ENABLED === 'true') context.waitUntil(dispatchNotifications(env,fetcher).catch(()=>{console.warn('notification_dispatch_failed');}));
+      return response;
+    }
     if (url.pathname === '/api/google/callback') return googleCallbackRedirect(request);
     if (url.pathname === '/api/notifications/preferences') return await handleNotificationPreferences(request, env, config, fetcher);
     if (url.pathname.startsWith('/api/drive/')) return await handleDriveRequest(request, env, config, fetcher);

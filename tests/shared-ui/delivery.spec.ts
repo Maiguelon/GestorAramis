@@ -1,3 +1,4 @@
+import { installEmptyClientPilot } from './pilot-fixture';
 import {test,expect,type BrowserContext} from '@playwright/test';
 import type {Piece,WorkspaceState,Delivery} from '../../contracts/domain';
 import type {DriveAsset} from '../../src/lib/drive-api';
@@ -103,3 +104,5 @@ test('delivery upload → review → changes visible in Design → new version �
  await page.getByRole('tab',{name:'Detalles',exact:true}).click();await expect(page.getByRole('textbox',{name:'Caption',exact:true})).toBeDisabled();await expect(page.getByRole('button',{name:'Marcar como programado',exact:true})).toHaveCount(0);expect(service.p.status).toBe('approved');
  await page.reload();expect(service.p.deliveries).toHaveLength(2);
 });
+
+test.beforeEach(async ({context})=>{await installEmptyClientPilot(context);});

@@ -1,3 +1,4 @@
+import { installEmptyClientPilot } from './pilot-fixture';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import type { WorkspaceState } from '../../contracts/domain';
 import type { DriveAsset } from '../../src/lib/drive-api';
@@ -312,3 +313,5 @@ test('trash asks for confirmation, keeps failed material and removes it only aft
   await expect(page.getByText('Archivo enviado a la papelera de Drive.')).toBeVisible();
   await page.reload();await material(page);await expect(button).toHaveCount(0);
 });
+
+test.beforeEach(async ({context})=>{await installEmptyClientPilot(context);});

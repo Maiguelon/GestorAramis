@@ -1,3 +1,4 @@
+import { installEmptyClientPilot } from './pilot-fixture';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import type { Command, CommandResult, WorkspaceState } from '../../contracts/domain';
 import { applyCommand, DomainError } from '../../src/domain/engine';
@@ -366,3 +367,5 @@ test('enlaces de calendario y solicitudes permanecen cerrados en modo compartido
   }
   expect(service.reads).toBe(0);
 });
+
+test.beforeEach(async ({context})=>{await installEmptyClientPilot(context);});

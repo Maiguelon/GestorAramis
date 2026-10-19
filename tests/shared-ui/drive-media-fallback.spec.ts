@@ -1,3 +1,4 @@
+import { installEmptyClientPilot } from './pilot-fixture';
 import { expect, test } from '@playwright/test';
 import type { WorkspaceState } from '../../contracts/domain';
 import type { DriveAsset } from '../../src/lib/drive-api';
@@ -102,3 +103,5 @@ test('miniaturas MOV/M4V, recuperación y descarga original sin cargar videos al
   await page.getByRole('button',{name:'Reproducir toma.mp4',exact:true}).click();
   await expect.poll(()=>contentRequests.some(url=>url==='/api/drive/assets/asset-mp4/content')).toBe(true);
 });
+
+test.beforeEach(async ({context})=>{await installEmptyClientPilot(context);});

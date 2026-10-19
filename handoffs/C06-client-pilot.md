@@ -1,5 +1,7 @@
 # Client pilot · 2026-10-19
 
+Later UI/behavior updates supersede the controls described below: see [unified publication and separate caption review](C06-client-review-update.md) and [monthly calendar](C06-client-calendar-usability.md). Original migration and rollout evidence is retained here.
+
 ## Scope
 
 Private revocable links, no client accounts. `/cliente#<token>` opens **Para revisar** and **Calendario**; a request ID after the token opens one exact review. All pending requests remain accessible across calendar months. The calendar has agenda/month views and an undated section; day cells show counts without stretching with the number of pieces.

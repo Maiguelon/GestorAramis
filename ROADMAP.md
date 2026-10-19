@@ -1,6 +1,8 @@
 # Hoja de ruta — Gestor Aramis V1
 ## Actualización · piloto cliente 2026-10-19
 
+Iteración de revisión publicada: una acción incluye calendario y publica entrega/guion con caption; aceptación por partes y cambios finales a Diseño con motivo. Migración 0003 y probe alojado con rollback aprobados. Uso y límites vigentes en `handoffs/C06-client-review-update.md`; piloto con un cliente real en su teléfono todavía pendiente.
+
 C06/C07/C09 avanzan juntos mediante `docs/PLAN_CLIENT_PILOT.md`: calendario y revisiones de guion/entrega por enlace privado, publicación explícita, WhatsApp agregado manual y multicliente excluido. Infraestructura de piloto integrada y migración aplicada; pruebas aisladas y probe real con rollback aprobados. La prueba con un cliente real y teléfonos del cliente sigue pendiente. C08 (subida cliente), cuentas cliente y acceso desde pantalla de inicio quedan fuera. Estado desplegado y evidencia en `handoffs/C06-client-pilot.md` y PROJECT_STATE.md.
 
 

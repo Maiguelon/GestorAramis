@@ -29,3 +29,7 @@ Ignored fictional screenshots: `work/client-review-unified-staff.png`, `work/cli
 ## Next check
 
 Refresh the app. In an existing piece use **Cliente → Actualizar vista del cliente**, review the preview, then open the same client link. Previously calendar-only entries remain metadata-only until this explicit update. Try a real final delivery and caption on the client's phone. No new account or Google renewal is needed for this change.
+
+## Deployment
+
+Published **7b6c11a1.gestor-aramis.pages.dev**, served at **https://gestor.aramis.agency/**; commit `7924841` (UI `bfe09c8`). Final package/TypeScript/Worker/secret scan and remote smoke passed. Remote bundle `index-CcMN88yy.js` is byte-identical to the prepared package. Read-only check of the real client capability returns HTTP 200, the same two calendar pieces and one request, with no internal fields. Hosted staff UI confirms the latest delivery v2 takes precedence, the single publication button sits below the tabs, and the old header checkbox is gone. No publication action was clicked; the modal was closed after inspection. Screenshot `work/client-review-hosted-controls.png` excludes the private link. Sprint commits were fast-forwarded into local main before deployment; no GitHub push. This does not create or upgrade any real public review automatically.

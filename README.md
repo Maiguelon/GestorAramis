@@ -20,7 +20,7 @@ The team plans posts and reels, writes scripts, records footage, produces finish
 
 The product follows that workflow. Marketing manages the plan; design opens a production queue with direct access to scripts and material. Drive remains the file store. Email summaries make new handoffs visible even when nobody has the app open.
 
-The client pilot follows the same principle: a manually sent WhatsApp message opens pending reviews and a calendar directly. Marketing explicitly publishes a script snapshot or a finished delivery; the client can approve, request changes or comment. Nothing is shared automatically.
+The client pilot opens its monthly calendar when there are no pending reviews; other shared months and undated pieces remain easy to find. It follows the same principle: a manually sent WhatsApp message opens pending reviews and a calendar directly. Marketing explicitly publishes a script snapshot or a finished delivery; the client can approve, request changes or comment. Nothing is shared automatically.
 
 ## Current functionality
 
@@ -212,7 +212,7 @@ Engineering notes are mostly in Spanish and include historical checkpoints. Use 
 
 ## Client pilot
 
-From a piece, open **Cliente** to share it in the client calendar or publish a review. Script text starts empty: staff curate exactly what the client sees, independently of internal production instructions. Final reviews use the pinned delivery files and caption. Script approval leaves the piece in Planning; final delivery changes return it to Design with the client’s reason. Multiclient pieces are excluded.
+From a piece, use the calendar visibility checkbox above the actions and tabs to share its title, date, format and state. Open **Cliente** to publish a review. The Design work view omits these client controls. Script text starts empty: staff curate exactly what the client sees, independently of internal production instructions. Final reviews use the pinned delivery files and caption. Script approval leaves the piece in Planning; final delivery changes return it to Design with the client’s reason. Multiclient pieces are excluded.
 
 From **Clientes → client → Acceso y revisiones del cliente**, create/copy, rotate or revoke its link and prepare one WhatsApp message for all pending reviews. Opening WhatsApp never marks a message as sent. Anyone with the link can respond; names are self-reported, not verified identities. Treat these links as private credentials.
 

@@ -18,3 +18,9 @@ Read-only hosted RPC inspection found an active Ariel Contreras link with two pu
 - Regression: TypeScript/Vite and Pages/Worker build plus secret scanning passed. Hosted read-only inspection also verified the public client API returns HTTP 200 with the same two calendar pieces and zero requests, and no private fields. Demo checks and deployment completion are recorded below.
 
 No automatic publication, database migration, permission change or external message is needed for these corrections. All new behavioral browser fixtures are fictional; real customer entries are inspected read-only.
+
+## Regression and rollout
+
+The complete shared browser run passed **41 tests** after its internal-only harnesses were updated to mock the new read-only header lookup. A separate focused demo regression passed **10 tests** covering internal detail, Design and multiclient behavior. The new lost-response test intentionally clicks the controlled checkbox without assuming a server-confirmed checked state. Local screenshots: `work/client-calendar-mobile-fixed.png`, `work/client-calendar-header-management.png`, `work/client-calendar-header-design.png`. They use fictional records. TypeScript, Pages/Worker compilation and package secret scanning passed.
+
+No real client link was created, renewed or revoked, and no customer publication setting was changed during investigation. The API check used the existing active capability ephemerally and reported only allowlisted piece metadata; credentials were not printed or committed. Hosted deployment result follows.

@@ -1,5 +1,15 @@
 # Estado del proyecto
 
+## Calendario cliente y controles por vista — 2026-10-19
+
+Corrección solicitada después del primer piloto. Diagnóstico real de sólo lectura: el enlace activo de Ariel tiene dos piezas marcadas (28/9 y 16/10) y cero solicitudes de revisión. La API pública devuelve HTTP 200 con esas mismas piezas y sin campos privados; no faltaba persistencia. La entrada siempre mostraba Para revisar vacío y el calendario abría una agenda del mes actual, dejando el resto poco visible.
+
+Ahora abre Calendario si no hay revisiones accionables. Calendario muestra cuadrícula mensual con títulos, cantidades y altura fija por día, detalle del día debajo, acceso directo a otros meses compartidos y piezas sin fecha a la vista. Si el mes actual está vacío, empieza por el próximo mes con contenido o el último pasado. Para revisar conserva su lista y ofrece abrir Calendario al estar vacío.
+
+Gestión tiene Mostrar en el calendario del cliente arriba, antes de acciones y pestañas. Un mismo estado compartido alimenta la casilla y la publicación de revisiones; conserva reintentos exactos y protege borradores/operaciones inciertas. Diseño no tiene pestaña Cliente ni control de visibilidad, tampoco al abrir desde Calendario, y no consulta la API de publicación. Multicliente sigue excluido. No hay migraciones, cambios de permisos, nuevos enlaces, publicaciones de contenido ni envíos externos.
+
+Verificación: 41 recorridos compartidos completos y 10 de regresión demo (detalle, Diseño y multicliente) aprobados; TypeScript/Vite/Pages/Worker y escaneo de secretos aprobados. Fixtures anteriores incluyen explícitamente la consulta de lectura de cabecera para aislar sus errores de Drive; los tres fallos iniciales eran consultas nuevas sin doble de servicio. Handoff `handoffs/C06-client-calendar-usability.md`. Rama `fix/client-calendar-visibility`; publicación y comprobación alojada finales en curso.
+
 ## Piloto cliente por enlace — 2026-10-19
 
 Sprint en `feature/client-pilot`, dividido en commits de plan, API/SQL, página cliente, controles internos y cierre. Calendario/agenda y pendientes sin login; publicación expresa de guion curado o entrega exacta; comentarios, aprobación y cambios. Guion aprobado no cambia planificación; cambios finales vuelven a Diseño con motivo y fuente cliente. Multicliente excluido. Pestaña Cliente en la pieza; acceso general y WhatsApp agregado manual en Clientes → cliente → Acceso y revisiones. Ningún contenido existente se publica por defecto.

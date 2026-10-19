@@ -4,7 +4,7 @@
 
 Gestor Aramis brings monthly planning, production assets, design handoffs and review into one workspace. It was built around the day-to-day work of the Aramis team and is now used internally to coordinate real content production.
 
-**Current status:** the internal V1 is complete, deployed and in use by the team. Planning, production and review were already part of the working release before email notifications were added as a subsequent improvement. Client-facing calendars, approvals and material requests exist as local prototypes; their live integration is the next product phase.
+**Current status:** the internal V1 is complete, deployed and in use by the team. Planning, production and review were already part of the working release before email notifications were added as a subsequent improvement. An opt-in client pilot adds private calendar and review links without client accounts. Client material requests remain local prototypes.
 
 [Open the deployed app — team login required](https://gestor.aramis.agency/) · [Run the local demo](#run-the-local-demo) · [Architecture](#architecture) · [Verification](#verification)
 
@@ -20,7 +20,7 @@ The team plans posts and reels, writes scripts, records footage, produces finish
 
 The product follows that workflow. Marketing manages the plan; design opens a production queue with direct access to scripts and material. Drive remains the file store. Email summaries make new handoffs visible even when nobody has the app open.
 
-The planned client experience follows the same principle: a WhatsApp message opens the relevant calendar, approval or upload page directly. Those remote client flows are not active in the deployed V1 yet.
+The client pilot follows the same principle: a manually sent WhatsApp message opens pending reviews and a calendar directly. Marketing explicitly publishes a script snapshot or a finished delivery; the client can approve, request changes or comment. Nothing is shared automatically.
 
 ## Current functionality
 
@@ -98,7 +98,7 @@ Workspace changes refresh when the tab regains focus and every 15 seconds while 
 contracts/             Shared domain and notification types
 src/domain/            Business rules, selectors and fictional demo fixtures
 src/internal/          Planning, production, delivery, history and settings UI
-src/client/            Client-facing local prototypes
+src/client/            Client pilot and earlier local prototypes
 src/lib/               Data adapters, uploads and notification preferences
 server/                Authorization, workspace API, Drive and email services
 functions/             Cloudflare Pages API entry point
@@ -189,7 +189,7 @@ The work spans operational discovery, workflow design, service integration and d
 
 ## Current boundaries and next steps
 
-The internal V1 covers the team's planning, production and review workflow and is already in use. Client access, live calendar links, remote approvals and client uploads belong to the next product phase. Authentication emails and self-service account recovery are separate improvements. Social publishing is handled outside the app. Internal metrics come after the client workflows.
+The internal V1 covers the team's planning, production and review workflow and is already in use. The client pilot supports private calendar links and remote script/delivery approvals. Client accounts, uploads and a real-client/mobile rollout remain future work. Authentication emails and self-service account recovery are separate improvements. Social publishing is handled outside the app. Internal metrics come after the client workflows.
 
 Each deployment needs its own Google OAuth configuration for the Drive integration, separate from staff sign-in through Supabase. Connection setup and renewal procedures are documented in the Drive handoffs; the OAuth publishing status of the current Aramis deployment is an operational detail recorded in [PROJECT_STATE.md](PROJECT_STATE.md).
 
@@ -209,3 +209,13 @@ Browser uploads depend on the browser remaining active; the native Drive app is 
 | [Email notification handoff](handoffs/C11-email-notifications.md) | Verified sender, scheduling, recovery and operational evidence |
 
 Engineering notes are mostly in Spanish and include historical checkpoints. Use the latest dated entry in `PROJECT_STATE.md` and the relevant handoff when resuming work.
+
+## Client pilot
+
+From a piece, open **Cliente** to share it in the client calendar or publish a review. Script text starts empty: staff curate exactly what the client sees, independently of internal production instructions. Final reviews use the pinned delivery files and caption. Script approval leaves the piece in Planning; final delivery changes return it to Design with the client’s reason. Multiclient pieces are excluded.
+
+From **Clientes → client → Acceso y revisiones del cliente**, create/copy, rotate or revoke its link and prepare one WhatsApp message for all pending reviews. Opening WhatsApp never marks a message as sent. Anyone with the link can respond; names are self-reported, not verified identities. Treat these links as private credentials.
+
+The pilot uses a separate allowlisted API and private database tables. Authorization uses a 256-bit capability hash; an encrypted copy allows staff to recover the link. The token stays in the URL fragment, outside HTTP request URLs. Media uses a short-lived HTTP-only cookie and rechecks publication, revocation and the pinned file revision on every request. Legacy demo calendar links retain their read-only scope. No Drive sharing changes are required.
+
+Run `npm run test:e2e:shared -- tests/shared-ui/client-pilot.spec.ts tests/shared-ui/client-pilot-staff.spec.ts` for the simulated browser flows. See [the sprint plan](docs/PLAN_CLIENT_PILOT.md) and [handoff](handoffs/C06-client-pilot.md) for deployed status, migration evidence and rollout limitations.

@@ -1,4 +1,8 @@
 # Hoja de ruta — Gestor Aramis V1
+## Actualización · piloto cliente 2026-10-19
+
+C06/C07/C09 avanzan juntos mediante `docs/PLAN_CLIENT_PILOT.md`: calendario y revisiones de guion/entrega por enlace privado, publicación explícita, WhatsApp agregado manual y multicliente excluido. Infraestructura de piloto integrada y migración aplicada; pruebas aisladas y probe real con rollback aprobados. La prueba con un cliente real y teléfonos del cliente sigue pendiente. C08 (subida cliente), cuentas cliente y acceso desde pantalla de inicio quedan fuera. Estado desplegado y evidencia en `handoffs/C06-client-pilot.md` y PROJECT_STATE.md.
+
 
 Versión acordada el 2026-09-06. Objetivo: coordinación interna visible para la hermana del usuario y calendario, aprobaciones y material para clientes desde WhatsApp. Contratos compartidos en contracts/. Detalles y justificación en DECISIONS.md.
 

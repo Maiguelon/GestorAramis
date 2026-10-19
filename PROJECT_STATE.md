@@ -1,5 +1,15 @@
 # Estado del proyecto
 
+## Piloto cliente por enlace — 2026-10-19
+
+Sprint en `feature/client-pilot`, dividido en commits de plan, API/SQL, página cliente, controles internos y cierre. Calendario/agenda y pendientes sin login; publicación expresa de guion curado o entrega exacta; comentarios, aprobación y cambios. Guion aprobado no cambia planificación; cambios finales vuelven a Diseño con motivo y fuente cliente. Multicliente excluido. Pestaña Cliente en la pieza; acceso general y WhatsApp agregado manual en Clientes → cliente → Acceso y revisiones. Ningún contenido existente se publica por defecto.
+
+Migraciones `202610190001_client_pilot.sql` y `202610190002_client_pilot_media.sql` aplicadas una vez en Supabase; no repetir. Hash y copia cifrada para enlaces recuperables/revocables; RPC sólo servidor, proyección explícita sin notas/material fuente. Streaming de revisiones exactas con cookie de 15 minutos y revalidación por lectura. Una consulta de medios ambigua se detectó con SQL real, se corrigió en migración separada y se verificó nuevamente. Probe alojado con rollback: guion, respuesta repetida, cambios finales, revocación, grants; conserva 46 piezas / 7 clientes y cero enlaces/solicitudes piloto. No se envió WhatsApp/correo ni se crearon archivos Drive de prueba.
+
+Verificación: 564 casos unitarios, 35 recorridos compartidos más caso de carrera de lectura y repetición focalizada final de seis casos piloto. 30 recorridos demo cubiertos; cinco afectados por un ensayo de carga diferida descartado se repitieron con éxito. Paquete Pages/TypeScript/Worker compilado y escaneado sin secretos. Los dobles HTTP comprueban bytes Range de revisión fijada y los tests SQL la pertenencia al snapshot; no se afirma aún preview de una nueva entrega cliente real ni prueba iPhone. Plan `docs/PLAN_CLIENT_PILOT.md`; guía y límites `handoffs/C06-client-pilot.md`.
+
+Publicación y smoke remoto: en curso. Próxima acción: terminar publicación en dominio habitual, comprobar lectura staff sin generar enlaces reales, luego Miguel elige un primer cliente para probar el circuito en su celular. Cuentas cliente, subidas cliente, PWA y avisos nuevos por comentarios quedan fuera del sprint.
+
 ## Piezas multicliente — publicado 2026-10-18
 
 Publicado **7ab5ced8.gestor-aramis.pages.dev**, también en **https://gestor.aramis.agency/**. Nuevo contenido tiene Varios clientes y Seleccionar todos, conserva la selección inicial, pone Clientes en una fila completa y Formato/Fecha debajo, y quita las dos aclaraciones redundantes. Una selección fija comparte una tarea, estado, texto, material y entrega. Pendientes/Diseño muestran una vez; búsqueda, filtros, calendario, mes e historial la encuentran desde cualquier destinatario. Las compartidas son extras fuera de la base mensual. A pedido final de Miguel, se identifican con un símbolo de grupo junto a los nombres; piezas individuales conservan logo. Archivar avisa que afecta a todos.

@@ -22,6 +22,12 @@ for (const path of ['/api/notifications/preferences', '/api/drive/pieces/0000000
 }
 const foreign = await fetch(`${base}/api/workspace`, { headers: { Origin: 'https://example.invalid' } });
 assert.equal(foreign.status, 403);
+const pilotStaff = await fetch(base + '/api/client-pilot/staff', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+assert.equal(pilotStaff.status,401,'Client publication controls require a verified staff session');
+const pilotMissing = await fetch(base + '/api/client/view');
+assert.equal(pilotMissing.status,403,'A client page cannot read data without its private link');
+const pilotUnknown = await fetch(base + '/api/client/view',{headers:{Authorization:`Bearer ${'z'.repeat(43)}`}});
+assert.equal(pilotUnknown.status,403,'An unknown capability is rejected by the live service');
 const foreignDrive=await fetch(`${base}/api/drive/connect`, {method:'POST',headers:{Origin:'https://example.invalid','Content-Type':'application/json'},body:'{}'});
 assert.equal(foreignDrive.status,403);
 const foreignPreferences=await fetch(`${base}/api/notifications/preferences`, {method:'POST',headers:{Origin:'https://example.invalid','Content-Type':'application/json'},body:'{}'});
@@ -72,6 +78,9 @@ try {
     assert.match(response.headers()['x-robots-tag'], /noindex/);
   }
   assert.deepEqual(errors, []);
+  await page.goto(base + '/cliente#invalid-smoke-link');
+  await page.getByRole('heading',{name:'Este enlace no está disponible',exact:true}).waitFor();
+  assert.equal(await page.locator('input[type=password]').count(),0);
 } finally {
   await browser.close();
 }

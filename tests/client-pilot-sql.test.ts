@@ -76,6 +76,24 @@ describe('client pilot private PostgreSQL boundary',()=>{
    await db.query("insert into app_private.deliveries(workspace_id,piece_id,version,caption,assets,status,created_by) values($1,$2,2,'Otra','[]','pending','Diseño')",[W,P]);
    await expect(respond(request.id,'approved')).rejects.toThrow('CONFLICT');
  });
+ it('authorizes only assets in the published final snapshot and denies source files or withdrawn media',async()=>{
+   const A=randomUUID(),G=randomUUID(),source=randomUUID();
+   await db.query('insert into app_private.drive_connections(workspace_id,generation,encrypted_tokens,account_email,account_permission_id) values($1,$2,$3,\'fixture@example.test\',\'fixture\')',[W,G,JSON.stringify(cipher)]);
+   await db.query("insert into app_private.drive_folders(workspace_id,logical_key,folder_id) values($1,$2,'final-folder')",[W,`piece:${P}:delivery`]);
+   for(const id of [A,source]){
+     await db.query("insert into app_private.drive_uploads(upload_id,workspace_id,user_id,piece_id,client_id,name,mime_type,byte_size,fingerprint,drive_file_id,folder_id,generation,status) values($1,$2,$3,$4,$5,'final.mp4','video/mp4',6,'fixture',$6,'final-folder',$7,'complete')",[id,W,U,P,C,'file-'+id,G]);
+     await db.query("insert into app_private.drive_team_assets(id,workspace_id,checksum,drive_revision_id) values($1,$2,$3,'pinned-one')",[id,W,'b'.repeat(32)]);
+   }
+   const d=(await db.query<{id:string}>('select id from app_private.deliveries where piece_id=$1 order by version desc limit 1',[P])).rows[0];
+   await db.query('update app_private.deliveries set assets=$1 where id=$2',[JSON.stringify([{id:A,name:'final.mp4',mimeType:'video/mp4',size:6}]),d.id]);
+   const revision=(await db.query<{revision:number}>('select revision from public.pieces where id=$1',[P])).rows[0].revision;
+   const value=await staff('publish',{pieceId:P,expectedRevision:revision,kind:'delivery',deliveryId:d.id});const request=value.requests.find(r=>r.kind==='delivery')!;
+   expect(await rpc('asset',{requestId:request.id,assetId:A},null,hash)).toMatchObject({id:A,driveRevisionId:'pinned-one',generation:G});
+   await expect(rpc('asset',{requestId:request.id,assetId:source},null,hash)).rejects.toThrow('NOT_FOUND');
+   expect(await rpc('connection-get',{requestId:request.id},null,hash)).toMatchObject({generation:G});
+   await staff('withdraw',{requestId:request.id});
+   await expect(rpc('asset',{requestId:request.id,assetId:A},null,hash)).rejects.toThrow('INVALID_ACCESS');
+ });
  it('archive withdraws publication; restoring does not expose it again',async()=>{
    await db.query('update public.pieces set archived=true where id=$1',[P]);expect((await view()).pieces).toEqual([]);
    await db.query('update public.pieces set archived=false where id=$1',[P]);expect((await view()).pieces).toEqual([]);

@@ -11,7 +11,7 @@ async function result<T>(response:Response):Promise<T>{
   return value as T;
 }
 export async function readPilot(token:string,signal?:AbortSignal):Promise<PilotView>{
-  return result(await fetch('/api/client/view',{headers:{Authorization:`Bearer ${token}`},credentials:'same-origin',cache:'no-store',signal}));
+  return result(await fetch('/api/client/view',{headers:{Authorization:`Bearer ${token}`},credentials:'same-origin',cache:'no-store',signal:signal?AbortSignal.any([signal,AbortSignal.timeout(30_000)]):AbortSignal.timeout(30_000)}));
 }
 export interface PilotResponse {requestId:string;decision:'approved'|'changes'|'comment';comment:string;author:string;key:string}
 export async function respondPilot(token:string,payload:PilotResponse):Promise<PilotView>{

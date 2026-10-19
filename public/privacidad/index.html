@@ -23,7 +23,7 @@
     <div class="page-intro">
       <p class="eyebrow">Gestor Aramis</p>
       <h1>Privacy policy</h1>
-      <p class="updated">Effective and last updated: October 15, 2026</p>
+      <p class="updated">Effective and last updated: October 19, 2026</p>
       <p class="lead">This policy explains how Aramis handles information in its internal content planning, production and review workspace.</p>
       <p>Aramis operates Gestor Aramis at <a href="https://gestor.aramis.agency/">gestor.aramis.agency</a>. For support or privacy requests, contact <a class="contact-email" href="mailto:miguelcarreteroangel@gmail.com">miguelcarreteroangel@gmail.com</a>.</p>
     </div>
@@ -55,7 +55,7 @@
     </section>
     <section id="access">
       <h2>4. Who can access information</h2>
-      <p>Workspace information and materials are accessible through the application to authorized Aramis team members. Management and Design are work views, not separate permissions. This policy describes the current internal release; live client-facing access is not enabled.</p>
+      <p>Workspace information and materials are accessible through the application to authorized Aramis team members. Management and Design are work views, not separate permissions. An optional client pilot provides private links to an explicitly shared calendar, script text and finished delivery reviews. Anyone with that link can view the shared content and submit comments or decisions for that client; respondent names are self-reported. Internal notes, production instructions and source material are not included. Aramis can renew or revoke a link, withdraw a review or hide a piece. Multiclient tasks are excluded.</p>
       <p>We use the following service providers to operate the workspace:</p>
       <ul>
         <li><strong>Google Drive:</strong> storage of source material and deliveries, file metadata, thumbnails and video viewing.</li>
@@ -67,8 +67,8 @@
     </section>
     <section id="storage">
       <h2>5. Storage, security and browser data</h2>
-      <p>Original files and retained delivery revisions are stored in Google Drive. Workspace records and file references are stored in Supabase. Google integration tokens are encrypted before database storage; private integration credentials stay on the server. Production connections use HTTPS, and the API checks staff identity and workspace membership before providing protected information.</p>
-      <p>The browser stores essential sign-in session information and work-view preferences, as well as identifiers and metadata needed to retry operations and resume uploads. A short-lived, HTTP-only cookie authorizes private media requests. Clearing site data removes local sessions and preferences and can interrupt pending uploads; it does not delete workspace records or Drive files.</p>
+      <p>Original files and retained delivery revisions are stored in Google Drive. Workspace records and file references are stored in Supabase. Google integration tokens are encrypted before database storage; private integration credentials stay on the server. Production connections use HTTPS, and the API checks staff identity and workspace membership, or a client link’s validity and published scope, before providing protected information. Client links are authorized using a cryptographic hash; an encrypted copy lets the team recover the link. Review snapshots and responses are retained for the work history.</p>
+      <p>The browser stores essential sign-in session information and work-view preferences, as well as identifiers and metadata needed to retry operations and resume uploads. Short-lived, HTTP-only cookies authorize private media requests. Client links contain a private token in the URL fragment; keep the complete link private and ask Aramis to renew it if it is shared unintentionally. Clearing site data removes local sessions and preferences and can interrupt pending uploads; it does not delete workspace records or Drive files.</p>
       <p>The public About and Privacy pages use locally hosted assets and do not request workspace data. Opening Google's video viewer or an external link connects to that provider, which may use its own cookies and privacy practices.</p>
     </section>
     <section id="retention">

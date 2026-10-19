@@ -53,3 +53,17 @@ test('final review uses only client media routes and requires a comment for chan
  await page.screenshot({path:'work/client-pilot-review.png',fullPage:true});
 });
 
+test('a delayed refresh cannot overwrite a decision already confirmed by the client',async({page,context})=>{
+ const view=fixture();let hold=false,release=()=>{},held=false;
+ await context.route('**/api/client/view',async route=>{
+   const snapshot=structuredClone(view);
+   if(hold){held=true;await new Promise<void>(resolve=>{release=resolve;});}
+   await route.fulfill({json:snapshot});
+ });
+ await context.route('**/api/client/respond',route=>{view.requests[0].status='approved';view.requests[0].canRespond=false;return route.fulfill({json:view});});
+ await page.goto(`/cliente#${token}/${R}`);await expect(page.getByRole('button',{name:'Aprobar guion',exact:true})).toBeVisible();
+ hold=true;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect.poll(()=>held).toBe(true);
+ page.on('dialog',d=>d.accept());await page.getByRole('button',{name:'Aprobar guion',exact:true}).click();await expect(page.getByText('Aprobación registrada.')).toBeVisible();
+ release();await expect(page.getByRole('button',{name:'Aprobar guion',exact:true})).toHaveCount(0);
+});
+

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Copy, ExternalLink, Link2, MessageCircle, RefreshCw } from 'lucide-react';
 import type { Client, Piece } from '../../contracts/domain';
 import type { PilotAction, PilotStaffView } from '../../contracts/client-pilot';
@@ -15,7 +15,8 @@ export default function ClientPilot({client,piece,disabled=false,onDirty,onBusy}
   const [busy,setBusy]=useState(false),[script,setScript]=useState('');
   const [pending,setPending]=useState<(PilotAction&{key:string})|null>(null);
   const [message,setMessage]=useState('');
-  const refresh=useCallback(async()=>{try{setView(await staffPilot({action:'staff-view',clientId:client.id}));setError('');}catch(error){setError(error instanceof Error?error.message:'No pudimos cargar el acceso.');}},[client.id]);
+  const readSerial=useRef(0);
+  const refresh=useCallback(async()=>{const serial=++readSerial.current;try{const data=await staffPilot({action:'staff-view',clientId:client.id});if(serial===readSerial.current){setView(data);setError('');}}catch(error){if(serial===readSerial.current)setError(error instanceof Error?error.message:'No pudimos cargar el acceso.');}},[client.id]);
   useEffect(()=>{void refresh();},[refresh,piece?.revision]);
   useEffect(()=>{onDirty?.(!!script.trim());return()=>onDirty?.(false);},[script,onDirty]);
   useEffect(()=>{onBusy?.(busy||!!pending);return()=>onBusy?.(false);},[busy,pending,onBusy]);
@@ -24,7 +25,7 @@ export default function ClientPilot({client,piece,disabled=false,onDirty,onBusy}
   if(shared)return <p className="notice-banner">Las piezas multicliente se gestionan sólo dentro del equipo.</p>;
   async function act(action:PilotAction,retry?:PilotAction&{key:string}){
     if(busy)return;const payload=retry??{...action,key:crypto.randomUUID()};setBusy(true);setPending(payload);setError('');setNotice('');
-    try{setView(await staffPilot(payload));setPending(null);if(payload.action==='publish')setScript('');setNotice('Cambio guardado.');void sharedWorkspace.refresh();}
+    try{const data=await staffPilot(payload);readSerial.current++;setView(data);setPending(null);if(payload.action==='publish')setScript('');setNotice('Cambio guardado.');void sharedWorkspace.refresh();}
     catch(error){setError(error instanceof Error?error.message:'No pudimos confirmar el cambio.');if(error instanceof PilotError&&['VALIDATION','CONFLICT','INVALID_TRANSITION','NOT_FOUND','forbidden'].includes(error.code)){setPending(null);void sharedWorkspace.refresh();}}
     finally{setBusy(false);}
   }

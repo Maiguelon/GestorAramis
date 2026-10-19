@@ -34,3 +34,11 @@ Ignored screenshots: `work/client-pilot-mobile.png`, `work/client-pilot-review.p
 Start with one willing client. In a single-client piece, prepare the exact public text or final delivery and create its client link. Test the link on a separate phone/browser, including a comment, script approval, final correction and new-version review. Only then send it from WhatsApp. Keep source material and internal notes private. If needed, revoke the link and withdraw/hide the published reviews; internal production continues normally.
 
 Deployments are additive: the previous internal app tolerates the new empty pilot tables. Existing customers receive no access until staff explicitly create a link and publish content. No change to Google OAuth, Resend, DNS or team accounts is required.
+
+## Published result
+
+Cloudflare Pages deployment **c82a24bd.gestor-aramis.pages.dev**, served at **https://gestor.aramis.agency/**; application code `70ebee6`. `pages:prepare` passed TypeScript, frontend/Worker compilation and secret scanning; the extended remote smoke passed, including authenticated-only publication and rejection of missing/unknown pilot capabilities. Hosted staff-session read of the Cliente tab passed with no link or publication created. Screenshot: `work/client-pilot-hosted-controls.png`. Both migrations and the expanded rollback probe (including the pinned asset authorization query) succeeded; final counts remain 46 pieces / 7 clients / zero pilot links and requests.
+
+Final Vitest run: **564 passed**. Browser evidence: **30 distinct demo routes** covered across the full run plus successful five-case rerun after removing the lazy-load experiment; **36 distinct shared routes** covered by the full 35-case run plus the added delayed-refresh case, with all six pilot cases repeated successfully after the last UI change. The browser/services doubles do not replace the pending first real-client phone test.
+
+Sprint commits were made on `feature/client-pilot` and integrated into local `main` by fast-forward. GitHub was not pushed; production was published through the established Pages deployment flow.

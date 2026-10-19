@@ -13,7 +13,7 @@ async function result<T>(response:Response):Promise<T>{
 export async function readPilot(token:string,signal?:AbortSignal):Promise<PilotView>{
   return result(await fetch('/api/client/view',{headers:{Authorization:`Bearer ${token}`},credentials:'same-origin',cache:'no-store',signal:signal?AbortSignal.any([signal,AbortSignal.timeout(30_000)]):AbortSignal.timeout(30_000)}));
 }
-export interface PilotResponse {requestId:string;decision:'approved'|'changes'|'comment';comment:string;author:string;key:string}
+export interface PilotResponse {requestId:string;decision:'approved'|'changes'|'comment';comment:string;author:string;key:string;part?:'content'|'caption'}
 export async function respondPilot(token:string,payload:PilotResponse):Promise<PilotView>{
   return result(await fetch('/api/client/respond',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(payload),credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(30_000)}));
 }

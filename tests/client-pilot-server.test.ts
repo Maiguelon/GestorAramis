@@ -8,6 +8,12 @@ const env:WorkerEnv={SUPABASE_URL:'https://example.supabase.co',SUPABASE_PUBLISH
 const token='a'.repeat(43),view={client:{id:C,name:'Ficticio',initials:'F',color:'#123456'},pieces:[],requests:[]};
 const req=(path:string,body?:unknown,bearer=token)=>new Request('https://gestor.example'+path,{method:body?'POST':'GET',headers:{Authorization:`Bearer ${bearer}`,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
 describe('public client pilot HTTP boundary',()=>{
+ it('accepts only the named review parts and preserves the exact response payload',async()=>{
+   const payload={requestId:U,key:W,decision:'approved',comment:'',author:'Cliente',part:'caption'};
+   const fetcher=vi.fn(async(_input:unknown,init?:RequestInit)=>{expect(JSON.parse(String(init?.body)).p_payload).toEqual(payload);return Response.json(view);});
+   expect((await handleRequest(req('/api/client/respond',payload),env,fetcher)).status).toBe(200);
+   fetcher.mockClear();expect((await handleRequest(req('/api/client/respond',{...payload,part:'internalNote'}),env,fetcher)).status).toBe(400);expect(fetcher).not.toHaveBeenCalled();
+ });
  it('forwards a hash only, strips cookies from JSON and sets a client-specific private media cookie',async()=>{
    const fetcher=vi.fn(async(_input:unknown,init?:RequestInit)=>{expect(init?.body).not.toContain(token);return Response.json(view);});
    const response=await handleRequest(req('/api/client/view'),env,fetcher);

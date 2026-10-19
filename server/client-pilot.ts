@@ -94,7 +94,8 @@ export async function handleClientPilot(request:Request,env:WorkerEnv,config:Con
   let payload:Record<string,unknown>={};
   if(path.endsWith('/respond')){
     payload=await body(request);
-    if(Object.keys(payload).some(k=>!['requestId','key','decision','comment','author'].includes(k))
+    if(Object.keys(payload).some(k=>!['requestId','key','decision','comment','author','part'].includes(k))
+      ||('part' in payload&&!['content','caption'].includes(String(payload.part)))
       ||!['approved','changes','comment'].includes(String(payload.decision))||typeof payload.comment!=='string'||typeof payload.author!=='string')throw new ServiceError('VALIDATION',400);
     uuid(payload.requestId);uuid(payload.key);
   }

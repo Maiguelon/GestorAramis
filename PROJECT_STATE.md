@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Etiquetas de vencimiento con más contraste — 2026-10-21
+
+Refuerzo visual pedido por Miguel: Vence hoy y Vence mañana pasan a etiquetas con fondo suave, borde, negrita e icono de reloj. Hoy rojo institucional; mañana ámbar. Mismo componente en Pendientes y Diseño, adaptable a columnas estrechas y móvil. Fecha vencida conserva su presentación anterior. No cambia la lógica de fechas, orden, estados ni notificaciones.
+
+Siete recorridos existentes de Pendientes/Historial/Diseño aprobados. TypeScript, compilación de producción Pages/Worker y escaneo de secretos aprobados. Sin pruebas nuevas para este ajuste visual. Publicación y comprobación alojada pendientes en este corte; seguimiento en `handoffs/C05-deadline-labels.md`.
+
 ## Avisos visuales de vencimiento — 2026-10-21
 
 Pendientes y tarjetas de Diseño muestran **Vence hoy** / **Vence mañana** debajo de la fecha prevista. Hoy usa el mismo rojo que una fecha vencida; mañana conserva el color normal. Vencidas conservan Fecha vencida. Aprobadas/programadas/publicadas/archivadas y piezas sin fecha no reciben avisos de urgencia. Fecha basada en Argentina y actualización al cambiar el día mediante el hook existente; mañana se calcula como día calendario, incluyendo cambio de mes/año. No cambia Atención, orden, estados ni notificaciones.

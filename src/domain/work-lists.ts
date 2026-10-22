@@ -1,5 +1,5 @@
 import type { Piece, WorkspaceState } from '../../contracts/domain';
-import { activeMaterial, weekRange } from './selectors';
+import { activeMaterial, addDays, weekRange } from './selectors';
 
 export const ARAMIS_TIME_ZONE = 'America/Argentina/Buenos_Aires';
 export type WorkScope = 'all' | 'week';
@@ -41,6 +41,15 @@ export function comparePieceDate(a: Piece, b: Piece): number {
 
 export function isApprovedPiece(piece: Piece): boolean {
   return piece.status === 'approved' || piece.status === 'scheduled';
+}
+
+/** Date reminders are visual only; they do not change workflow or Attention counts. */
+export function deadlineNotice(piece: Piece, today: string): { label: string | null; urgent: boolean } {
+  const date = piece.plannedDate;
+  if (!date || piece.archived || isApprovedPiece(piece) || piece.status === 'published') return { label: null, urgent: false };
+  if (date < today) return { label: 'Fecha vencida', urgent: true };
+  if (date === today) return { label: 'Vence hoy', urgent: true };
+  return { label: date === addDays(today, 1) ? 'Vence mañana' : null, urgent: false };
 }
 
 export function isHistoricalPiece(piece: Piece, today: string): boolean {

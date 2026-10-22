@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Avisos visuales de vencimiento — 2026-10-21
+
+Pendientes y tarjetas de Diseño muestran **Vence hoy** / **Vence mañana** debajo de la fecha prevista. Hoy usa el mismo rojo que una fecha vencida; mañana conserva el color normal. Vencidas conservan Fecha vencida. Aprobadas/programadas/publicadas/archivadas y piezas sin fecha no reciben avisos de urgencia. Fecha basada en Argentina y actualización al cambiar el día mediante el hook existente; mañana se calcula como día calendario, incluyendo cambio de mes/año. No cambia Atención, orden, estados ni notificaciones.
+
+Validación local: 11 casos unitarios existentes de listas y siete recorridos de Pendientes/Historial/Diseño aprobados, incluyendo medianoche de Argentina. Paquete de producción TypeScript/Pages/Worker y escaneo de secretos aprobados. Handoff `handoffs/C05-deadline-labels.md`. Sin cambios de base, Drive, permisos ni envíos. Publicación y comprobación alojada pendientes al registrar este corte.
+
 ## Publicación unificada y revisión de caption — 2026-10-19
 
 Publicado **7b6c11a1.gestor-aramis.pages.dev**, servido en **https://gestor.aramis.agency/**; commit de publicación `7924841`, UI `bfe09c8`. En Gestión → pieza → Cliente, **Actualizar vista del cliente** reemplaza la casilla superior y las publicaciones separadas: incluye el calendario y comparte entrega vigente exacta con prioridad, o guion previsualizado/editable, más caption si existe. Sin contenido sólo publica metadatos de calendario. Ocultar conserva una acción secundaria. Diseño y multicliente siguen sin controles de cliente.

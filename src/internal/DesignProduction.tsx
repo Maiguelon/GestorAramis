@@ -4,7 +4,7 @@ import { ArrowRight, FileText, Paperclip, Search } from 'lucide-react';
 import type { Piece, WorkspaceState } from '../../contracts/domain';
 import PieceClientAvatar from '../components/PieceClientAvatar';
 import FormatBadge from '../components/FormatBadge';
-import { comparePieceDate, isApprovedPiece, isHistoricalPiece, productionWaitReason } from '../domain/work-lists';
+import { comparePieceDate, deadlineNotice, isApprovedPiece, isHistoricalPiece, productionWaitReason } from '../domain/work-lists';
 import { APP_MODE } from '../lib/api';
 import { ChangeReason } from './PieceDelivery';
 import './design-production.css';
@@ -65,11 +65,11 @@ export default function DesignProduction({ state, today, open }: {
     <p className="design-list-note">{categoryNotes[category]}</p>
     <div className="design-task-list">
       {shown.map(piece => {
-        const overdue = !isApprovedPiece(piece) && !!piece.plannedDate && piece.plannedDate < today;
+        const deadline = deadlineNotice(piece, today);
         const stage = category === 'waiting' ? piece.status === 'planned' ? 'Planificación · Marketing' : productionWaitReason(state, piece) : category === 'approved' ? 'Aprobado' : categoryLabels[category];
         return <article className="design-task" key={piece.id} aria-label={piece.title}>
           <div className="design-task-identity"><PieceClientAvatar piece={piece} clients={state.clients}/><div><span title={pieceClientNames(piece, state.clients)}>{pieceClientLabel(piece, state.clients)} · <FormatBadge format={piece.format}/></span><h2><button onClick={() => open(piece.id)}>{piece.title}</button></h2></div></div>
-          <ChangeReason piece={piece} compact/><div className={`design-date ${overdue ? 'overdue' : ''}`}><span>Publicación prevista</span><strong>{dateText(piece.plannedDate)}</strong>{overdue ? <small>Fecha vencida</small> : piece.plannedDate === today ? <small>Hoy</small> : null}</div>
+          <ChangeReason piece={piece} compact/><div className={`design-date ${deadline.urgent ? 'overdue' : ''}`}><span>Publicación prevista</span><strong>{dateText(piece.plannedDate)}</strong>{deadline.label && <small>{deadline.label}</small>}</div>
           <div className="design-task-actions"><span className="design-stage">{stage}</span>
             <div><a className="button secondary" href={`/text/${encodeURIComponent(piece.id)}`} target="_blank" rel="noopener noreferrer"><FileText size={16}/>Guion y texto</a><button className="button secondary" onClick={() => open(piece.id, 'material')}><Paperclip size={16}/>Material</button>
               {!consultation && APP_MODE !== 'demo' && <button className="button secondary" onClick={() => open(piece.id, 'delivery')}>Entrega</button>}

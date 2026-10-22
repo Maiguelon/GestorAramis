@@ -3,4 +3,5 @@
 .date-cell .deadline-badge.deadline-today,.design-date .deadline-badge.deadline-today{color:#8b2634;background:#fbecef;border-color:#e8bdc6}
 .date-cell .deadline-tomorrow,.design-date .deadline-tomorrow{color:#805500;background:#fff3d2;border-color:#ebce86}
 .design-date .deadline-badge{align-self:flex-end;font-size:11px;margin-top:3px}
-@media(max-width:760px){.design-date .deadline-badge{align-self:auto;margin-top:0}.date-cell .deadline-badge{margin-left:6px;margin-top:0}}
+.date-cell .deadline-badge{display:flex}
+@media(max-width:760px){.design-date .deadline-badge{align-self:auto;margin-top:0}.date-cell .deadline-badge{display:inline-flex;margin-left:6px;margin-top:0}}

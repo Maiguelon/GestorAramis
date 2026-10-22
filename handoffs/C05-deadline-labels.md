@@ -4,6 +4,8 @@
 
 Miguel requested more visual emphasis after the initial release. Today/tomorrow now use a shared badge with a soft background, border, bold text and a clock icon. Today is wine red; tomorrow is amber. The badge can wrap in narrow columns. Past dates keep their original plain label. Date logic, sorting and all workflow behavior are unchanged. Seven existing browser flows and production packaging/TypeScript/Worker/secret scanning passed. Hosted evidence follows after publication.
 
+Follow-up published **479f170c.gestor-aramis.pages.dev**, served at **https://gestor.aramis.agency/**; code `3f4ffeb` (badge component `7167131`). Remote smoke passed and bundle `index-EX01YDWH.js` matches the prepared package. Hosted Management/Design confirm colored backgrounds, borders, clocks and bold text; desktop badges stay below the date. At 390 px both labels fit without horizontal overflow. Browser viewport, filters and work mode restored. Screenshot `work/deadline-badges-hosted.png`; no task writes or new GitHub push. This supersedes the initial plain label styling documented below.
+
 Management Pending and Design cards retain the planned date and add **Vence hoy** / **Vence mañana** beneath it. Today's unfinished tasks use the same red styling as overdue work; tomorrow retains the regular date color. Past dates retain **Fecha vencida**. Approved, scheduled, published, archived and undated work does not gain urgency labels.
 
 Both views use `deadlineNotice` and the existing Argentina date hook. Tomorrow uses calendar-day arithmetic, including month/year boundaries. This is presentation only: no state transitions, sorting changes, Attention category changes, notifications, client publication or database changes.

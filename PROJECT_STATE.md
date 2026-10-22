@@ -4,7 +4,7 @@
 
 Refuerzo visual pedido por Miguel: Vence hoy y Vence mañana pasan a etiquetas con fondo suave, borde, negrita e icono de reloj. Hoy rojo institucional; mañana ámbar. Mismo componente en Pendientes y Diseño, adaptable a columnas estrechas y móvil. Fecha vencida conserva su presentación anterior. No cambia la lógica de fechas, orden, estados ni notificaciones.
 
-Siete recorridos existentes de Pendientes/Historial/Diseño aprobados. TypeScript, compilación de producción Pages/Worker y escaneo de secretos aprobados. Sin pruebas nuevas para este ajuste visual. Publicación y comprobación alojada pendientes en este corte; seguimiento en `handoffs/C05-deadline-labels.md`.
+Siete recorridos existentes de Pendientes/Historial/Diseño aprobados. TypeScript, compilación de producción Pages/Worker y escaneo de secretos aprobados. Publicado **479f170c.gestor-aramis.pages.dev**, servido en **https://gestor.aramis.agency/**, código `3f4ffeb` (badges `7167131`). Smoke remoto y coincidencia exacta del bundle `index-EX01YDWH.js` aprobados. UI alojada: rojo/ámbar, fondo/borde/icono y peso 800 confirmados en Gestión y Diseño; etiquetas siempre debajo de la fecha en escritorio. A 390 px ambas caben completas, sin desbordamiento horizontal. Viewport, filtros y modo de trabajo restaurados; sólo navegación de lectura. Captura `work/deadline-badges-hosted.png`. Sin pruebas nuevas para este ajuste visual, cambios de datos ni nuevo push. Seguimiento en `handoffs/C05-deadline-labels.md`.
 
 ## Avisos visuales de vencimiento — 2026-10-21
 

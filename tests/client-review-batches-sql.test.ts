@@ -52,6 +52,8 @@ describe('atomic batched client reviews',()=>{
    const r=await final();let v=await batch(r,[answer('caption','changes','Acortar')]);
    expect(await area()).toBe('marketing');expect(await status()).toBe('production');expect(v.requests[0]).toMatchObject({canRespond:true,status:'changes',contentStatus:'pending',captionStatus:'changes'});
    v=await batch(r,[answer('content')]);expect(v.requests[0]).toMatchObject({canRespond:false,status:'changes',contentStatus:'approved'});expect(await status()).toBe('production');expect(await area()).toBe('marketing');
+   const latest=(await db.query<{kind:string;reason:string}>("select kind,reason from app_private.notification_events e where client_request_id=$1 and audience='marketing' and app_private.notification_event_current(e)",[r.id])).rows;
+   expect(latest).toHaveLength(1);expect(latest[0].kind).toBe('client_changes');expect(latest[0].reason).toContain('Caption: Cambios pedidos · Acortar');
  });
  it('routes mixed changes to both email audiences and only material reasons to Design',async()=>{
    const r=await final();await batch(r,[answer('content','changes','Recortar video'),answer('caption','changes','Acortar texto')]);

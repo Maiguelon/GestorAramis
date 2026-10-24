@@ -14,13 +14,13 @@ Client feedback uses existing preferences/cadences and one current summary per r
 
 ## Database
 
-Applied once to hosted Supabase: **202610240001**, **202610240002**, **202610240003**. Do not replay. First two applied together in a transaction. Existing service-only grants retained; a revoked private helper preserves legacy individual responses and staff/media actions. No existing review was republished/reopened. Legacy combined publications use one content decision in the new UI.
+Applied once to hosted Supabase: **202610240001** through **202610240004**. Do not replay. First two applied together in a transaction. Existing service-only grants retained; a revoked private helper preserves legacy individual responses and staff/media actions. No existing review was republished/reopened. Legacy combined publications use one content decision in the new UI.
 
 `supabase/tests/client_review_batches_hosted.sql` passed in PGlite and hosted PostgreSQL with BEGIN/ROLLBACK: atomic validation, exact replay, Marketing caption routing, subsequent Design material correction, audience reasons, withdrawal and grants. Hosted result: **0 synthetic pieces / 0 synthetic clients remaining**. No Drive calls or actual test mail. Additional isolated tests cover mixed/partial decisions, comments, stale versions/revocation, privacy, dispatch revalidation and earlier corrections surviving later acceptance.
 
 ## Verification
 
-- Full Vitest **583 passed**. After final digest migration, 46 relevant SQL/notification cases passed again.
+- Full Vitest **583 passed**. After final digest migration, 46 relevant SQL/notification cases passed again; the final 20-case source/queue block includes one additional regression.
 - Shared browser suite initially 46/47: the sole failure expected the former return heading. Updated that assertion to client source; all 11 affected delivery/publication/review/Design cases then passed. All 47 distinct cases covered. Includes save/reload, one batch, partial warning, exact retry after reload, new-version isolation, comments, aggregate badge and Design filtering. Service mocks do not establish real iPhone playback or real-client acceptance.
 - TypeScript, safe Pages shared package, Worker build and private-key scan passed. Production notification configuration comes from the ignored generated package; the standalone sample TOML dry-run remains disabled.
 - Read-only hosted public API: both active client spaces returned 200, matching calendars, without internal fields. Staff UI shows badges without duplicate subtitle. Existing client link renders draft controls and one Send action; no real response/publication submitted.
@@ -30,3 +30,5 @@ Ignored evidence: `work/client-review-status-hosted.png`, `work/client-review-ba
 ## Next
 
 Refresh and try a deliberately selected piece on a real client phone: video correction + caption acceptance in one send, then a partial send completed later. No new account, DNS, Drive permissions or OAuth renewal needed. Actual phone behavior and email reception for real client feedback still need usage validation. No GitHub push requested for this sprint.
+
+Production: Pages acf83598, bundle index-8_b5vU58.js (exact match); notification Worker 54279489-06b0-44f7-809a-388fbf418d72. Local main contains all sprint commits, no push. Final hosted rollback probe also exercised deferred triggers and preserved the source of a staff-recorded client return.

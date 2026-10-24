@@ -1,5 +1,18 @@
 # Estado del proyecto
 
+## Client review drafts and staff feedback - 2026-10-24
+
+Integrated and deployed. Client sections prepare local approvals/corrections/comments, with one final Send per piece and a warning before partial submission. Untouched sections remain pending after a partial send, including after changes to another section. Browser drafts and exact uncertain request UUID/body survive reload on the same device. New-version/revoked/withdrawn/archived requests cannot accept fresh stale responses. Staff gets one explicit-publication aggregate badge; Design only sees client material corrections. Removed redundant production subtitle. Material feedback goes to Design; script/caption feedback goes to Marketing; mixed feedback reaches both via existing mail cadences. Later acceptance retains earlier corrections in the digest. Manual staff-recorded returns preserve client/team source too.
+
+Hosted migrations **202610240001 through 202610240004 applied once**; do not replay. Existing grants and legacy clients retained, no real review republished. Final synthetic hosted probe with BEGIN/ROLLBACK passed, including deferred notification triggers and manually recorded client return source; **0 synthetic pieces / 0 synthetic clients left**. No actual client decision, test email or Drive write performed. Public read-only checks for both active client spaces returned 200 and no internal fields. Hosted staff badge and client draft/Send UI checked; Design remains free of unrelated client badges and publication controls. Management restored after inspection.
+
+Verification: full Vitest **583 passed** before the last source-only SQL case; final digest block 46 passed, final source/queue block 20 passed (includes one additional case). Shared browser suite 46/47 initially, only an old heading assertion failed; corrected and the entire affected 11-case block passed. All 47 distinct browser cases covered with mocked services. TypeScript/shared package/Worker/private-key scan and final remote smoke passed. No real-iPhone or actual-client email-reception claim.
+
+Final Pages **acf83598.gestor-aramis.pages.dev**, production **https://gestor.aramis.agency/**. App/documentation commit `7c854e8` (UI `9cd88a0`, routing copy `41e0745`), final source-only SQL `1011e78`. Hosted bundle **index-8_b5vU58.js** matches the prepared package byte-for-byte. Notification Worker **54279489-06b0-44f7-809a-388fbf418d72** deployed with existing enabled configuration and minute cron; no new credential/settings needed. Work from feature/client-review-drafts was fast-forwarded into local main; no new GitHub push.
+
+Evidence and operating limits: handoffs/C06-client-review-drafts.md. Ignored screenshots work/client-review-status-hosted.png, work/client-review-batches-hosted-probe.png, work/client-review-design-feedback.png and work/client-review-batch-mobile.png. Next: actual client phone trial with one complete and one partial review, and confirm normal feedback mail reception. Drafts are local to the browser/device and disappear if its storage is cleared.
+
+
 ## Etiquetas de vencimiento con más contraste — 2026-10-21
 
 Refuerzo visual pedido por Miguel: Vence hoy y Vence mañana pasan a etiquetas con fondo suave, borde, negrita e icono de reloj. Hoy rojo institucional; mañana ámbar. Mismo componente en Pendientes y Diseño, adaptable a columnas estrechas y móvil. Fecha vencida conserva su presentación anterior. No cambia la lógica de fechas, orden, estados ni notificaciones.

@@ -30,8 +30,12 @@ begin
    or (select app_private.client_review_summary(p)->>'status')<>'changes' then raise exception 'Material routing/summary failed'; end if;
  if (select count(*) from app_private.notification_events where client_request_id=r and source='client')<>2 then raise exception 'Missing audience events'; end if;
  if exists(select 1 from app_private.notification_events where client_request_id=r and audience='design' and reason like '%text correction%') then raise exception 'Design received caption noise'; end if;
+ set constraints all immediate;
  perform public.aramis_client_pilot(w,u,null,'withdraw',jsonb_build_object('clientId',c,'requestId',r,'key',gen_random_uuid()));
  if exists(select 1 from app_private.notification_events e where e.client_request_id=r and app_private.notification_event_current(e)) then raise exception 'Stale event actionable'; end if;
+ update public.pieces set status='review' where id=p;
+ update public.pieces set status='production' where id=p;
+ if not exists(select 1 from app_private.notification_events where piece_id=p and kind='returned' and source='client') then raise exception 'Manual client return lost its source'; end if;
  if has_function_privilege('anon','public.aramis_client_pilot(uuid,uuid,text,text,jsonb)','execute') or has_function_privilege('authenticated','public.aramis_client_pilot(uuid,uuid,text,text,jsonb)','execute') then raise exception 'Public grant widened'; end if;
 end $probe$;
 rollback;

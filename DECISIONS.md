@@ -151,3 +151,7 @@ Calendario es una cuadrícula mensual, con días de altura fija y detalle comple
 
 Una acción en la pestaña Cliente incluye la pieza en el calendario y publica una instantánea: entrega vigente exacta con prioridad sobre el guion; caption incluido si existe. El guion se previsualiza y puede limpiarse antes de compartir. Sin contenido, sólo metadatos de calendario. Notas internas y material fuente no se publican. Cada parte presente se acepta o pide cambios por separado; aprobar parcialmente no aprueba la entrega. Un pedido de cambios final cierra la versión y vuelve a Diseño con el motivo identificado. La aprobación de guion no cambia la etapa interna. Las revisiones anteriores conservan su semántica hasta republicar explícitamente. Diseño y multicliente siguen fuera de estos controles.
 
+
+## D34 - Client review drafts and area routing (2026-10-24)
+
+Each section is prepared locally, then one exact-version batch sends the piece review. Partial sends warn but remain allowed; untouched parts stay pending. Any requested change wins the aggregate; accepting all shared parts approves the delivery. Script/caption feedback belongs to Marketing; material corrections belong to Design. Staff shows one aggregate only after explicit publication, and Design sees client status only for material corrections. Existing notification cadences summarize by area without losing earlier corrections when another section is accepted. Browser drafts stay on the same device. Legacy individual responses remain compatible. See handoffs/C06-client-review-drafts.md.

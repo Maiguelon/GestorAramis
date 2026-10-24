@@ -20,7 +20,7 @@ The team plans posts and reels, writes scripts, records footage, produces finish
 
 The product follows that workflow. Marketing manages the plan; design opens a production queue with direct access to scripts and material. Drive remains the file store. Email summaries make new handoffs visible even when nobody has the app open.
 
-The client pilot opens its monthly calendar when there are no pending reviews; other shared months and undated pieces remain easy to find. It follows the same principle: a manually sent WhatsApp message opens pending reviews and a calendar directly. Marketing explicitly publishes a script snapshot or a finished delivery; the client can approve, request changes or comment. Nothing is shared automatically.
+The client pilot opens its monthly calendar when there are no pending reviews; other shared months and undated pieces remain easy to find. It follows the same principle: a manually sent WhatsApp message opens pending reviews and a calendar directly. Marketing explicitly publishes a script snapshot or a finished delivery; the client prepares section approvals, corrections or comments as a browser-local draft, then sends one review per piece. Partial submissions warn about untouched sections and leave them pending. Nothing is shared automatically.
 
 ## Current functionality
 
@@ -35,7 +35,7 @@ The client pilot opens its monthly calendar when there are no pending reviews; o
 | Source material | Upload to Drive through the app, or add files directly to the linked Drive folder and bring them into the piece when the app checks it. Preview thumbnails, download originals or download a ZIP. |
 | Delivery and review | Keep finished work separate from source footage. Submit an ordered, versioned delivery for review; approve it or return it to production with a required reason. |
 | History | Keep approved work visible through its planned publication date, then show it in History. Archive and restore pieces while preserving their records and files. |
-| Email notifications — added after V1 | Notify design about production entries and returns, and marketing about new deliveries for review. Daily summaries default to 09:00 Argentina; each person can change frequency, time or pause them. |
+| Email notifications — added after V1 | Notify design about production entries and returns, and marketing about new deliveries for review. Client feedback follows the same cadence: text corrections go to marketing and material corrections to design. Daily summaries default to 09:00 Argentina; each person can change frequency, time or pause them. |
 
 ### Workflow
 

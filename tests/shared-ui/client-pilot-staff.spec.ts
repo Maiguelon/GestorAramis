@@ -3,7 +3,7 @@ import type { PilotView, PilotStaffView } from '../../contracts/client-pilot';
 import type { Piece, WorkspaceState } from '../../contracts/domain';
 const token='a'.repeat(43),C='20000000-0000-4000-8000-000000000001',P='30000000-0000-4000-8000-000000000001',R='40000000-0000-4000-8000-000000000001';
 function fixture():PilotView{return {client:{id:C,name:'Estudio Horizonte · ficticio',initials:'EH',color:'#8b2634'},pieces:[{id:P,title:'Cuidados de primavera',format:'reel',plannedDate:'2026-10-28',status:'planned'},{id:P+'2',title:'Otra fecha',format:'post',plannedDate:'2026-11-04',status:'production'}],requests:[{id:R,pieceId:P,kind:'script',version:1,text:'Un consejo simple para esta primavera.\nVisitá nuestro espacio.',assets:[],status:'pending',canRespond:true,comment:'',comments:[],createdAt:'2026-10-19T12:00:00Z'}]};}
-test('staff publishes a curated script and manages a reusable link; Design flow is untouched',async({page,context})=>{
+test('staff publishes the saved script and manages a reusable link; Design flow is untouched',async({page,context})=>{
  const U='f0000000-0000-4000-8000-000000000001',M='10000000-0000-4000-8000-000000000001';
  const encode=(v:unknown)=>Buffer.from(JSON.stringify(v)).toString('base64url');const jwt=`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:U,role:'authenticated',aud:'authenticated',exp:Math.floor(Date.now()/1000)+3600})}.FAKE_SIGNATURE`;
  const user={id:U,aud:'authenticated',role:'authenticated',email:'fixture@example.test',app_metadata:{provider:'email',providers:['email']},user_metadata:{},created_at:new Date().toISOString()};
@@ -20,9 +20,9 @@ test('staff publishes a curated script and manages a reusable link; Design flow 
  });
  await page.goto('/');await page.getByLabel('Correo',{exact:true}).fill('fixture@example.test');await page.getByLabel('Contraseña',{exact:true}).fill('test-password');await page.getByRole('button',{name:'Ingresar',exact:true}).click();
  await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();const dialog=page.getByRole('dialog');await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();
- await expect(dialog.getByLabel('Texto que verá el cliente')).toHaveValue('Indicaciones privadas para Diseño');
+ await expect(dialog.getByLabel('Texto que verá el cliente')).toHaveCount(0);
  await dialog.getByRole('button',{name:'Crear enlace del cliente',exact:true}).click();await expect(dialog.getByLabel('Enlace privado del cliente')).toHaveValue(`http://127.0.0.1:5175/cliente#${token}`);
- await dialog.getByLabel('Texto que verá el cliente').fill('Guion preparado sólo para el cliente');page.on('dialog',d=>d.accept());await dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true}).click();
- await expect(dialog.getByText('Guion v1 · Pendiente',{exact:true})).toBeVisible();expect(actions.find(a=>a.action==='publish')?.text).toBe('Guion preparado sólo para el cliente');expect(piece.status).toBe('planned');
+ page.on('dialog',d=>d.accept());await dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true}).click();
+ await expect(dialog.getByText('Guion v1 · Pendiente',{exact:true})).toBeVisible();expect(actions.find(a=>a.action==='publish')?.text).toBe(piece.script);expect(piece.status).toBe('planned');
  await dialog.screenshot({path:'work/client-pilot-staff.png'});
 });

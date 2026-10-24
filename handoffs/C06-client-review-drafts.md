@@ -32,3 +32,7 @@ Ignored evidence: `work/client-review-status-hosted.png`, `work/client-review-ba
 Refresh and try a deliberately selected piece on a real client phone: video correction + caption acceptance in one send, then a partial send completed later. No new account, DNS, Drive permissions or OAuth renewal needed. Actual phone behavior and email reception for real client feedback still need usage validation. No GitHub push requested for this sprint.
 
 Production: Pages acf83598, bundle index-8_b5vU58.js (exact match); notification Worker 54279489-06b0-44f7-809a-388fbf418d72. Local main contains all sprint commits, no push. Final hosted rollback probe also exercised deferred triggers and preserved the source of a staff-recorded client return.
+
+## Compact publication panel - 2026-10-24
+
+At Miguel's request, the upper piece Client block now contains only Actualizar vista del cliente in its normal state. Removed the heading/help, script editor, delivery/caption preview and secondary hide control. Publishing uses the saved script/caption or exact latest valid delivery, with existing confirmation, revision, idempotency and retry handling. The link/WhatsApp/administration block and published request list remain unchanged. Global client access UI is unchanged. Existing six publication/link/retry/Design browser cases adapted and passed. No new tests for this visual simplification, database migration, data publication or messages. Final build and hosted UI evidence recorded in PROJECT_STATE.md.

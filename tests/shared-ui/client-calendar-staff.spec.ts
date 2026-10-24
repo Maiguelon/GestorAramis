@@ -33,38 +33,39 @@ async function login(page:Page) {
   await page.goto('/');await page.getByLabel('Correo',{exact:true}).fill('fixture@example.test');await page.getByLabel('Contraseña',{exact:true}).fill('test-password');await page.getByRole('button',{name:'Ingresar',exact:true}).click();
 }
 
-test('one publication button below the tabs shares the curated script and caption with the calendar',async({page,context})=>{
-  const service=await setup(context);await login(page);
+test('one compact publication button shares the saved script and caption with the calendar',async({page,context})=>{
+  const service=await setup(context);service.piece.script='Guion guardado para el cliente';await login(page);
   await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();const dialog=page.getByRole('dialog');
   await expect(dialog.getByRole('checkbox',{name:/Mostrar en el calendario del cliente/})).toHaveCount(0);
-  await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();await expect(dialog.getByLabel('Texto que verá el cliente')).toHaveValue(service.piece.script!);
+  await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();await expect(dialog.getByLabel('Texto que verá el cliente')).toHaveCount(0);
   const publish=dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true});
   expect((await publish.boundingBox())!.y).toBeGreaterThan((await dialog.getByRole('tablist').boundingBox())!.y);
-  await dialog.getByLabel('Texto que verá el cliente').fill('Guion preparado sólo para el cliente');page.on('dialog',d=>d.accept());await publish.click();
-  await expect(dialog.getByText('Guion v1 · Pendiente',{exact:true})).toBeVisible();await expect(dialog.getByRole('button',{name:'Ocultar del cliente',exact:true})).toBeVisible();
-  expect(service.actions.find(a=>a.action==='publish')).toMatchObject({text:'Guion preparado sólo para el cliente',separateParts:true,kind:'script'});expect(service.piece.status).toBe('planned');
+  await expect(dialog.locator('.pilot-publish').getByRole('button')).toHaveCount(1);await expect(dialog.getByRole('heading',{name:'Revisión del cliente',exact:true})).toHaveCount(0);
+  page.on('dialog',d=>d.accept());await publish.click();
+  await expect(dialog.getByText('Guion v1 · Pendiente',{exact:true})).toBeVisible();
+  expect(service.actions.find(a=>a.action==='publish')).toMatchObject({text:service.piece.script,separateParts:true,kind:'script'});expect(service.piece.status).toBe('planned');
   await dialog.screenshot({path:'work/client-review-unified-staff.png'});
 });
 
 test('unified publication retries identically, persists on reload, and does not expose an unsubmitted draft',async({page,context})=>{
-  const service=await setup(context);service.loseOnce();await login(page);
+  const service=await setup(context);service.piece.script='Guion para publicar';service.loseOnce();await login(page);
   await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();const dialog=page.getByRole('dialog');
   await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();page.on('dialog',d=>d.accept());
-  await dialog.getByLabel('Texto que verá el cliente').fill('Guion para publicar');await dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true}).click();
+  await dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true}).click();
   await expect(dialog.getByRole('button',{name:'Reintentar la misma operación',exact:true})).toBeVisible();await expect(dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true})).toBeDisabled();
   await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(dialog.getByRole('button',{name:'Reintentar la misma operación',exact:true})).toBeVisible();
-  await dialog.getByRole('button',{name:'Reintentar la misma operación',exact:true}).click();await expect(dialog.getByRole('button',{name:'Ocultar del cliente',exact:true})).toBeVisible();
+  await dialog.getByRole('button',{name:'Reintentar la misma operación',exact:true}).click();await expect(dialog.getByText('Guion v1 · Pendiente',{exact:true})).toBeVisible();
   const writes=service.actions.filter(a=>a.action==='publish');expect(writes).toHaveLength(2);expect(writes[0]).toEqual(writes[1]);
   await dialog.getByRole('button',{name:'Cerrar',exact:true}).click();await page.reload();await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();
   const client=await context.newPage();await client.goto(`/cliente#${token}`);
   await client.getByRole('button',{name:/Guion del piloto/}).click();await expect(client.getByRole('region',{name:'Guion',exact:true})).toContainText('Guion para publicar');await expect(client.getByRole('region',{name:'Caption',exact:true})).toContainText('Caption privado');
-  await dialog.getByLabel('Texto que verá el cliente').fill('Texto aún privado');await client.reload();await client.getByRole('button',{name:/Guion del piloto/}).click();await expect(client.getByText('Texto aún privado',{exact:true})).toHaveCount(0);await client.close();
+  await dialog.getByRole('tab',{name:'Detalles',exact:true}).click();await dialog.getByLabel('Guion e instrucciones de producción').fill('Texto aún privado');await client.reload();await client.getByRole('button',{name:/Guion del piloto/}).click();await expect(client.getByText('Texto aún privado',{exact:true})).toHaveCount(0);await client.close();
 });
 
 test('a valid final delivery takes precedence over the script and uses the immutable delivery caption',async({page,context})=>{
   const service=await setup(context);service.piece.status='review';service.piece.deliveries=[{id:'60000000-0000-4000-8000-000000000001',version:2,caption:'Caption de entrega exacta',assets:[{id:'video',name:'entrega.mp4',mimeType:'video/mp4',size:100,source:'drive'}],status:'pending',createdAt:'2026-10-19T12:00:00Z',createdBy:'Diseño',comment:'',source:null,decidedBy:null,decidedAt:null}];
   await login(page);await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();const dialog=page.getByRole('dialog');await dialog.getByRole('tab',{name:'Cliente',exact:true}).click();
-  await expect(dialog.getByLabel('Texto que verá el cliente')).toHaveCount(0);await expect(dialog.getByText('entrega.mp4',{exact:true})).toBeVisible();await expect(dialog.getByText('Caption de entrega exacta',{exact:true})).toBeVisible();
+  await expect(dialog.getByLabel('Texto que verá el cliente')).toHaveCount(0);await expect(dialog.getByText('entrega.mp4',{exact:true})).toHaveCount(0);await expect(dialog.getByText('Caption de entrega exacta',{exact:true})).toHaveCount(0);
   page.on('dialog',d=>d.accept());await dialog.getByRole('button',{name:'Actualizar vista del cliente',exact:true}).click();expect(service.actions.find(a=>a.action==='publish')).toMatchObject({kind:'delivery',deliveryId:service.piece.deliveries[0].id,separateParts:true});expect(service.actions.find(a=>a.action==='publish')).not.toHaveProperty('text');
 });
 

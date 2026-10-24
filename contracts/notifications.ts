@@ -17,7 +17,7 @@ export interface NotificationSettings {
 }
 export interface NotificationItem {
   pieceId: string; sequence: number; client: string; title: string;
-  format: string; plannedDate: string | null; kind: 'ready' | 'returned' | 'review'; reason: string;
+  format: string; plannedDate: string | null; kind: 'ready' | 'returned' | 'review' | 'client_approved' | 'client_changes' | 'client_comment'; source?: 'team' | 'client'; reason: string;
 }
 export interface NotificationEmail { from: string; to: string[]; subject: string; html: string; text: string }
 export interface NotificationBatch {

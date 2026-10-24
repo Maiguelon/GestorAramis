@@ -16,6 +16,8 @@ export interface PilotView {
   pieces: PilotPiece[]; requests: PilotRequest[];
 }
 export interface PilotStaffView extends PilotView { linkActive: boolean; linkUrl?: string }
+export interface PilotAnswer { part: 'content' | 'caption'; decision: 'approved' | 'changes' | 'comment'; comment: string }
+export interface PilotBatchResponse { requestId: string; version: number; key: string; author: string; answers: PilotAnswer[] }
 export type PilotAction =
   | { action: 'link-ensure' | 'link-rotate' | 'link-revoke'; clientId: string }
   | { action: 'calendar-show' | 'calendar-hide'; clientId: string; pieceId: string; expectedRevision: number }

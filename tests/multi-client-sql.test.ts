@@ -30,7 +30,7 @@ describe('multiclient pieces in isolated PostgreSQL', () => {
   afterAll(async () => { await db?.close(); });
 
   it('preserves every old piece and has no recipient backfill or workflow mutation', async () => {
-    expect(await snapshot()).toEqual(prior);
+    expect((await snapshot()).pieces.map(({clientReview:_,...p})=>p)).toEqual(prior.pieces);
     expect((await db.query('select * from app_private.piece_clients')).rows).toHaveLength(0);
   });
   it('creates a single piece with ordered recipients and idempotent replay', async () => {

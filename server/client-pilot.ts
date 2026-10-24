@@ -94,12 +94,19 @@ export async function handleClientPilot(request:Request,env:WorkerEnv,config:Con
   let payload:Record<string,unknown>={};
   if(path.endsWith('/respond')){
     payload=await body(request);
-    if(Object.keys(payload).some(k=>!['requestId','key','decision','comment','author','part'].includes(k))
+    if('answers' in payload){
+      const answers=payload.answers;
+      if(Object.keys(payload).some(k=>!['requestId','version','key','author','answers'].includes(k))
+        ||!Number.isSafeInteger(payload.version)||Number(payload.version)<1||typeof payload.author!=='string'||!payload.author.trim()||payload.author.length>120
+        ||!Array.isArray(answers)||answers.length<1||answers.length>2||new Set(answers.map(a=>a?.part)).size!==answers.length
+        ||answers.some(a=>!a||typeof a!=='object'||Array.isArray(a)||Object.keys(a).some(k=>!['part','decision','comment'].includes(k))
+          ||!['content','caption'].includes(a.part)||!['approved','changes','comment'].includes(a.decision)||typeof a.comment!=='string'||a.comment.length>10000||(a.decision!=='approved'&&!a.comment.trim())))throw new ServiceError('VALIDATION',400);
+    }else if(Object.keys(payload).some(k=>!['requestId','key','decision','comment','author','part'].includes(k))
       ||('part' in payload&&!['content','caption'].includes(String(payload.part)))
       ||!['approved','changes','comment'].includes(String(payload.decision))||typeof payload.comment!=='string'||typeof payload.author!=='string')throw new ServiceError('VALIDATION',400);
     uuid(payload.requestId);uuid(payload.key);
   }
-  const result=await rpc<Record<string,unknown>>(path.endsWith('/view')?'view':'respond',payload);
+  const result=await rpc<Record<string,unknown>>(path.endsWith('/view')?'view':'answers' in payload?'respond-batch':'respond',payload);
   const clientId=uuid((result.client as {id:string}|undefined)?.id);
   const encrypted=await seal({token,clientId,expiresAt:Date.now()+15*60_000},await keyFor(env),`${config.workspaceId}:client-media`);
   const cookie=btoa(JSON.stringify(encrypted));

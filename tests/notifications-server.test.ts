@@ -45,11 +45,15 @@ describe('notification dispatch with provider mocked',()=>{
  it('escapes task content, carries return reason and links through authenticated app',()=>{
   const email=renderNotificationEmail({...batch,items:[{...batch.items[0],client:'<script>private()</script>',title:'Texto & "imagen"',kind:'returned',reason:'Cambiar <b>inicio</b>'}]},'Aramis <sender@example.test>',env.NOTIFICATION_APP_URL!);
   expect(email.html).toContain('&lt;script&gt;');expect(email.html).not.toContain('<script>');
-  expect(email.html).toContain('Cambios solicitados: Cambiar &lt;b&gt;inicio&lt;/b&gt;');
+  expect(email.html).toContain('Cambiar &lt;b&gt;inicio&lt;/b&gt;');expect(email.text).toContain('Equipo');
   expect(email.text).toContain('Volvió a producción');expect(email.html).toContain(`/?piece=${batch.items[0].pieceId}`);
   expect(email.to).toEqual([batch.recipient]);expect(email.html).not.toContain('drive.google');
   const review=renderNotificationEmail({...batch,audience:'marketing',items:[{...batch.items[0],kind:'review'}]},'sender@example.test',env.NOTIFICATION_APP_URL!);
   expect(review.subject).toContain('revisión');expect(review.text).toContain('Nueva entrega para revisar');
+ });
+ it('labels client responses explicitly and renders only the area-specific reason supplied by the queue',()=>{
+  const email=renderNotificationEmail({...batch,items:[{...batch.items[0],kind:'client_changes',source:'client',reason:'Entrega: recortar <inicio>'}]},'sender@example.test',env.NOTIFICATION_APP_URL!);
+  expect(email.subject).toContain('actualizaciones');expect(email.html).toContain('Cambios pedidos por el cliente');expect(email.html).toContain('&lt;inicio&gt;');expect(email.text).toContain('Entrega: recortar <inicio>');expect(email.text).not.toContain('Caption');
  });
  it('freezes payload before sending and acknowledges provider acceptance',async()=>{
   const mock=service();expect(await dispatchNotifications(env,mock.fetcher)).toMatchObject({sent:1,failed:0});

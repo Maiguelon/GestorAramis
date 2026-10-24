@@ -8,6 +8,13 @@ const env:WorkerEnv={SUPABASE_URL:'https://example.supabase.co',SUPABASE_PUBLISH
 const token='a'.repeat(43),view={client:{id:C,name:'Ficticio',initials:'F',color:'#123456'},pieces:[],requests:[]};
 const req=(path:string,body?:unknown,bearer=token)=>new Request('https://gestor.example'+path,{method:body?'POST':'GET',headers:{Authorization:`Bearer ${bearer}`,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
 describe('public client pilot HTTP boundary',()=>{
+ it('forwards one atomic versioned batch and rejects duplicate parts or empty corrections before the database',async()=>{
+   const payload={requestId:U,key:W,version:2,author:'Cliente',answers:[{part:'content',decision:'approved',comment:''},{part:'caption',decision:'changes',comment:'Acortar'}]};
+   const fetcher=vi.fn(async(_input:unknown,init?:RequestInit)=>{const data=JSON.parse(String(init?.body));expect(data.p_action).toBe('respond-batch');expect(data.p_payload).toEqual(payload);return Response.json(view);});
+   expect((await handleRequest(req('/api/client/respond',payload),env,fetcher)).status).toBe(200);fetcher.mockClear();
+   for(const invalid of [{...payload,version:1.5},{...payload,answers:[payload.answers[0],payload.answers[0]]},{...payload,answers:[{...payload.answers[1],comment:' '}]},{...payload,answers:[{...payload.answers[0],internalNote:'private'}]}])expect((await handleRequest(req('/api/client/respond',invalid),env,fetcher)).status).toBe(400);
+   expect(fetcher).not.toHaveBeenCalled();
+ });
  it('accepts only the named review parts and preserves the exact response payload',async()=>{
    const payload={requestId:U,key:W,decision:'approved',comment:'',author:'Cliente',part:'caption'};
    const fetcher=vi.fn(async(_input:unknown,init?:RequestInit)=>{expect(JSON.parse(String(init?.body)).p_payload).toEqual(payload);return Response.json(view);});

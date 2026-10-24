@@ -1,4 +1,4 @@
-import type { PilotAction, PilotStaffView, PilotView } from '../../contracts/client-pilot';
+import type { PilotAction, PilotBatchResponse, PilotStaffView, PilotView } from '../../contracts/client-pilot';
 import { sharedWorkspace } from './shared-api';
 
 export class PilotError extends Error { constructor(public code:string,message:string){super(message);} }
@@ -14,7 +14,7 @@ export async function readPilot(token:string,signal?:AbortSignal):Promise<PilotV
   return result(await fetch('/api/client/view',{headers:{Authorization:`Bearer ${token}`},credentials:'same-origin',cache:'no-store',signal:signal?AbortSignal.any([signal,AbortSignal.timeout(30_000)]):AbortSignal.timeout(30_000)}));
 }
 export interface PilotResponse {requestId:string;decision:'approved'|'changes'|'comment';comment:string;author:string;key:string;part?:'content'|'caption'}
-export async function respondPilot(token:string,payload:PilotResponse):Promise<PilotView>{
+export async function respondPilot(token:string,payload:PilotResponse|PilotBatchResponse):Promise<PilotView>{
   return result(await fetch('/api/client/respond',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(payload),credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(30_000)}));
 }
 export async function staffPilot(payload:(PilotAction&{key:string})|{action:'staff-view';clientId:string}):Promise<PilotStaffView>{

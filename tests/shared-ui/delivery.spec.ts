@@ -93,7 +93,7 @@ test('delivery upload → review → changes visible in Design → new version �
  await page.getByLabel('Origen de la respuesta').selectOption('client');await page.getByLabel('Comentario / motivo de los cambios').fill('Cambiar el cierre y agregar el logo.');await changes.click();
  await expect(page.locator('.delivery-changes').first()).toContainText('Cambiar el cierre y agregar el logo.');
  await page.getByRole('button',{name:'Cerrar',exact:true}).click();
- await expect(page.locator('.design-task')).toContainText('Cambios solicitados');await expect(page.locator('.design-task')).toContainText('Cambiar el cierre');
+ await expect(page.locator('.design-task')).toContainText('Cambios del cliente');await expect(page.locator('.design-task')).toContainText('Cambiar el cierre');
  await page.getByRole('button',{name:'Entrega',exact:true}).click();await page.getByLabel('Incluir final-1.png en la entrega',{exact:true}).check();await send.click();
  await expect(page.getByRole('heading',{name:'Entrega v2 · En revisión',exact:true})).toBeVisible();
  await page.getByText('Versiones anteriores (1)',{exact:true}).click();await page.getByText('Entrega v1',{exact:true}).click();await expect(page.getByRole('heading',{name:'Entrega v1 · Cambios solicitados',exact:true})).toBeVisible();

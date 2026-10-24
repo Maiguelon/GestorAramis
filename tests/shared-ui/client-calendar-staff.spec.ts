@@ -77,3 +77,16 @@ test('Design omits the client tab and visibility, including pieces opened from C
   await page.getByRole('button',{name:'Calendario',exact:true}).click();await page.getByRole('button',{name:'Abrir Guion del piloto',exact:true}).click();
   await expect(dialog.getByRole('tab',{name:'Cliente',exact:true})).toHaveCount(0);expect(service.actions).toHaveLength(0);
 });
+
+test('published review has one aggregate badge; Design sees only client material corrections',async({page,context})=>{
+ const service=await setup(context);service.piece.status='production';service.piece.workArea='design';service.piece.productionStage='ready';
+ await login(page);await expect(page.locator('.client-review-badge')).toHaveCount(0);
+ service.piece.clientReview={requestId:'review',kind:'delivery',status:'pending',contentStatus:'approved',captionStatus:'pending',contentComment:'',captionComment:''};await page.reload();
+ await expect(page.locator('.client-review-badge')).toHaveText('Cliente · Revisión pendiente');await expect(page.locator('.work-stage')).not.toContainText('Para producción');
+ await page.getByLabel('Vista de trabajo',{exact:true}).selectOption('design');await expect(page.locator('.client-review-badge')).toHaveCount(0);
+ service.piece.clientReview={...service.piece.clientReview,status:'changes',contentStatus:'changes',captionStatus:'changes',contentComment:'Recortar el video',captionComment:'Cambiar el caption'};
+ service.piece.deliveries=[{id:'delivery',version:1,caption:'Final',assets:[],status:'changes',comment:'Entrega: Recortar el video\nCaption: Cambiar el caption',source:'client',createdAt:'2026-10-24T12:00:00Z',createdBy:'Diseño',decidedBy:'Cliente',decidedAt:'2026-10-24T13:00:00Z'}];await page.reload();
+ await expect(page.locator('.client-review-badge')).toHaveText('Cliente · Cambios pedidos');await expect(page.locator('.delivery-changes')).toContainText('Cambios del cliente');await expect(page.locator('.delivery-changes')).toContainText('Recortar el video');await expect(page.locator('.delivery-changes')).not.toContainText('Cambiar el caption');expect(service.actions).toHaveLength(0);
+ await page.screenshot({path:'work/client-review-design-feedback.png',fullPage:true});
+ service.piece.workArea='marketing';service.piece.clientReview.contentStatus='approved';await page.reload();await expect(page.getByRole('button',{name:'Abrir pieza',exact:true})).toHaveCount(0);
+});

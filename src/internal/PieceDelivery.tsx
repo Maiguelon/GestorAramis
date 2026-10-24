@@ -8,10 +8,13 @@ import './delivery.css';
 
 type Act = (command: Command) => Promise<CommandResult | undefined>;
 export function latestDelivery(piece: Piece) { return [...(piece.deliveries??[])].sort((a,b)=>b.version-a.version)[0]; }
-export function ChangeReason({piece, compact=false}:{piece:Piece;compact?:boolean}) {
+export function ChangeReason({piece, compact=false,materialOnly=false}:{piece:Piece;compact?:boolean;materialOnly?:boolean}) {
+  const client=piece.clientReview;
+  if(!materialOnly&&!compact&&client?.kind==='script'&&client.status==='changes')return <aside className="delivery-changes"><strong>Cambios del cliente · Guion / caption</strong><p>{[client.contentStatus==='changes'&&`Guion: ${client.contentComment}`,client.captionStatus==='changes'&&`Caption: ${client.captionComment}`].filter(Boolean).join('\n')}</p></aside>;
   const delivery=latestDelivery(piece);
   if(piece.status!=='production'||delivery?.status!=='changes')return null;
-  return <aside className={`delivery-changes ${compact?'compact':''}`}><strong>Cambios solicitados · v{delivery.version}</strong><p>{delivery.comment}</p>{!compact&&<small>{delivery.source==='client'?'Devolución del cliente':'Devolución del equipo'} · Registró {delivery.decidedBy}{delivery.decidedAt?` · ${new Date(delivery.decidedAt).toLocaleString('es-AR')}`:''}</small>}</aside>;
+  if(materialOnly&&delivery.source==='client'&&client&&client.contentStatus!=='changes')return null;
+  return <aside className={`delivery-changes ${compact?'compact':''}`}><strong>Cambios del {delivery.source==='client'?'cliente':'equipo'} · v{delivery.version}</strong><p>{(compact||materialOnly)&&client?.contentStatus==='changes'&&client.contentComment?client.contentComment:delivery.comment}</p>{!compact&&<small>{delivery.source==='client'?'Devolución del cliente':'Devolución del equipo'} · Registró {delivery.decidedBy}{delivery.decidedAt?` · ${new Date(delivery.decidedAt).toLocaleString('es-AR')}`:''}</small>}</aside>;
 }
 
 export function DeliveryPreview({delivery}:{delivery:Delivery}) {

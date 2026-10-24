@@ -1,5 +1,12 @@
 # Estado del proyecto
 
+## Compact client publication - 2026-10-24
+
+The upper Client tab block in a piece now shows only Actualizar vista del cliente in its normal state. Removed heading/help, script editor and delivery/caption previews, including the secondary hide action from that block. Publishes saved piece content or the exact valid delivery; the existing confirmation/revision/retry boundary remains. Link, WhatsApp, administration and published requests below are unchanged. Global client access UI unchanged. Six existing publication/link/retry/Design browser cases adapted and passed; TypeScript/shared package/Worker/private-key scan passed. No backend changes, real publication actions or messages.
+
+Published **bd1cd7c4.gestor-aramis.pages.dev**, production **https://gestor.aramis.agency/**, code **3269d11**. Bundle **index-DxeZc0vm.js** matches the safe package exactly; remote smoke passed. Read-only hosted UI confirms 1 publish button, 0 preview editors, and preserved link box. Screenshot work/client-publish-compact-hosted.png omits the private link. Local main committed; no push. Handoff: handoffs/C06-client-review-drafts.md, Compact publication panel.
+
+
 ## Client review drafts and staff feedback - 2026-10-24
 
 Integrated and deployed. Client sections prepare local approvals/corrections/comments, with one final Send per piece and a warning before partial submission. Untouched sections remain pending after a partial send, including after changes to another section. Browser drafts and exact uncertain request UUID/body survive reload on the same device. New-version/revoked/withdrawn/archived requests cannot accept fresh stale responses. Staff gets one explicit-publication aggregate badge; Design only sees client material corrections. Removed redundant production subtitle. Material feedback goes to Design; script/caption feedback goes to Marketing; mixed feedback reaches both via existing mail cadences. Later acceptance retains earlier corrections in the digest. Manual staff-recorded returns preserve client/team source too.

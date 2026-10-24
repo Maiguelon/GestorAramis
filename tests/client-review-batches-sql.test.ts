@@ -91,6 +91,10 @@ describe('atomic batched client reviews',()=>{
    const result=(await db.query<{v:{send:boolean}}>("select public.aramis_notification_dispatch($1,'begin-send',$2,'2030-01-02T12:00:01Z') v",[W,JSON.stringify({id:b.id,lease:b.lease,email:{to:['marketing@example.test']}})])).rows[0].v;
    expect(result.send).toBe(false);
  });
+ it('keeps the source when staff record a client correction using the existing delivery action',async()=>{
+   const r=await final();await db.exec('set constraints all immediate');await respond(r.id,'caption','changes','Recorded by staff flow');
+   const e=(await db.query<{source:string}>("select source from app_private.notification_events where piece_id=$1 and kind='returned' order by sequence desc limit 1",[P])).rows[0];expect(e.source).toBe('client');
+ });
  it('rejects wrong versions, revoked links, archived pieces and non-service callers',async()=>{
    const r=await final();await expect(batch({...r,version:r.version+1},[answer('content')])).rejects.toThrow('CONFLICT');
    await rpc('link-revoke');await expect(batch(r,[answer('content')])).rejects.toThrow('INVALID_ACCESS');

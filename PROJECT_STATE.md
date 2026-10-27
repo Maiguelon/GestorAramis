@@ -1,5 +1,14 @@
 # Estado del proyecto
 
+## Expanded text editing - 2026-10-27
+
+The authenticated text tab now supports Editar, large auto-growing script/slides and caption fields (one field for stories), sticky save controls and Ctrl/Cmd+S. Reading/copying remains the default for Design. Saves send only changed text fields via existing revision-checked commands; client publication remains explicit. Caption locks match Details. Concurrent edits preserve the local draft until deliberate reload; tab close/reload/Panel/Cancel guard unsaved changes. Pending saves reuse the exact session retry operation after reload. A remotely archived dirty draft remains copyable but cannot save. Internal notes and legacy story instructions remain read-only. Unsaved drafts are in memory, with a close warning, rather than automatically persisted.
+
+Verification: **17 shared browser cases + 3 demo cases passed**, including five new editor cases, session/sign-out regression, exact retry after reload, concurrency, caption lock, story text, remote archive, tab-close dismissal, long content/mobile width and two-tab synchronization back to the normal piece dialog. TypeScript, safe shared package, Worker compile and private-key scan passed. No backend schema changes, real text saves, client publications, messages or notification changes for QA.
+
+Published **f32f216a.gestor-aramis.pages.dev**, production **https://gestor.aramis.agency/**, code **6493ead**. Hosted bundle **index-Hc168-8f.js** matches the prepared package byte-for-byte. Remote smoke passed. Read-only hosted inspection: Edit opens the wide script field, caption in review remains read-only, Save stays disabled without changes, and font is Lato. Screenshot work/piece-text-editor-hosted.png; mobile mocked evidence work/piece-text-editor-mobile.png. Reader mode restored without a save. Local main committed; no push. Handoff handoffs/C05-expanded-text-editor.md. User action: refresh, Abrir texto completo, Editar, then Guardar cambios or Ctrl+S.
+
+
 ## Compact client publication - 2026-10-24
 
 The upper Client tab block in a piece now shows only Actualizar vista del cliente in its normal state. Removed heading/help, script editor and delivery/caption previews, including the secondary hide action from that block. Publishes saved piece content or the exact valid delivery; the existing confirmation/revision/retry boundary remains. Link, WhatsApp, administration and published requests below are unchanged. Global client access UI unchanged. Six existing publication/link/retry/Design browser cases adapted and passed; TypeScript/shared package/Worker/private-key scan passed. No backend changes, real publication actions or messages.

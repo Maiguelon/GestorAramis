@@ -75,7 +75,7 @@ function PieceStateActions({ piece, approvalId, disabled, act, onReview }: { pie
   </div>;
 }
 function ExpandedTextLink({ pieceId, dirty }: { pieceId: string; dirty: boolean }) {
-  return <div className="expand-text-actions"><div><strong>Texto de la pieza</strong><small>Lectura completa en otra pestaña.</small></div><a className="button primary" href={dirty ? undefined : `/text/${encodeURIComponent(pieceId)}`} aria-disabled={dirty} tabIndex={dirty ? -1 : undefined} target="_blank" rel="noopener noreferrer"><ExternalLink size={17}/>Abrir texto completo</a>{dirty && <p className="form-hint">Guardá los cambios para abrir la versión actualizada.</p>}</div>;
+  return <div className="expand-text-actions"><div><strong>Texto de la pieza</strong><small>Lectura y edición en otra pestaña.</small></div><a className="button primary" href={dirty ? undefined : `/text/${encodeURIComponent(pieceId)}`} aria-disabled={dirty} tabIndex={dirty ? -1 : undefined} target="_blank" rel="noopener noreferrer"><ExternalLink size={17}/>Abrir texto completo</a>{dirty && <p className="form-hint">Guardá los cambios para abrir la versión actualizada.</p>}</div>;
 }
 function DetailsForm({piece,onSave,onDirty}:{piece:Piece;onDirty:(dirty:boolean)=>void;onSave:(command:Command)=>Promise<CommandResult|undefined>}) {
   const [draft,setDraft]=useState(piece);

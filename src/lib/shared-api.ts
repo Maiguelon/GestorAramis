@@ -1,6 +1,6 @@
 import type { Command, CommandResult, WorkspaceState } from '../../contracts/domain';
 
-export interface StaffWorkspace { state: WorkspaceState; memberId: string; workspaceId: string; workspaceName: string }
+export interface StaffWorkspace { state: WorkspaceState; memberId: string; workspaceId: string; workspaceName: string; canViewStatistics?: boolean }
 export interface SharedSnapshot { workspace: StaffWorkspace | null; error: string; loading: boolean; busy: boolean; uncertain: boolean }
 export class SharedApiError extends Error {
   constructor(public code: string, message: string) { super(message); this.name = 'SharedApiError'; }
@@ -38,7 +38,11 @@ export class SharedWorkspaceStore {
   getSnapshot = () => this.snapshot;
   /** Allowlisted same-origin authenticated transport. The returned body can stream. */
   async authenticatedFetch(path: string, init: RequestInit = {}): Promise<Response> {
-    if (!(path.startsWith('/api/drive/') || path === '/api/notifications/preferences' || path === '/api/client-pilot/staff') || /[\\?#]/.test(path)) throw new SharedApiError('VALIDATION', 'Ruta no permitida.');
+    const statistics = path === '/api/statistics' || path.startsWith('/api/statistics?');
+    const existingRoute = path.startsWith('/api/drive/') || path === '/api/notifications/preferences' || path === '/api/client-pilot/staff';
+    if (/[\\#]/.test(path) || !(statistics || existingRoute && !path.includes('?'))) {
+      throw new SharedApiError('VALIDATION', 'Ruta no permitida.');
+    }
     if (!this.token || !this.userId) throw new SharedApiError('SESSION_REQUIRED', 'Ingresá para abrir el espacio del equipo.');
     const generation = this.generation;
     const controller = new AbortController(); this.controllers.add(controller);

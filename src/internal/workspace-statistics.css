@@ -1,0 +1,115 @@
+.workspace-statistics {
+  display: grid;
+  gap: 20px;
+}
+
+.statistics-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr)) repeat(2, minmax(150px, 1fr)) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.statistics-filters label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.statistics-filters input,
+.statistics-filters select {
+  min-width: 0;
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #dce2ea;
+  border-radius: 5px;
+  background-color: white;
+  padding: 8px 10px;
+  color: var(--ink);
+}
+
+.statistics-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.statistics-card,
+.statistics-table,
+.statistics-method {
+  background: white;
+  border: 1px solid #dce2ea;
+  border-radius: 8px;
+}
+
+.statistics-card,
+.statistics-method {
+  padding: 16px;
+}
+
+.statistics-card h2,
+.statistics-heading {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.statistics-card strong {
+  display: block;
+  margin-block: 8px 4px;
+  font-size: 1.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.statistics-card p {
+  margin: 0;
+}
+
+.statistics-table {
+  overflow-x: auto;
+}
+
+.statistics-table table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.statistics-table th,
+.statistics-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e9ecf1;
+}
+
+.statistics-table thead th {
+  background: #e9ecf1;
+}
+
+.statistics-table tr:last-child td,
+.statistics-table tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.statistics-table small {
+  display: block;
+}
+
+.statistics-method summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+@media (max-width: 950px) {
+  .statistics-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .statistics-cards {
+    grid-template-columns: 1fr;
+  }
+  .statistics-table th,
+  .statistics-table td {
+    padding: 10px;
+  }
+}

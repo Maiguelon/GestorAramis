@@ -1,5 +1,13 @@
 # Estado del proyecto
 
+## Estadísticas internas — 2026-11-16
+
+Primera versión integrada localmente en `feature/internal-statistics`, desde el gestor del equipo. Gestión muestra Estadísticas sólo a una membresía autorizada. La base comprueba el permiso en cada consulta. Filtros de mes, cliente y formato; aprobaciones vigentes, clientes atendidos, mediana hasta la primera entrega y de revisión interna, y tabla de aprobaciones, devoluciones y avance por cliente. El avance usa las piezas asignadas a los meses elegidos; el volumen evita duplicar piezas multicliente.
+
+La migración `202611160001_internal_statistics.sql` conserva las decisiones y reaperturas futuras al confirmar cada entrega. Reutiliza los hitos existentes de entrada a Diseño y envío. Del histórico, se importan las decisiones persistidas con fuente y fechas válidas; los tiempos sin ambos hitos quedan fuera. Espera de material, tiempos de cliente por WhatsApp y publicación quedan para bloques posteriores.
+
+Verificación local: TypeScript, Vitest **588 pruebas en 32 archivos**, **14 recorridos de navegador distintos** con sesión simulada, compilación de Pages y Worker y comprobación de secretos del paquete. Durante la prueba en 390 px se ajustaron las etiquetas de filtros y pasaron los dos recorridos nuevos. PostgreSQL aislado verificó permisos por miembro, límites del mes argentino, reaperturas, filtros y conteo multicliente. Pendiente aplicar migración, habilitar únicamente la cuenta de Miguel, desplegar el gestor del equipo y verificar la cobertura histórica real. Pasos en `handoffs/C13-internal-statistics.md`.
+
 ## Expanded text editing - 2026-10-27
 
 The authenticated text tab now supports Editar, large auto-growing script/slides and caption fields (one field for stories), sticky save controls and Ctrl/Cmd+S. Reading/copying remains the default for Design. Saves send only changed text fields via existing revision-checked commands; client publication remains explicit. Caption locks match Details. Concurrent edits preserve the local draft until deliberate reload; tab close/reload/Panel/Cancel guard unsaved changes. Pending saves reuse the exact session retry operation after reload. A remotely archived dirty draft remains copyable but cannot save. Internal notes and legacy story instructions remain read-only. Unsaved drafts are in memory, with a close warning, rather than automatically persisted.

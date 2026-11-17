@@ -11,6 +11,27 @@ const post = (body: unknown, headers = {}) => request('/api/commands', { method:
 const transport = (rpc = () => Response.json(snapshot)) => vi.fn(async (url: RequestInfo | URL, _init?: RequestInit) => String(url).endsWith('/auth/v1/user') ? Response.json({ id: 'real-user' }) : rpc());
 
 describe('shared team Worker API', () => {
+  it('forwards statistics filters with the user session and honors the private database permission', async () => {
+    const report = { approved: 2, byClient: [] };
+    const fetcher = transport(() => Response.json(report));
+    const path = '/api/statistics?from=2026-09&through=2026-11&format=reel';
+    const response = await handleRequest(request(path), env, fetcher);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(await response.json()).toEqual(report);
+    expect(String(fetcher.mock.calls[1][0])).toBe('https://project.supabase.co/rest/v1/rpc/aramis_statistics');
+    expect(JSON.parse(fetcher.mock.calls[1][1]!.body as string)).toEqual({
+      p_workspace_id: workspaceId, p_from: '2026-09-01', p_through: '2026-11-01', p_client_id: null, p_format: 'reel',
+    });
+    expect(JSON.stringify(fetcher.mock.calls)).not.toContain('NEVER_FORWARD');
+    const denied = await handleRequest(request(path), env, transport(() => Response.json({ code: '42501' }, { status: 403 })));
+    expect(denied.status).toBe(403);
+    expect(await denied.json()).toEqual({ error: 'forbidden', code: 'forbidden' });
+    fetcher.mockClear();
+    const invalid = await handleRequest(request(path + '&workspaceId=' + requestId), env, fetcher);
+    expect(invalid.status).toBe(400);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
   it('verifies identity then forwards the user JWT and a server-selected workspace, never service_role', async () => {
     const fetcher = transport();
     const response = await handleRequest(request(), env, fetcher);

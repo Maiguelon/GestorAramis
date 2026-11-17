@@ -1,0 +1,58 @@
+import { FORMAT_LABELS } from '../contracts/domain';
+import { ServiceError, type Fetcher } from './errors';
+
+const month = /^20\d{2}-(?:0[1-9]|1[0-2])$/;
+const uuid = /^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i;
+const filters = new Set(['from', 'through', 'clientId', 'format']);
+
+function monthIndex(value: string) {
+  return Number(value.slice(0, 4)) * 12 + Number(value.slice(5));
+}
+
+export async function readStatistics(
+  config: { url: string; publishableKey: string; workspaceId: string },
+  authorization: string,
+  query: URLSearchParams,
+  fetcher: Fetcher,
+): Promise<unknown> {
+  for (const key of query.keys()) {
+    if (!filters.has(key) || query.getAll(key).length !== 1) throw new ServiceError('VALIDATION', 400);
+  }
+  const from = query.get('from');
+  const through = query.get('through');
+  const clientId = query.get('clientId');
+  const format = query.get('format');
+  if (!from || !through || !month.test(from) || !month.test(through) || from > through
+    || monthIndex(through) - monthIndex(from) >= 24
+    || (clientId !== null && !uuid.test(clientId))
+    || (format !== null && !Object.hasOwn(FORMAT_LABELS, format))) {
+    throw new ServiceError('VALIDATION', 400);
+  }
+
+  let response: Response;
+  try {
+    response = await fetcher(new URL('/rest/v1/rpc/aramis_statistics', config.url), {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { Authorization: authorization, apikey: config.publishableKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_workspace_id: config.workspaceId,
+        p_from: from + '-01',
+        p_through: through + '-01',
+        p_client_id: clientId,
+        p_format: format,
+      }),
+    });
+  } catch { throw new ServiceError('service_unavailable', 503); }
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    if (response.status === 401) throw new ServiceError('unauthenticated', 401);
+    if (response.status === 403 || data?.code === '42501') throw new ServiceError('forbidden', 403);
+    if (data?.code === 'P0001' && data.message === 'VALIDATION') throw new ServiceError('VALIDATION', 400);
+    throw new ServiceError('service_unavailable', 503);
+  }
+  if (!data || typeof data.approved !== 'number' || !Array.isArray(data.byClient)) {
+    throw new ServiceError('service_unavailable', 503);
+  }
+  return data;
+}

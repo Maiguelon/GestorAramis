@@ -14,7 +14,7 @@ assert.match(favicon.headers.get('content-type'), /image\/svg\+xml/);
 const manifest = await fetch(base + '/manifest.webmanifest');
 assert.equal(manifest.status, 200);
 assert.equal((await manifest.json()).icons[0].src, faviconPath);
-for (const path of ['/api/notifications/preferences', '/api/drive/pieces/00000000-0000-4000-8000-000000000001/delivery-assets', '/api/workspace', '/api/commands', '/api/drive/status', '/api/drive/assets/00000000-0000-4000-8000-000000000001/content', '/api/drive/assets/00000000-0000-4000-8000-000000000001/thumbnail', '/api/drive/assets/00000000-0000-4000-8000-000000000001/viewer']) {
+for (const path of ['/api/statistics?from=2026-11&through=2026-11', '/api/notifications/preferences', '/api/drive/pieces/00000000-0000-4000-8000-000000000001/delivery-assets', '/api/workspace', '/api/commands', '/api/drive/status', '/api/drive/assets/00000000-0000-4000-8000-000000000001/content', '/api/drive/assets/00000000-0000-4000-8000-000000000001/thumbnail', '/api/drive/assets/00000000-0000-4000-8000-000000000001/viewer']) {
   const response = await fetch(base + path, path.endsWith('commands')
     ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' } : {});
   assert.equal(response.status, 401, `${path} must require a session`);

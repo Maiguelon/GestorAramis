@@ -1,5 +1,17 @@
 # Estado del proyecto
 
+## Estadísticas activadas en producción — 2026-11-21
+
+Publicado **4938dc10.gestor-aramis.pages.dev**, dominio del equipo **https://gestor.aramis.agency/**. Código de implementación **77ac16b**. Bundle **index-CdyKUDzg.js**, SHA-256 **f9aecc111198611c3c8b06c4011bb63bb4516d251dfe193f1c7c3cab94ef62d2**, idéntico al paquete preparado. Miguel ejecutó el archivo operativo revisado que aplica **202611160001_internal_statistics.sql** y concede el acceso sólo a su membresía verificada. Consulta autenticada real posterior confirma `canViewStatistics=true` y respuesta 200 del informe. No repetir la migración.
+
+Preflight verificó el proyecto y la cuenta confirmada de Miguel, su membresía activa y la ausencia inicial de la RPC. El control de navegador devolvía “Computer Use helper already has an active request”; por eso el titular ejecutó la activación SQL. La comprobación posterior usó una sesión temporal de su cuenta, generada mediante el administrador de Auth sin enviar correo. Las sesiones de comprobación se cerraron con alcance local al terminar. No se cambiaron piezas ni archivos para QA.
+
+Evidencia real al 21/11: período septiembre–noviembre **24 piezas con aprobación vigente para 6 clientes**, coincidencia con los 24 registros actuales aprobados/programados/publicados. Son 19 reels, 3 historias y 2 posts; no hay títulos identificados como pruebas en ese conjunto. Hay **25** casos con ambos hitos para primera entrega y **70** versiones con una decisión interna registrada. Septiembre no tiene primera entrega con fecha de entrada a Diseño conservada. El histórico puede haber perdido decisiones anteriores sobrescritas antes de la migración; el registro nuevo conserva las futuras decisiones y reaperturas. No se deriva ahorro de horas ni mejora causal de estas observaciones.
+
+Verificación repetida: **588 pruebas / 32 archivos**, TypeScript/Pages/Worker y escaneo de secretos del paquete aprobados. En producción se verificaron navegación autenticada, filtros por período/formato/cliente, pantalla de 390 px sin desbordamiento, API sin sesión 401 y no-store, origen externo 403 e intento de sustituir workspace 400. El smoke general del dominio pasó e incluye ahora la ruta de estadísticas. La captura móvil se repitió después de esperar la transición de la barra lateral. El rechazo de otras membresías está probado en PostgreSQL aislado; no se inició sesión como Eliana o Eric para QA.
+
+Capturas y registro privado ignorados en `work/statistics-hosted/`; pasos y límites en `handoffs/C13-internal-statistics.md`. Para usar, recargar el gestor, elegir Gestión y abrir Estadísticas. Rama `feature/internal-statistics`, sin push ni merge a main.
+
 ## Estadísticas internas — 2026-11-16
 
 Primera versión integrada localmente en `feature/internal-statistics`, desde el gestor del equipo. Gestión muestra Estadísticas sólo a una membresía autorizada. La base comprueba el permiso en cada consulta. Filtros de mes, cliente y formato; aprobaciones vigentes, clientes atendidos, mediana hasta la primera entrega y de revisión interna, y tabla de aprobaciones, devoluciones y avance por cliente. El avance usa las piezas asignadas a los meses elegidos; el volumen evita duplicar piezas multicliente.

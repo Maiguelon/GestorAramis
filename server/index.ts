@@ -5,7 +5,7 @@ import { callWorkspaceRpc } from './workspace-repository';
 import { googleCallbackRedirect, handleDriveRequest, preparePieceFolders } from './drive-service';
 import type { Piece } from '../contracts/domain';
 import { handleClientPilot } from './client-pilot';
-import { readStatistics } from './statistics';
+import { readStatistics, statisticsSnapshots } from './statistics';
 
 export interface WorkerEnv extends NotificationEnv {
   SUPABASE_URL?: string;
@@ -94,12 +94,15 @@ export async function handleRequest(request: Request, env: WorkerEnv, fetcher: F
     if (url.pathname === '/api/google/callback') return googleCallbackRedirect(request);
     if (url.pathname === '/api/notifications/preferences') return await handleNotificationPreferences(request, env, config, fetcher);
     if (url.pathname.startsWith('/api/drive/')) return await handleDriveRequest(request, env, config, fetcher);
-    if (!['/api/workspace', '/api/commands', '/api/statistics'].includes(url.pathname)) throw new ServiceError('feature_unavailable', 501);
-    if ((url.pathname !== '/api/commands' && request.method !== 'GET')
+    const snapshotRoute = url.pathname === '/api/statistics/snapshots';
+    if (!['/api/workspace', '/api/commands', '/api/statistics', '/api/statistics/snapshots'].includes(url.pathname)) throw new ServiceError('feature_unavailable', 501);
+    if ((snapshotRoute && !['GET','POST'].includes(request.method))
+      || (!snapshotRoute && url.pathname !== '/api/commands' && request.method !== 'GET')
       || (url.pathname === '/api/commands' && request.method !== 'POST')) throw new ServiceError('method_not_allowed', 405);
     const boundedFetch: Fetcher = (input, init) => fetcher(input, { ...init, signal: AbortSignal.timeout(30_000) });
     const user=await verifySupabaseUser(request, config, boundedFetch);
     const authorization = request.headers.get('Authorization')!;
+    if (snapshotRoute) return Response.json(await statisticsSnapshots(config, authorization, request, boundedFetch), { headers: HEADERS });
     if (url.pathname === '/api/statistics') {
       return Response.json(await readStatistics(config, authorization, url.searchParams, boundedFetch), { headers: HEADERS });
     }

@@ -26,10 +26,27 @@ export interface ClientStatistics extends StatisticsClient {
 }
 
 export interface WorkspaceStatistics {
+  definitionVersion?: number;
   approved: number;
   clientsServed: number;
   firstDelivery: TimeStatistic;
   internalReview: TimeStatistic;
   clients: StatisticsClient[];
   byClient: ClientStatistics[];
+  versions?: {
+    count: number; median: number | null; one: number; two: number; threePlus: number;
+  };
+  deadline?: {
+    count: number; onTime: number; late: number; unknown: number; percent: number | null;
+  };
+  pieces?: {
+    id: string; title: string; format: ContentFormat; clients: string[];
+    approvedAt: string; versions: number; teamChanges: number; clientChanges: number;
+    deadline: string | null; deadlineResult: 'on_time' | 'late' | 'unknown';
+  }[];
 }
+
+export interface StatisticsSnapshotSummary {
+  month: string; capturedAt: string; captureType: 'manual' | 'automatic'; definitionVersion: number;
+}
+export interface StatisticsSnapshot extends StatisticsSnapshotSummary { report: WorkspaceStatistics }

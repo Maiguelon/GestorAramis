@@ -11,6 +11,26 @@ const post = (body: unknown, headers = {}) => request('/api/commands', { method:
 const transport = (rpc = () => Response.json(snapshot)) => vi.fn(async (url: RequestInfo | URL, _init?: RequestInit) => String(url).endsWith('/auth/v1/user') ? Response.json({ id: 'real-user' }) : rpc());
 
 describe('shared team Worker API', () => {
+  it('lists and freezes monthly snapshots with a user JWT and rejects extra inputs', async () => {
+    const saved = {month:'2026-10',report:{approved:2},capturedAt:'2026-11-21T03:00:00Z'};
+    const fetcher=transport(()=>Response.json(saved));
+    const reply=await handleRequest(request('/api/statistics/snapshots', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({month:'2026-10'})}),env,fetcher);
+    expect(reply.status).toBe(200);
+    expect(reply.headers.get('Cache-Control')).toBe('no-store');
+    expect(String(fetcher.mock.calls[1][0])).toContain('/rpc/aramis_statistics_snapshot');
+    expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body))).toEqual({p_workspace_id:workspaceId,p_month:'2026-10-01'});
+    expect(JSON.stringify(fetcher.mock.calls)).not.toContain('NEVER_FORWARD');
+    const list=await handleRequest(request('/api/statistics/snapshots'),env,transport(()=>Response.json([])));
+    expect(await list.json()).toEqual([]);
+    for(const body of [{month:'2026-10',workspaceId},{month:'2026-10',report:{}},{month:'bad'},{}]) {
+      expect((await handleRequest(request('/api/statistics/snapshots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),env,fetcher)).status).toBe(400);
+    }
+    for(const suffix of ['?month=2026-10&month=2026-09','?workspaceId='+workspaceId]) {
+      expect((await handleRequest(request('/api/statistics/snapshots'+suffix),env,fetcher)).status).toBe(400);
+    }
+    expect((await handleRequest(request('/api/statistics/snapshots?month=2026-10'),env,transport(()=>Response.json(null)))).status).toBe(404);
+    expect((await handleRequest(request('/api/statistics/snapshots'),env,transport(()=>Response.json({code:'42501'},{status:403})))).status).toBe(403);
+  });
   it('forwards statistics filters with the user session and honors the private database permission', async () => {
     const report = { approved: 2, byClient: [] };
     const fetcher = transport(() => Response.json(report));

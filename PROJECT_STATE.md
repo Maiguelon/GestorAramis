@@ -1,5 +1,19 @@
 # Estado del proyecto
 
+## Ampliación de estadísticas publicada — 2026-11-21
+
+Versiones por pieza, cumplimiento de primera fecha comprometida y cortes mensuales inmutables integrados en producción. Datos/API/programador en **6aedf07**; interfaz y documentación en el commit siguiente de `feature/internal-statistics`. Nueva migración **202611210001_statistics_monthly_cuts.sql** aplicada mediante el editor SQL del proyecto después de recuperar la sesión existente del navegador. Resultado observado: **Monthly statistics activated**. No repetirla ni volver a aplicar C13. No cambia la lista de lectores: continúa privada para Miguel.
+
+Pages **4446b0ea.gestor-aramis.pages.dev**, dominio **https://gestor.aramis.agency/**, bundle **index-DT2dGeJQ.js**, SHA-256 **c83c53317741efb1e67ed32d9da9b5e64d772675f9f1b9b8ccf6aa9b8c0e53e4**. Worker de avisos actualizado a **765acb93-f203-456f-8de8-b6c07e44423e**, mismo cron y correo habilitado. El cierre de estadísticas corre de forma independiente del email. Primera captura automática: noviembre al cerrarse el mes en Argentina; no se afirma haber observado ese evento futuro. La RPC real ya devuelve null correctamente mientras no hay mes elegible.
+
+Cortes incluye todos los clientes/formatos, timestamp real y versión de definición, sin recalcular al consultarlo; JSON descargable idéntico al guardado. Reintentar el mismo mes conserva el original. Se guardó un primer corte manual de octubre con fecha de hoy, sin presentarlo como una foto tomada en octubre: **17 aprobaciones, mediana 2 versiones, distribución 5 / 6 / 6** para 1 / 2 / 3+. Total actual septiembre–noviembre **24 aprobadas, mediana 2 versiones, distribución 8 / 7 / 9**. Detalle expandible separa cambios del equipo y cliente.
+
+El plazo compara aprobación con primera fecha prevista de publicación registrada, inclusive ese día en Argentina. Cambiar o quitar la fecha posterior no reescribe el compromiso. Las fechas existentes se capturan como línea de base de hoy: **las 24 aprobaciones previas no tienen fecha comprometida verificable para este indicador**, se muestran fuera de la muestra y el porcentaje queda sin dato. Las próximas aprobaciones alimentarán la medición. No se mide publicación real ni horas trabajadas.
+
+Verificación: **597 pruebas / 33 archivos**, **55 recorridos compartidos** de navegador, TypeScript, paquete seguro Pages/Worker y smoke remoto aprobados. Sesión temporal de Miguel cerrada al acabar, sin enviar correos ni tocar piezas/Drive para QA. Consultas reales validaron versiones/coverage, filtros, snapshot manual, retry inmutable, descarga exacta y 390 px. Pruebas de otras membresías y medianoche local en PostgreSQL aislado. Evidencia privada en `work/statistics-monthly-hosted/`; límites y pasos en **handoffs/C14-statistics-monthly-cuts.md**.
+
+Para revisar: recargar → Gestión → Estadísticas → Cortes mensuales. No hace falta ningún paso manual de activación. Commits locales en la rama; no se realizó push ni merge.
+
 ## Estadísticas activadas en producción — 2026-11-21
 
 Publicado **4938dc10.gestor-aramis.pages.dev**, dominio del equipo **https://gestor.aramis.agency/**. Código de implementación **77ac16b**. Bundle **index-CdyKUDzg.js**, SHA-256 **f9aecc111198611c3c8b06c4011bb63bb4516d251dfe193f1c7c3cab94ef62d2**, idéntico al paquete preparado. Miguel ejecutó el archivo operativo revisado que aplica **202611160001_internal_statistics.sql** y concede el acceso sólo a su membresía verificada. Consulta autenticada real posterior confirma `canViewStatistics=true` y respuesta 200 del informe. No repetir la migración.

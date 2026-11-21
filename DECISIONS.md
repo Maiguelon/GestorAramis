@@ -155,3 +155,10 @@ Una acción en la pestaña Cliente incluye la pieza en el calendario y publica u
 ## D34 - Client review drafts and area routing (2026-10-24)
 
 Each section is prepared locally, then one exact-version batch sends the piece review. Partial sends warn but remain allowed; untouched parts stay pending. Any requested change wins the aggregate; accepting all shared parts approves the delivery. Script/caption feedback belongs to Marketing; material corrections belong to Design. Staff shows one aggregate only after explicit publication, and Design sees client status only for material corrections. Existing notification cadences summarize by area without losing earlier corrections when another section is accepted. Browser drafts stay on the same device. Legacy individual responses remain compatible. See handoffs/C06-client-review-drafts.md.
+
+
+## D35 — Métricas privadas y evidencia mensual (2026-11-21)
+
+Estadísticas es una capacidad explícita por membresía, no una consecuencia de elegir la vista Gestión. Mide observaciones del flujo sin incorporar cronómetros ni acciones nuevas para Diseño. Las versiones se cuentan sobre piezas con aprobación vigente, una vez por pieza global incluso si es multicliente; cambios registrados distinguen equipo/cliente. Plazo significa aprobación frente a la primera fecha prevista de publicación conocida e inmutable, inclusive ese día en Argentina; no publicación real. Las fechas existentes constituyen una línea de base desde la activación y no se atribuyen retroactivamente a aprobaciones previas.
+
+Cada mes cerrado admite un corte global inmutable con timestamp de captura, origen y definición. Reintentos devuelven el primer corte. El cierre automático comienza con el mes de activación y corre independientemente del email en el Worker existente; una captura manual anterior se identifica como realizada hoy. No usar observaciones sin comparación para afirmar mejoras o ahorro. Acceso y export permanecen privados; revisar nombres/títulos antes de publicarlos. Implementación y evidencia en handoffs/C13-internal-statistics.md y C14-statistics-monthly-cuts.md.

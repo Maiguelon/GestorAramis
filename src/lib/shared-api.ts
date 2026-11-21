@@ -38,7 +38,8 @@ export class SharedWorkspaceStore {
   getSnapshot = () => this.snapshot;
   /** Allowlisted same-origin authenticated transport. The returned body can stream. */
   async authenticatedFetch(path: string, init: RequestInit = {}): Promise<Response> {
-    const statistics = path === '/api/statistics' || path.startsWith('/api/statistics?');
+    const statistics = path === '/api/statistics' || path.startsWith('/api/statistics?')
+      || path === '/api/statistics/snapshots' || path.startsWith('/api/statistics/snapshots?');
     const existingRoute = path.startsWith('/api/drive/') || path === '/api/notifications/preferences' || path === '/api/client-pilot/staff';
     if (/[\\#]/.test(path) || !(statistics || existingRoute && !path.includes('?'))) {
       throw new SharedApiError('VALIDATION', 'Ruta no permitida.');

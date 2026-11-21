@@ -36,6 +36,7 @@ The client pilot opens its monthly calendar when there are no pending reviews; o
 | Delivery and review | Keep finished work separate from source footage. Submit an ordered, versioned delivery for review; approve it or return it to production with a required reason. |
 | History | Keep approved work visible through its planned publication date, then show it in History. Archive and restore pieces while preserving their records and files. |
 | Email notifications — added after V1 | Notify design about production entries and returns, and marketing about new deliveries for review. Client feedback follows the same cadence: text corrections go to marketing and material corrections to design. Daily summaries default to 09:00 Argentina; each person can change frequency, time or pause them. |
+| Private statistics | An explicitly authorized account can inspect approval volume, elapsed production/review times, versions per approved piece and approval against the first recorded planned publication date. Immutable monthly cuts include capture dates, metric definitions and an exact JSON export. |
 
 ### Workflow
 
@@ -88,7 +89,7 @@ flowchart LR
 
 Administrative Supabase and Resend keys stay on the server; Google integration tokens are stored encrypted. Core workspace commands run with the signed-in user's identity; specialized file and notification operations use private server credentials with their own authorization checks. Internal drafts and notes are kept separate from client-visible content.
 
-Cron runs independently of page visits. Database leases coordinate scheduled and immediate dispatch; retries keep the same email body and Resend idempotency key. Uncertain sends beyond the retry window are held for review instead of resent blindly.
+Cron runs independently of page visits. The same Worker also closes statistics months in a separate job, regardless of email preferences. Monthly snapshots preserve their original data and capture date; retrospectively saved months are labeled with the actual save date, and unobserved historical deadlines are excluded from the percentage. Database leases coordinate scheduled and immediate dispatch; retries keep the same email body and Resend idempotency key. Uncertain sends beyond the retry window are held for review instead of resent blindly.
 
 Workspace changes refresh when the tab regains focus and every 15 seconds while visible. Drive imports are checked from the app; there is no continuous background watcher of every Drive folder.
 
@@ -181,6 +182,8 @@ npm run notifications:check
 
 The **October 1, 2026 checkpoint** records 525 passing unit tests across 23 files and 27 shared browser flows. It also records a real grouped email accepted and marked delivered by Resend, authenticated preference saving and a smoke check of the published app. Detailed evidence is in [PROJECT_STATE.md](PROJECT_STATE.md) and the [email handoff](handoffs/C11-email-notifications.md). These checks do not imply that every workflow has been tested with every team member or device.
 
+The **November 21, 2026 statistics checkpoint** records 597 passing unit/SQL tests, 55 shared browser flows, and authenticated hosted verification of filters, version counts, immutable snapshot retries, exact JSON download and mobile layout. Approval deadlines preserve the first recorded date; approvals predating that record have unknown coverage. These observational metrics do not establish a before/after improvement. See the [statistics handoff](handoffs/C14-statistics-monthly-cuts.md).
+
 ## Development approach
 
 The project was developed with AI coding agents through scoped implementation blocks, shared contracts, automated checks and written handoffs. Product decisions came from the agency's actual workflow and feedback from marketing and design. Iteration included mobile upload behavior, Drive permissions, production queue visibility, review corrections and notification frequency.
@@ -189,7 +192,7 @@ The work spans operational discovery, workflow design, service integration and d
 
 ## Current boundaries and next steps
 
-The internal V1 covers the team's planning, production and review workflow and is already in use. The client pilot supports private calendar links and remote script/delivery approvals. Client accounts, uploads and a real-client/mobile rollout remain future work. Authentication emails and self-service account recovery are separate improvements. Social publishing is handled outside the app. Internal metrics come after the client workflows.
+The internal V1 covers the team's planning, production and review workflow and is already in use. The client pilot supports private calendar links and remote script/delivery approvals. Client accounts, uploads and a real-client/mobile rollout remain future work. Authentication emails and self-service account recovery are separate improvements. Social publishing is handled outside the app. Private internal statistics are deployed; deadline coverage grows from the date commitments began being recorded.
 
 Each deployment needs its own Google OAuth configuration for the Drive integration, separate from staff sign-in through Supabase. Connection setup and renewal procedures are documented in the Drive handoffs; the OAuth publishing status of the current Aramis deployment is an operational detail recorded in [PROJECT_STATE.md](PROJECT_STATE.md).
 

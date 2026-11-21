@@ -1,4 +1,8 @@
 # Hoja de ruta — Gestor Aramis V1
+
+## C13–C14 — Estadísticas internas (publicadas, 2026-11-21)
+
+Consulta privada de aprobaciones y tiempos observados, versiones por pieza y cumplimiento de fecha comprometida. Cortes mensuales inmutables automáticos/manuales y export JSON. Activación y consultas reales completadas; primera captura automática de noviembre pendiente del cierre natural del mes. Cobertura histórica explícita y sin afirmaciones causales. Evidencia vigente en PROJECT_STATE.md y handoffs/C14-statistics-monthly-cuts.md.
 ## Update - client review drafts (2026-10-24)
 
 Atomic per-piece sends, local section drafts, partial-review warnings, staff aggregate badges and audience-specific feedback are integrated and deployed. Hosted rollback probe passed. Real client phone/email usage remains the next pilot check. See handoffs/C06-client-review-drafts.md.

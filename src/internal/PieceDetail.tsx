@@ -1,7 +1,7 @@
 import { isMultiClient, pieceClientNames } from '../../contracts/piece-clients';
 import { useEffect, useState, type FormEvent } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
-import { Archive, ArrowRight, CheckCheck, ChevronDown, Copy, ExternalLink, Eye, FileText, History, Link2, MessageCircle, Paperclip, Plus, RotateCcw, Save, Send, ShieldCheck } from 'lucide-react';
+import { Archive, ArrowRight, CheckCheck, ChevronDown, Copy, Download, ExternalLink, Eye, FileText, History, Link2, MessageCircle, Paperclip, Plus, RotateCcw, Save, Send, ShieldCheck } from 'lucide-react';
 import type { Asset, Command, CommandResult, Piece, Review, WorkspaceState } from '../../contracts/domain';
 import { FORMAT_LABELS } from '../../contracts/domain';
 import { Modal, Status } from '../components/ui';
@@ -13,6 +13,7 @@ import DriveMaterials from './DriveMaterials';
 import PieceDelivery, { ChangeReason, latestDelivery } from './PieceDelivery';
 import './piece-detail.css';
 import { APP_MODE } from '../lib/api';
+import { createReelScriptDocx } from '../lib/reel-script-docx';
 import { sharedWorkspace } from '../lib/shared-api';
 import ClientPilot from './ClientPilot';
 import { ClientPilotBusy, ClientPilotFeedback, ClientPilotProvider } from './ClientPilotContext';
@@ -43,7 +44,7 @@ function PieceDetailBody({ piece, state, execute, onClose, initialTab = 'details
     {APP_MODE !== 'demo' && sharedWorkspace.getSnapshot().uncertain && <div className="error-banner"><p>No pudimos confirmar el guardado. Reintentá para verificarlo sin duplicar el cambio.</p><button className="button secondary" disabled={saving} onClick={async()=>{setSaving(true);try{await sharedWorkspace.retryPending();setError('');}catch{}finally{setSaving(false);}}}>Reintentar guardado</button></div>}<fieldset className="save-fieldset" disabled={saving}>
     <div className="detail-client-identity"><PieceClientAvatar piece={piece} clients={state.clients}/><div><strong>{pieceClientNames(piece, state.clients)}</strong><span className={`format-picker format-${piece.format}`}><select aria-label="Cambiar tipo de pieza" title={detailsDirty ? 'Guardá los detalles antes de cambiar el tipo' : 'Cambiar tipo de pieza'} value={piece.format} disabled={detailsDirty} onChange={async event=>{const format=event.target.value as Piece['format'];if(format===piece.format)return;const result=await act({type:'update-piece',pieceId:piece.id,expectedRevision:piece.revision,patch:{format}});if(result)setNotice('Tipo de pieza actualizado.');}}>{Object.entries(FORMAT_LABELS).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select><ChevronDown size={13} aria-hidden="true"/></span>{detailsDirty&&<small>Guardá los detalles para cambiar el tipo desde acá.</small>}</div></div><div className="detail-status"><Status status={piece.status}/>{(isMultiClient(piece)||APP_MODE==='demo')&&<span><Eye size={14}/>{isMultiClient(piece) ? 'Multicliente · gestión y entrega compartidas' : piece.visibleToClient ? 'Visible en el calendario del cliente' : 'No figura en el calendario del cliente'}</span>}</div>
     {clientControls&&<ClientPilotBusy onBusy={setClientBusy}/>}
-    <ChangeReason piece={piece} materialOnly={workMode==='design'}/><PieceStateActions piece={piece} approvalId={approvalId} disabled={detailsDirty || materialBusy || clientBusy} act={act} onReview={() => { setTab(APP_MODE === 'demo' ? 'review' : 'delivery'); setNotice('Aprobación deshecha. La misma versión vuelve a Revisión.'); }}/><ExpandedTextLink pieceId={piece.id} dirty={detailsDirty}/><Tabs.Root value={tab} onValueChange={value => {if(clientBusy){setError('Esperá a que termine o reintentá el cambio para el cliente.');return;}if(materialBusy){setError('Esperá a que termine de guardarse el material.');return;}if(detailsDirty && (tab==='details'||tab==='client') && value!==tab){setError('Guardá los detalles antes de cambiar de sección, o cargá los datos guardados para descartar tu borrador.');return;}setTab(value);setError('');setNotice('');}}><Tabs.List className="detail-tabs" aria-label="Secciones del contenido">{[{id:'details',name:'Detalles',icon:FileText},...(APP_MODE==='demo'?[{id:'review',name:'Revisión',icon:CheckCheck}]:[{id:'delivery',name:'Entrega',icon:CheckCheck}]),{id:'material',name:'Material',icon:Paperclip},...(clientControls?[{id:'client',name:'Cliente',icon:MessageCircle}]:[]),{id:'history',name:'Historial',icon:History}].map(item=><Tabs.Trigger key={item.id} value={item.id}><item.icon size={16}/>{item.name}</Tabs.Trigger>)}</Tabs.List>
+    <ChangeReason piece={piece} materialOnly={workMode==='design'}/><PieceStateActions piece={piece} approvalId={approvalId} disabled={detailsDirty || materialBusy || clientBusy} act={act} onReview={() => { setTab(APP_MODE === 'demo' ? 'review' : 'delivery'); setNotice('Aprobación deshecha. La misma versión vuelve a Revisión.'); }}/><ExpandedTextActions piece={piece} clients={pieceClientNames(piece, state.clients)} dirty={detailsDirty}/><Tabs.Root value={tab} onValueChange={value => {if(clientBusy){setError('Esperá a que termine o reintentá el cambio para el cliente.');return;}if(materialBusy){setError('Esperá a que termine de guardarse el material.');return;}if(detailsDirty && (tab==='details'||tab==='client') && value!==tab){setError('Guardá los detalles antes de cambiar de sección, o cargá los datos guardados para descartar tu borrador.');return;}setTab(value);setError('');setNotice('');}}><Tabs.List className="detail-tabs" aria-label="Secciones del contenido">{[{id:'details',name:'Detalles',icon:FileText},...(APP_MODE==='demo'?[{id:'review',name:'Revisión',icon:CheckCheck}]:[{id:'delivery',name:'Entrega',icon:CheckCheck}]),{id:'material',name:'Material',icon:Paperclip},...(clientControls?[{id:'client',name:'Cliente',icon:MessageCircle}]:[]),{id:'history',name:'Historial',icon:History}].map(item=><Tabs.Trigger key={item.id} value={item.id}><item.icon size={16}/>{item.name}</Tabs.Trigger>)}</Tabs.List>
       {clientControls&&<ClientPilotFeedback/>}{error && <div role="alert" className="error-banner">{error}</div>}{notice && <div role="status" className="notice-banner">{notice}</div>}
       <Tabs.Content value="details" className="detail-tab-content"><DetailsForm piece={piece} onDirty={setDetailsDirty} onSave={async command=>{const result=await act(command);if(result)setNotice(APP_MODE === 'demo' ? 'Cambios guardados en esta demostración.' : 'Cambios guardados en el espacio compartido.');return result;}}/><div className="detail-bottom-actions"><button className="text-button muted" onClick={async()=>{if(confirm(isMultiClient(piece)?'¿Archivar esta pieza para todos los clientes seleccionados? Se conservará su historial.':'¿Archivar este contenido? Dejará de verse en el calendario y sus enlaces de solicitud se revocarán.')){const result=await act({type:'update-piece',pieceId:piece.id,expectedRevision:piece.revision,patch:{archived:true}});if(result)onClose();}}}><Archive size={15}/>Archivar</button></div><p className="form-hint">Aprobar cierra el trabajo interno. La pieza queda al fondo de Pendientes hasta su fecha prevista y después se consulta desde Historial.</p></Tabs.Content>
       <Tabs.Content value="delivery" className="detail-tab-content"><PieceDelivery key={`${piece.id}:${piece.status}:${latestDelivery(piece)?.id??"draft"}`} piece={piece} act={act} onBusy={setMaterialBusy}/></Tabs.Content>
@@ -74,8 +75,46 @@ function PieceStateActions({ piece, approvalId, disabled, act, onReview }: { pie
     {disabled && <span className="form-hint">Guardá los detalles antes de cambiar el estado.</span>}
   </div>;
 }
-function ExpandedTextLink({ pieceId, dirty }: { pieceId: string; dirty: boolean }) {
-  return <div className="expand-text-actions"><div><strong>Texto de la pieza</strong><small>Lectura y edición en otra pestaña.</small></div><a className="button primary" href={dirty ? undefined : `/text/${encodeURIComponent(pieceId)}`} aria-disabled={dirty} tabIndex={dirty ? -1 : undefined} target="_blank" rel="noopener noreferrer"><ExternalLink size={17}/>Abrir texto completo</a>{dirty && <p className="form-hint">Guardá los cambios para abrir la versión actualizada.</p>}</div>;
+function ExpandedTextActions({ piece, clients, dirty }: { piece: Piece; clients: string; dirty: boolean }) {
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
+  const script = piece.format === 'reel' ? piece.script : undefined;
+  const hasScript = Boolean(script?.trim());
+
+  async function download() {
+    if (dirty || downloading || !script?.trim()) return;
+    setDownloading(true);
+    setDownloadError(false);
+    try {
+      const file = await createReelScriptDocx(piece.title, clients, script);
+      const url = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.name;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      // Allow the browser to acquire the file before releasing the download URL.
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      setDownloadError(true);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  return <div className="expand-text-actions">
+    <div><strong>Texto de la pieza</strong><small>Lectura y edición en otra pestaña.</small></div>
+    <div className="expand-text-buttons">
+      {hasScript && <button type="button" className="button secondary" disabled={dirty || downloading} onClick={download}>
+        <Download size={17} aria-hidden="true"/>{downloading ? 'Preparando Word…' : 'Descargar guion'}
+      </button>}
+      <a className="button primary" href={dirty ? undefined : `/text/${encodeURIComponent(piece.id)}`} aria-disabled={dirty}
+        tabIndex={dirty ? -1 : undefined} target="_blank" rel="noopener noreferrer"><ExternalLink size={17}/>Abrir texto completo</a>
+    </div>
+    {dirty && <p className="form-hint">Guardá los cambios para {hasScript ? 'abrir o descargar' : 'abrir'} la versión actualizada.</p>}
+    {hasScript && downloadError && <p className="form-hint" role="alert">No pudimos preparar el Word. Intentá de nuevo.</p>}
+  </div>;
 }
 function DetailsForm({piece,onSave,onDirty}:{piece:Piece;onDirty:(dirty:boolean)=>void;onSave:(command:Command)=>Promise<CommandResult|undefined>}) {
   const [draft,setDraft]=useState(piece);

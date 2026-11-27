@@ -24,6 +24,7 @@
 
 .expand-text-actions { justify-content: space-between; margin: 4px 0 18px; padding: 15px 16px; border: 1px solid #e5c9ce; border-left: 4px solid #8b2634; border-radius: 7px; background: #fbf6f7; }
 .expand-text-actions > div { display: grid; gap: 3px; min-width: 0; }
+.expand-text-actions > .expand-text-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .expand-text-actions strong { font-size: 14px; color: #1b2a41; }
 .expand-text-actions small { font-size: 12px; line-height: 1.4; color: #4c627b; }
 .expand-text-actions .button { min-height: 44px; font-weight: 800; white-space: nowrap; }
@@ -31,6 +32,9 @@
 .story-legacy-notes { padding: 13px 15px; border: 1px solid #dce1e7; border-radius: 7px; background: #f8f9fb; font-size: 12px; color: #506177; }
 .story-legacy-notes summary { cursor: pointer; font-weight: 700; color: #1b2a41; }
 .story-legacy-notes p { margin: 9px 0 0; line-height: 1.5; }
-@media (max-width: 600px) { .expand-text-actions .button { width: 100%; justify-content: center; } }
+@media (max-width: 600px) {
+  .expand-text-buttons, .expand-text-actions .button { width: 100%; }
+  .expand-text-actions .button { justify-content: center; }
+}
 
 .team-materials > .team-file-picker{margin-top:12px}

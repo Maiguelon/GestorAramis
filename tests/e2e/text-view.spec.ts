@@ -2,7 +2,7 @@ import {expect,test} from '@playwright/test';
 test('guion ampliado lee texto guardado, actualiza en otra pestaña y deja de mostrar una pieza archivada',async({page})=>{
  await page.goto('/');await page.getByRole('button',{name:'Abrir Detrás de cada proyecto'}).click();const dialog=page.getByRole('dialog');
  await dialog.getByLabel('Guion e instrucciones de producción').fill('ESCENA 1\nApertura del reel.\n\nESCENA 2\nPresentación del equipo.');
- await expect(dialog.getByText('Guardá los cambios para abrir la versión actualizada.')).toBeVisible();await expect(dialog.locator('a').filter({hasText:'Abrir texto completo'})).not.toHaveAttribute('href',/text/);
+ await expect(dialog.getByText(/Guardá los cambios para .*la versión actualizada\./)).toBeVisible();await expect(dialog.locator('a').filter({hasText:'Abrir texto completo'})).not.toHaveAttribute('href',/text/);
  await dialog.getByRole('button',{name:'Guardar cambios'}).click();const popupPromise=page.waitForEvent('popup');await dialog.getByRole('link',{name:'Abrir texto completo'}).click();const reader=await popupPromise;
  await expect(reader.getByRole('heading',{name:'Detrás de cada proyecto',exact:true})).toBeVisible();await expect(reader.locator('.piece-text-content').first()).toHaveText('ESCENA 1\nApertura del reel.\n\nESCENA 2\nPresentación del equipo.');await expect(reader.getByRole('textbox')).toHaveCount(0);
  const action=await dialog.locator('.expand-text-actions').boundingBox();const tabs=await dialog.locator('.detail-tabs').boundingBox();expect(action!.y).toBeLessThan(tabs!.y);

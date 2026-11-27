@@ -1,5 +1,11 @@
 # Estado del proyecto
 
+## Guion de reel en Word — publicado 2026-11-27
+
+En un reel con guion guardado, **Texto de la pieza → Descargar guion** baja una copia editable .docx en A4 con título, clientes y guion. La acción pide guardar o descartar cambios pendientes antes de descargar y funciona desde el detalle del equipo. El archivo se genera en el navegador.
+
+Publicado en **af89ea50.gestor-aramis.pages.dev**. Se verificaron el paquete publicado en el dominio del equipo, el smoke alojado y la descarga con datos ficticios a ancho móvil. La prueba de impresión revisó las tres páginas A4 de un guion largo y la escritura de texto en una copia. Pasaron **598 pruebas unitarias/SQL** (más la repetición focalizada de ZIP/DOCX tras el ajuste de impresión), **20 recorridos compartidos** y **6 del demo local**. Pasos y alcance en `handoffs/C05-reel-script-docx.md`.
+
 ## Ampliación de estadísticas publicada — 2026-11-21
 
 Versiones por pieza, cumplimiento de primera fecha comprometida y cortes mensuales inmutables integrados en producción. Datos/API/programador en **6aedf07**; interfaz y documentación en el commit siguiente de `feature/internal-statistics`. Nueva migración **202611210001_statistics_monthly_cuts.sql** aplicada mediante el editor SQL del proyecto después de recuperar la sesión existente del navegador. Resultado observado: **Monthly statistics activated**. No repetirla ni volver a aplicar C13. No cambia la lista de lectores: continúa privada para Miguel.

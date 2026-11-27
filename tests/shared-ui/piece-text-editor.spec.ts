@@ -1,4 +1,5 @@
 import {test,expect,type BrowserContext,type Page} from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 import type {Command,Piece,WorkspaceState} from '../../contracts/domain';
 const U='f0000000-0000-4000-8000-000000000001',M='10000000-0000-4000-8000-000000000001',P='20000000-0000-4000-8000-000000000001',C='30000000-0000-4000-8000-000000000001';
 async function setup(context:BrowserContext){
@@ -51,4 +52,47 @@ test('cancel and leaving protect unsaved text; archiving keeps a dirty draft ava
  page.once('dialog',d=>d.dismiss());await page.getByRole('link',{name:'Panel',exact:true}).click();await expect(script).toHaveValue('No perder este texto');
  const closing=page.waitForEvent('dialog');await page.close({runBeforeUnload:true});const prompt=await closing;expect(prompt.type()).toBe('beforeunload');await prompt.dismiss();await expect(script).toHaveValue('No perder este texto');
  s.piece.archived=true;s.piece.revision++;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(page.getByText('La pieza fue archivada. Podés copiar tu borrador, pero no guardar cambios.',{exact:true})).toBeVisible();await expect(script).toHaveValue('No perder este texto');await expect(page.getByRole('button',{name:'Guardar cambios',exact:true})).toBeDisabled();expect(s.operations).toHaveLength(0);
+});
+
+test('reel details download the latest saved script as editable Word', async ({ page, context }, testInfo) => {
+  const workspace = await setup(context);
+  workspace.piece.script = '  ';
+  await page.goto('/?piece=' + P);
+  await page.getByLabel('Correo', { exact: true }).fill('editor@example.test');
+  await page.getByLabel('Contraseña', { exact: true }).fill('fixture-password');
+  await page.getByRole('button', { name: 'Ingresar', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: workspace.piece.title });
+  const actions = dialog.locator('.expand-text-actions');
+  const button = actions.getByRole('button', { name: 'Descargar guion' });
+  const script = dialog.getByLabel('Guion e instrucciones de producción');
+  await expect(actions.getByRole('link', { name: 'Abrir texto completo' })).toBeVisible();
+  await expect(button).toHaveCount(0);
+  const savedScript = Array.from({ length: 12 }, (_, index) =>
+    'ESCENA ' + (index + 1) + '\n' +
+    '¿Qué vemos al llegar? Abrimos con un plano general en la entrada. Después, nos acercamos a la mesa y registramos el movimiento de las manos.\n' +
+    'VOZ · Hoy te mostramos cómo preparamos todo antes de abrir.').join('\n\n') + '\n\nCIERRE · Texto nuevo & guardado.';
+  await script.fill(savedScript);
+  await dialog.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(button).toBeEnabled();
+  await script.fill('Este borrador todavía no se guardó');
+  await expect(button).toBeDisabled();
+  await dialog.getByRole('button', { name: 'Descartar borrador' }).click();
+  await expect(button).toBeEnabled();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const downloadEvent = page.waitForEvent('download');
+  await button.click();
+  const download = await downloadEvent;
+  expect(download.suggestedFilename()).toBe('Texto de prueba ficticia - Guion.docx');
+  const path = testInfo.outputPath('reel-script.docx');
+  await download.saveAs(path);
+  const bytes = await readFile(path);
+  expect(bytes.includes(Buffer.from('CIERRE · Texto nuevo &amp; guardado.'))).toBe(true);
+  expect(bytes.includes(Buffer.from('Este borrador'))).toBe(false);
+  expect(bytes.includes(Buffer.from(workspace.piece.caption))).toBe(false);
+  expect(bytes.includes(Buffer.from(workspace.piece.internalNote))).toBe(false);
+  expect(workspace.operations).toHaveLength(1);
+
+  await dialog.getByLabel('Cambiar tipo de pieza').selectOption('post');
+  await expect(button).toHaveCount(0);
 });

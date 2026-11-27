@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { crc32 } from 'node:zlib';
 import { createZip, safeFileName, ZIP_SIZE_LIMIT } from '../src/lib/download-zip';
+import { createReelScriptDocx } from '../src/lib/reel-script-docx';
 
 // Independent ZIP reader: follow central offsets and verify payloads using Node's CRC.
 async function extract(zip: Blob) {
@@ -67,5 +68,19 @@ describe('download-all ZIP', () => {
   it('fails the entire archive if a file cannot be read', async () => {
     const broken = { size: 10, slice: () => ({ arrayBuffer: () => Promise.reject(new Error('disk failed')) }) } as unknown as Blob;
     await expect(createZip([{ name: 'ok', blob: new Blob(['ok']) }, { name: 'bad', blob: broken }])).rejects.toThrow('disk failed');
+  });
+
+  it('packs intact Word document relationships and preserves script lines, tabs and accented text', async () => {
+    const doc = await createReelScriptDocx('Grabación: día 1', 'Estudio & equipo', 'Primera toma <exterior>\r\n\r\n\t¿Listos? 🎬');
+    expect(doc.name).toBe('Grabación_ día 1 - Guion.docx');
+    const files = new Map((await extract(doc)).map(({ name, data }) => [name, data.toString('utf8')]));
+    expect([...files.keys()]).toEqual([
+      '[Content_Types].xml', '_rels/.rels', 'word/document.xml', 'word/_rels/document.xml.rels', 'word/styles.xml',
+    ]);
+    expect(files.get('_rels/.rels')).toContain('Target="word/document.xml"');
+    expect(files.get('word/document.xml')).toContain('Estudio &amp; equipo');
+    expect(files.get('word/document.xml')).toContain('Primera toma &lt;exterior&gt;</w:t></w:r></w:p><w:p></w:p>');
+    expect(files.get('word/document.xml')).toContain('<w:tab/><w:t xml:space="preserve">¿Listos? 🎬');
+    await expect(createZip([{ name: 'word/../escape', blob: new Blob(), preservePath: true }])).rejects.toThrow('Ruta interna de ZIP inválida');
   });
 });

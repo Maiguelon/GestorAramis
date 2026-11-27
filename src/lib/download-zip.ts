@@ -1,6 +1,6 @@
 /** Stored ZIP: videos are already compressed. Keep blobs intact, scan CRC in 1 MB chunks. */
 export const ZIP_SIZE_LIMIT = 2 * 1024 * 1024 * 1024;
-export type ZipEntry = { name: string; blob: Blob };
+export type ZipEntry = { name: string; blob: Blob; preservePath?: boolean };
 const encoder = new TextEncoder();
 const crcTable = Uint32Array.from({ length: 256 }, (_, value) => {
   for (let bit = 0; bit < 8; bit++) value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
@@ -16,10 +16,15 @@ export function safeFileName(value: string, fallback = 'archivo'): string {
 function uniqueNames(entries: ZipEntry[]): string[] {
   const used = new Set<string>();
   return entries.map(entry => {
-    const base = safeFileName(entry.name);
+    // Document packages need exact internal paths, including names such as .rels.
+    const base = entry.preservePath ? entry.name : safeFileName(entry.name);
+    if (entry.preservePath && base.split('/').some(part => !/^[-a-zA-Z0-9_.[\]]+$/.test(part) || part === '.' || part === '..')) {
+      throw new Error('Ruta interna de ZIP inválida.');
+    }
     const dot = base.lastIndexOf('.');
-    const stem = dot > 0 ? base.slice(0, dot) : base;
-    const extension = dot > 0 ? base.slice(dot) : '';
+    const hasExtension = dot > base.lastIndexOf('/') + 1;
+    const stem = hasExtension ? base.slice(0, dot) : base;
+    const extension = hasExtension ? base.slice(dot) : '';
     let name = base;
     for (let suffix = 2; used.has(name.toLocaleLowerCase('en-US')); suffix++) name = `${stem} (${suffix})${extension}`;
     used.add(name.toLocaleLowerCase('en-US'));
